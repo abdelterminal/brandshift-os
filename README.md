@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BrandShift OS
 
-## Getting Started
+Multi-tenant ERP + CRM + team-collaboration platform for BrandShift.
 
-First, run the development server:
+Slack's speed and shell, Odoo's breadth. Built so that no user is ever confused about where they
+are or what to do next.
+
+Status: **Phase 1, milestone 0 complete.** See [ROADMAP.md](ROADMAP.md).
+
+## Requirements
+
+- Node 22+ (developed on Node 26)
+- Docker with Compose v2+
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env      # then set JWT_SECRET and the Postgres password
+docker compose up -d      # Postgres
+npm install
+npm run db:migrate
+npm run db:seed
+npm run dev               # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Full stack in containers, reachable on the local network:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+docker compose up -d --build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Verify
 
-## Learn More
+```bash
+npm run lint && npx tsc --noEmit
+npm run test
+npx playwright test
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Documentation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [CLAUDE.md](CLAUDE.md) -- stack, conventions, and the design rules that are not negotiable
+- [DECISIONS.md](DECISIONS.md) -- what was decided, and why
+- [ROADMAP.md](ROADMAP.md) -- what is done and what is next
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Relationship to the previous app
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This replaces `abdelterminal/brandshiftsaas` (Angular + Django + MongoDB). That project is
+untouched, still runs, and remains the system of record until this one reaches parity. There is
+no data migration yet -- see Phase 2 in the roadmap.
