@@ -41,18 +41,36 @@ Not in M1, decided while building it:
 - `sessions` carries `organization_id` but is **not** tenant-scoped: it is looked up by token
   digest before any org is known. The exemption is recorded in `ORG_COLUMN_EXCEPTIONS`.
 
-### M2 - Design system
+### M2 - Design system  [AWAITING APPROVAL]
 
-- [ ] `src/app/tokens.css` -- full palette as CSS custom properties on `:root`, redefined under
-      `@media (prefers-color-scheme: dark)` and `[data-theme="dark"]`; Tailwind v4 `@theme` maps
-      them to utilities. No component ever writes a raw hex.
-- [ ] Neutral ramps for both themes, contrast-checked to WCAG AA
-- [ ] Status semantics: brand red, green, amber, blue -- one meaning each
-- [ ] Space Grotesk + Inter, self-hosted; type scale, 14-16px body floor
-- [ ] **Present palette and type scale for approval before building screens**
+- [x] `src/app/tokens.css` -- full palette as CSS custom properties on `:root`, redefined under
+      `@media (prefers-color-scheme: dark)` and `[data-theme="dark"]`; Tailwind v4 `@theme inline`
+      maps them to utilities. No component ever writes a raw hex.
+- [x] Neutral ramps for both themes, contrast-checked to WCAG AA. `src/app/tokens.test.ts`
+      resolves every semantic token through its `var()` chain in both themes and fails the build
+      on any pair below 4.5:1 for text or 3:1 for control edges and focus rings.
+- [x] Status semantics: brand red, green, amber, blue -- one meaning each
+- [x] Space Grotesk + Inter, self-hosted variable woff2 in `src/app/fonts/`; type scale with a
+      14px body default and a hard 12px floor, both asserted by the same test
+- [x] `/design` -- the reference page, read live from `tokens.css` by the same parser the test
+      uses, so the swatches and ratios it shows cannot drift from what ships
+- [ ] **Present palette and type scale for approval before building screens**  <-- HERE
 - [ ] Primitives: Button, Input, Select, Combobox, Badge/StatusPill, Table, Card, Tabs, Dialog,
       Drawer, Toast, EmptyState, Skeleton, Avatar, Tooltip -- each with default / hover /
       focus-visible / active / disabled / loading states
+
+Decisions taken while building it, for the approval conversation:
+- **#FD0000 carries white text at only 4.06:1**, below the 4.5:1 AA needs for a 14px button
+  label. The ramp keeps 500 as the exact brand red for identity and non-text use (logo, active
+  nav indicator, focus ring, where the bar is 3:1) and puts the interactive fill one step down
+  at 600, which reaches 5.84:1. Both are the brand red; only one is legible under a label.
+- Neutrals are warm (OKLCH hue 40, chroma <= 0.008) rather than blue-grey, so charcoal sits with
+  the red instead of fighting it. The dark canvas is `#1a1615`, not black.
+- Status `-solid` tokens are non-text marks only -- dots, bars, rail indicators. Text on a status
+  colour uses the `-bg` / `-text` pair. This is the one combination the tokens do not support,
+  and the test enforces it.
+- Theme has three states, not two: `system` stamps nothing and follows the OS; an explicit
+  choice writes `data-theme` and wins in both directions.
 
 ### M3 - The shell
 

@@ -1,0 +1,419 @@
+/**
+ * BrandShift OS design tokens.
+ *
+ * Two layers, and the distinction is the whole point:
+ *
+ *   PRIMITIVES  (--neutral-500, --red-600)  raw values. Never used by a component.
+ *   SEMANTIC    (--fg-muted, --accent)      what a component actually names.
+ *
+ * A component that writes `text-fg-muted` keeps working when the ramp is
+ * retuned, and keeps working in both themes, because only this file knows which
+ * primitive a role points at. That is why no component may write a raw hex --
+ * the old app had roughly 1,082 of them and could not be re-themed at all.
+ *
+ * Ramps were generated in OKLCH at a fixed hue per family, so lightness steps
+ * are perceptually even rather than evenly spaced in sRGB. They are written
+ * here as hex because hex is what the contrast test parses and what a designer
+ * can read; the OKLCH each one came from is in the comment beside it.
+ *
+ * Every foreground/background pair this file defines is checked against WCAG AA
+ * by `src/app/tokens.test.ts` -- 4.5:1 for text, 3:1 for control boundaries and
+ * focus rings. That test is the reason the palette can be trusted rather than
+ * merely asserted.
+ */
+
+/* ==========================================================================
+   1. Primitives
+   ========================================================================== */
+
+:root {
+  /* Neutrals -- hue 40, chroma <= 0.008. A trace of the brand's warmth, so
+     charcoal reads as charcoal and never as blue-grey. Never pure black. */
+  --neutral-0: #ffffff; /* L 1.000 */
+  --neutral-25: #fcfbfa; /* L 0.988 */
+  --neutral-50: #f8f6f5; /* L 0.974 */
+  --neutral-100: #f2efef; /* L 0.955 */
+  --neutral-200: #e6e3e1; /* L 0.917 */
+  --neutral-300: #d7d2d1; /* L 0.868 */
+  --neutral-400: #aeaaa8; /* L 0.740 */
+  --neutral-450: #958f8d; /* L 0.655 -- solved: 3:1 on light surfaces */
+  --neutral-500: #8d8886; /* L 0.630 */
+  --neutral-550: #77716f; /* L 0.555 -- solved: 4.5:1 on light surfaces */
+  --neutral-600: #706a68; /* L 0.530 -- solved: 4.5:1 light text, 3:1 dark border */
+  --neutral-700: #56504e; /* L 0.436 */
+  --neutral-800: #3d3736; /* L 0.343 */
+  --neutral-825: #35302e; /* L 0.312 */
+  --neutral-850: #2e2927; /* L 0.285 */
+  --neutral-900: #241f1e; /* L 0.245 */
+  --neutral-950: #1a1615; /* L 0.205 -- the dark canvas */
+  --neutral-1000: #120f0d; /* L 0.170 */
+
+  /* Brand red -- hue 29.23, anchored so that step 500 is exactly #FD0000.
+     500 is the identity colour. 600 is the one that carries white text at AA;
+     see --accent below, and the note in DECISIONS.md. */
+  --red-50: #fdefed;
+  --red-100: #fedbd5;
+  --red-200: #febbb0;
+  --red-300: #fd8c7c;
+  --red-400: #f85746;
+  --red-500: #fd0000; /* THE brand red */
+  --red-550: #e61810;
+  --red-600: #cb0c06;
+  --red-700: #a80805;
+  --red-800: #860a06;
+  --red-900: #670a06;
+  --red-950: #470603;
+
+  /* Green -- complete. Hue 152. */
+  --green-50: #eaf8ed;
+  --green-100: #d3f1d9;
+  --green-200: #ade4bb;
+  --green-300: #7cd194;
+  --green-400: #4bb870;
+  --green-500: #26a65a;
+  --green-600: #098b47;
+  --green-700: #037138;
+  --green-800: #0a562b;
+  --green-900: #094120;
+  --green-950: #052b14;
+
+  /* Amber -- due soon, needs attention. Hue 75. */
+  --amber-50: #fff4e6;
+  --amber-100: #ffe7c8;
+  --amber-200: #ffd293;
+  --amber-300: #fbb852;
+  --amber-400: #f2a618;
+  --amber-500: #e19900;
+  --amber-600: #bf8105;
+  --amber-700: #976500;
+  --amber-800: #734c02;
+  --amber-900: #573900;
+  --amber-950: #3b2500;
+
+  /* Blue -- active, in progress. Hue 255. */
+  --blue-50: #eef5fe;
+  --blue-100: #ddebfe;
+  --blue-200: #bdd9ff;
+  --blue-300: #91c1ff;
+  --blue-400: #5da4fd;
+  --blue-500: #3189f0;
+  --blue-600: #0771d9;
+  --blue-700: #025bb2;
+  --blue-800: #03478c;
+  --blue-900: #06366b;
+  --blue-950: #042449;
+}
+
+/* ==========================================================================
+   2. Semantic tokens -- light
+   Light is the bare :root, so it is the fallback for any renderer that does
+   not understand the dark rules below rather than a theme layered on later.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces. Cards are lighter than the canvas, so elevation reads without
+     a shadow -- which is what keeps a dense table quiet. */
+  --surface-sunken: var(--neutral-100);
+  --surface-base: var(--neutral-25);
+  --surface-raised: var(--neutral-0);
+  --surface-overlay: var(--neutral-0);
+  --surface-inset: var(--neutral-50);
+  --surface-hover: var(--neutral-100);
+  --surface-active: var(--neutral-200);
+
+  /* Text */
+  --fg-default: var(--neutral-1000);
+  --fg-muted: var(--neutral-600);
+  --fg-subtle: var(--neutral-550);
+  --fg-on-accent: var(--neutral-0);
+
+  /* Lines. `border` divides content and carries no contrast requirement;
+     `border-control` is the only visible edge of an input or checkbox and is
+     held to 3:1. Conflating the two is how invisible inputs happen. */
+  --border: var(--neutral-200);
+  --border-hover: var(--neutral-300);
+  --border-control: var(--neutral-450);
+
+  /* Accent -- primary action, active nav, focus. Red and nothing else.
+     --accent is the fill that carries white text at AA; --brand is the
+     identity colour, used where the requirement is 3:1 and not 4.5:1. */
+  --brand: var(--red-500);
+  --accent: var(--red-600);
+  --accent-hover: var(--red-700);
+  --accent-active: var(--red-800);
+  --accent-fg: var(--neutral-0);
+  --accent-subtle: var(--red-50);
+  --accent-subtle-hover: var(--red-100);
+  --accent-text: var(--red-700);
+  --accent-border: var(--red-200);
+
+  --focus-ring: var(--red-500);
+
+  /* Status. One meaning each, and no meaning is ever borrowed.
+     `-solid` is a NON-TEXT mark only -- a dot, a bar, a rail indicator -- and
+     is held to 3:1 against the canvas. Text on a status colour uses the
+     `-bg` / `-text` pair, which is held to 4.5:1. Putting a label on a
+     `-solid` fill is the one combination these tokens do not support. */
+  --status-complete-solid: var(--green-600);
+  --status-complete-bg: var(--green-50);
+  --status-complete-border: var(--green-200);
+  --status-complete-text: var(--green-700);
+
+  --status-attention-solid: var(--amber-600);
+  --status-attention-bg: var(--amber-50);
+  --status-attention-border: var(--amber-200);
+  --status-attention-text: var(--amber-800);
+
+  --status-active-solid: var(--blue-600);
+  --status-active-bg: var(--blue-50);
+  --status-active-border: var(--blue-200);
+  --status-active-text: var(--blue-700);
+
+  --status-blocked-solid: var(--red-600);
+  --status-blocked-bg: var(--red-50);
+  --status-blocked-border: var(--red-200);
+  --status-blocked-text: var(--red-700);
+
+  --status-neutral-solid: var(--neutral-450);
+  --status-neutral-bg: var(--neutral-100);
+  --status-neutral-border: var(--neutral-200);
+  --status-neutral-text: var(--neutral-600);
+
+  /* The left rail. Slightly recessed against the canvas so the content area
+     is what the eye lands on first. */
+  --sidebar-surface: var(--neutral-50);
+  --sidebar-fg: var(--neutral-700);
+  --sidebar-fg-active: var(--neutral-1000);
+  --sidebar-hover: var(--neutral-100);
+  --sidebar-active-bg: var(--red-50);
+  --sidebar-border: var(--neutral-200);
+
+  /* Elevation. Borders do most of the work; shadow is reserved for surfaces
+     that genuinely float above the page. */
+  --shadow-card: 0 1px 2px 0 rgb(18 15 13 / 0.04);
+  --shadow-popover:
+    0 4px 12px -2px rgb(18 15 13 / 0.1), 0 2px 4px -2px rgb(18 15 13 / 0.06);
+  --shadow-overlay:
+    0 16px 40px -8px rgb(18 15 13 / 0.18), 0 4px 12px -4px rgb(18 15 13 / 0.1);
+
+  /* Scrim behind dialogs and drawers. */
+  --scrim: rgb(18 15 13 / 0.44);
+}
+
+/* ==========================================================================
+   3. Semantic tokens -- dark, by system preference
+   Guarded so that an explicit light choice still wins here.
+   The block below (4) must stay identical; `tokens.test.ts` enforces that.
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --surface-sunken: var(--neutral-1000);
+    --surface-base: var(--neutral-950);
+    --surface-raised: var(--neutral-900);
+    --surface-overlay: var(--neutral-850);
+    --surface-inset: var(--neutral-1000);
+    --surface-hover: var(--neutral-900);
+    --surface-active: var(--neutral-850);
+
+    --fg-default: var(--neutral-50);
+    --fg-muted: var(--neutral-400);
+    --fg-subtle: var(--neutral-500);
+    --fg-on-accent: var(--neutral-0);
+
+    --border: var(--neutral-825);
+    --border-hover: var(--neutral-700);
+    --border-control: var(--neutral-600);
+
+    --brand: var(--red-500);
+    --accent: var(--red-600);
+    /* Hover brightens, press recedes. Reaching for --red-500 on press was the
+       obvious move and it fails AA against white at 4.06:1, so press goes
+       darker instead -- which also reads more like a button being pushed. */
+    --accent-hover: var(--red-550);
+    --accent-active: var(--red-700);
+    --accent-fg: var(--neutral-0);
+    --accent-subtle: var(--red-950);
+    --accent-subtle-hover: var(--red-900);
+    --accent-text: var(--red-400);
+    --accent-border: var(--red-900);
+
+    --focus-ring: var(--red-500);
+
+    --status-complete-solid: var(--green-400);
+    --status-complete-bg: var(--green-950);
+    --status-complete-border: var(--green-900);
+    --status-complete-text: var(--green-300);
+
+    --status-attention-solid: var(--amber-400);
+    --status-attention-bg: var(--amber-950);
+    --status-attention-border: var(--amber-900);
+    --status-attention-text: var(--amber-300);
+
+    --status-active-solid: var(--blue-400);
+    --status-active-bg: var(--blue-950);
+    --status-active-border: var(--blue-900);
+    --status-active-text: var(--blue-300);
+
+    --status-blocked-solid: var(--red-400);
+    --status-blocked-bg: var(--red-950);
+    --status-blocked-border: var(--red-900);
+    --status-blocked-text: var(--red-300);
+
+    --status-neutral-solid: var(--neutral-500);
+    --status-neutral-bg: var(--neutral-850);
+    --status-neutral-border: var(--neutral-800);
+    --status-neutral-text: var(--neutral-400);
+
+    --sidebar-surface: var(--neutral-1000);
+    --sidebar-fg: var(--neutral-400);
+    --sidebar-fg-active: var(--neutral-50);
+    --sidebar-hover: var(--neutral-900);
+    --sidebar-active-bg: var(--red-950);
+    --sidebar-border: var(--neutral-825);
+
+    --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-popover:
+      0 4px 12px -2px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+    --shadow-overlay:
+      0 16px 40px -8px rgb(0 0 0 / 0.6), 0 4px 12px -4px rgb(0 0 0 / 0.45);
+
+    --scrim: rgb(0 0 0 / 0.6);
+  }
+}
+
+/* ==========================================================================
+   4. Semantic tokens -- dark, chosen explicitly
+   Identical to (3). The toggle must win in both directions, including
+   choosing dark on a system set to light.
+   ========================================================================== */
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --surface-sunken: var(--neutral-1000);
+  --surface-base: var(--neutral-950);
+  --surface-raised: var(--neutral-900);
+  --surface-overlay: var(--neutral-850);
+  --surface-inset: var(--neutral-1000);
+  --surface-hover: var(--neutral-900);
+  --surface-active: var(--neutral-850);
+
+  --fg-default: var(--neutral-50);
+  --fg-muted: var(--neutral-400);
+  --fg-subtle: var(--neutral-500);
+  --fg-on-accent: var(--neutral-0);
+
+  --border: var(--neutral-825);
+  --border-hover: var(--neutral-700);
+  --border-control: var(--neutral-600);
+
+  --brand: var(--red-500);
+  --accent: var(--red-600);
+  /* Hover brightens, press recedes -- see the note in the media-query block. */
+  --accent-hover: var(--red-550);
+  --accent-active: var(--red-700);
+  --accent-fg: var(--neutral-0);
+  --accent-subtle: var(--red-950);
+  --accent-subtle-hover: var(--red-900);
+  --accent-text: var(--red-400);
+  --accent-border: var(--red-900);
+
+  --focus-ring: var(--red-500);
+
+  --status-complete-solid: var(--green-400);
+  --status-complete-bg: var(--green-950);
+  --status-complete-border: var(--green-900);
+  --status-complete-text: var(--green-300);
+
+  --status-attention-solid: var(--amber-400);
+  --status-attention-bg: var(--amber-950);
+  --status-attention-border: var(--amber-900);
+  --status-attention-text: var(--amber-300);
+
+  --status-active-solid: var(--blue-400);
+  --status-active-bg: var(--blue-950);
+  --status-active-border: var(--blue-900);
+  --status-active-text: var(--blue-300);
+
+  --status-blocked-solid: var(--red-400);
+  --status-blocked-bg: var(--red-950);
+  --status-blocked-border: var(--red-900);
+  --status-blocked-text: var(--red-300);
+
+  --status-neutral-solid: var(--neutral-500);
+  --status-neutral-bg: var(--neutral-850);
+  --status-neutral-border: var(--neutral-800);
+  --status-neutral-text: var(--neutral-400);
+
+  --sidebar-surface: var(--neutral-1000);
+  --sidebar-fg: var(--neutral-400);
+  --sidebar-fg-active: var(--neutral-50);
+  --sidebar-hover: var(--neutral-900);
+  --sidebar-active-bg: var(--red-950);
+  --sidebar-border: var(--neutral-825);
+
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-popover:
+    0 4px 12px -2px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-overlay:
+    0 16px 40px -8px rgb(0 0 0 / 0.6), 0 4px 12px -4px rgb(0 0 0 / 0.45);
+
+  --scrim: rgb(0 0 0 / 0.6);
+}
+
+/* ==========================================================================
+   5. Shape, type and motion -- theme-independent
+   ========================================================================== */
+
+:root {
+  /* Radii. Three sizes, one per kind of container. */
+  --radius-control: 8px; /* buttons, inputs, selects, menu items */
+  --radius-card: 12px; /* cards, panels, table containers */
+  --radius-surface: 16px; /* dialogs, drawers, sheets */
+  --radius-pill: 9999px; /* status pills, avatars, counts */
+
+  /* Type. Body floor is 14px; 12px is the absolute floor for anything that
+     carries meaning, and nothing goes below it. */
+  --text-display-lg: 2rem; /* 32px */
+  --text-display: 1.75rem; /* 28px */
+  --text-heading-lg: 1.375rem; /* 22px */
+  --text-heading: 1.125rem; /* 18px */
+  --text-body-lg: 1rem; /* 16px */
+  --text-body: 0.875rem; /* 14px -- the default */
+  --text-label: 0.8125rem; /* 13px */
+  --text-caption: 0.75rem; /* 12px -- the floor */
+
+  --leading-display: 1.15;
+  --leading-heading: 1.3;
+  --leading-body: 1.5;
+  --leading-tight: 1.4;
+
+  --tracking-display: -0.02em;
+  --tracking-heading: -0.01em;
+  --tracking-body: 0em;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Motion. 120-180ms, and only opacity and colour ever move. */
+  --duration-fast: 120ms;
+  --duration-base: 150ms;
+  --duration-slow: 180ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 1ms;
+    --duration-base: 1ms;
+    --duration-slow: 1ms;
+  }
+}

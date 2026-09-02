@@ -1,130 +1,253 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import "./tokens.css";
 
-@custom-variant dark (&:is(.dark *));
+/**
+ * Tailwind wiring for the tokens in ./tokens.css.
+ *
+ * `@theme inline` matters: it makes the generated utilities emit
+ * `var(--fg-muted)` rather than the value that token happened to hold at build
+ * time. That is what lets one class be correct in both themes.
+ */
+
+/**
+ * Dark applies when the system asks for it and the user has not overridden to
+ * light, or when the user has explicitly chosen dark. Most components never
+ * need `dark:` at all, because the tokens have already flipped -- reach for it
+ * only when a rule genuinely differs beyond colour.
+ */
+@custom-variant dark {
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+}
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
+  /* Fonts. Space Grotesk sets display headings; Inter does all UI and body. */
+  --font-sans:
+    var(--font-inter), var(--font-inter-ext), ui-sans-serif, system-ui,
+    -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display:
+    var(--font-space-grotesk), var(--font-space-grotesk-ext), ui-sans-serif,
+    system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+
+  /* Surfaces */
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-base: var(--surface-base);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-surface-inset: var(--surface-inset);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-active: var(--surface-active);
+
+  /* Text */
+  --color-fg-default: var(--fg-default);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-fg-on-accent: var(--fg-on-accent);
+  --color-fg-on-solid: var(--fg-on-solid);
+
+  /* Lines */
   --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
+  --color-border-hover: var(--border-hover);
+  --color-border-control: var(--border-control);
+
+  /* Accent */
+  --color-brand: var(--brand);
   --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-active: var(--accent-active);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-accent-subtle-hover: var(--accent-subtle-hover);
+  --color-accent-text: var(--accent-text);
+  --color-accent-border: var(--accent-border);
+  --color-focus-ring: var(--focus-ring);
+
+  /* Status */
+  --color-complete-solid: var(--status-complete-solid);
+  --color-complete-bg: var(--status-complete-bg);
+  --color-complete-border: var(--status-complete-border);
+  --color-complete-text: var(--status-complete-text);
+
+  --color-attention-solid: var(--status-attention-solid);
+  --color-attention-bg: var(--status-attention-bg);
+  --color-attention-border: var(--status-attention-border);
+  --color-attention-text: var(--status-attention-text);
+
+  --color-active-solid: var(--status-active-solid);
+  --color-active-bg: var(--status-active-bg);
+  --color-active-border: var(--status-active-border);
+  --color-active-text: var(--status-active-text);
+
+  --color-blocked-solid: var(--status-blocked-solid);
+  --color-blocked-bg: var(--status-blocked-bg);
+  --color-blocked-border: var(--status-blocked-border);
+  --color-blocked-text: var(--status-blocked-text);
+
+  --color-status-neutral-solid: var(--status-neutral-solid);
+  --color-status-neutral-bg: var(--status-neutral-bg);
+  --color-status-neutral-border: var(--status-neutral-border);
+  --color-status-neutral-text: var(--status-neutral-text);
+
+  /* Sidebar */
+  --color-sidebar-surface: var(--sidebar-surface);
+  --color-sidebar-fg: var(--sidebar-fg);
+  --color-sidebar-fg-active: var(--sidebar-fg-active);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-active-bg: var(--sidebar-active-bg);
+  --color-sidebar-border: var(--sidebar-border);
+
+  --color-scrim: var(--scrim);
+
+  /* Radii */
+  --radius-control: var(--radius-control);
+  --radius-card: var(--radius-card);
+  --radius-surface: var(--radius-surface);
+  --radius-pill: var(--radius-pill);
+
+  /* Type scale. Each size ships with the leading and tracking it was drawn
+     with, so `text-body` is a complete decision and not just a font-size. */
+  --text-display-lg: var(--text-display-lg);
+  --text-display-lg--line-height: var(--leading-display);
+  --text-display-lg--letter-spacing: var(--tracking-display);
+  --text-display-lg--font-weight: var(--weight-semibold);
+
+  --text-display: var(--text-display);
+  --text-display--line-height: var(--leading-display);
+  --text-display--letter-spacing: var(--tracking-display);
+  --text-display--font-weight: var(--weight-semibold);
+
+  --text-heading-lg: var(--text-heading-lg);
+  --text-heading-lg--line-height: var(--leading-heading);
+  --text-heading-lg--letter-spacing: var(--tracking-heading);
+  --text-heading-lg--font-weight: var(--weight-semibold);
+
+  --text-heading: var(--text-heading);
+  --text-heading--line-height: var(--leading-heading);
+  --text-heading--letter-spacing: var(--tracking-heading);
+  --text-heading--font-weight: var(--weight-semibold);
+
+  --text-body-lg: var(--text-body-lg);
+  --text-body-lg--line-height: var(--leading-body);
+
+  --text-body: var(--text-body);
+  --text-body--line-height: var(--leading-body);
+
+  --text-label: var(--text-label);
+  --text-label--line-height: var(--leading-tight);
+  --text-label--font-weight: var(--weight-medium);
+
+  --text-caption: var(--text-caption);
+  --text-caption--line-height: var(--leading-tight);
+
+  /* Shadows */
+  --shadow-card: var(--shadow-card);
+  --shadow-popover: var(--shadow-popover);
+  --shadow-overlay: var(--shadow-overlay);
+
+  /* Motion */
+  --ease-out: var(--ease-out);
+  --ease-in-out: var(--ease-in-out);
+  --animate-duration-fast: var(--duration-fast);
+  --animate-duration-base: var(--duration-base);
+  --animate-duration-slow: var(--duration-slow);
 }
 
-:root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+/**
+ * shadcn/ui compatibility.
+ *
+ * shadcn components are generated against a fixed set of variable names. They
+ * are aliased onto our tokens rather than maintained as a second palette, so
+ * an installed component inherits the theme without being rewritten -- and
+ * there is still exactly one source of truth.
+ */
+@theme inline {
+  --color-background: var(--surface-base);
+  --color-foreground: var(--fg-default);
+  --color-card: var(--surface-raised);
+  --color-card-foreground: var(--fg-default);
+  --color-popover: var(--surface-overlay);
+  --color-popover-foreground: var(--fg-default);
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--accent-fg);
+  --color-secondary: var(--surface-hover);
+  --color-secondary-foreground: var(--fg-default);
+  --color-muted: var(--surface-hover);
+  --color-muted-foreground: var(--fg-muted);
+  --color-destructive: var(--accent);
+  --color-destructive-foreground: var(--accent-fg);
+  --color-input: var(--border-control);
+  --color-ring: var(--focus-ring);
+  --radius-sm: var(--radius-control);
+  --radius-md: var(--radius-control);
+  --radius-lg: var(--radius-card);
+  --radius-xl: var(--radius-surface);
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+
   html {
-    @apply font-sans;
+    font-family: var(--font-sans);
+    /* Dense tables read better with tabular figures in the chrome; individual
+       numeric cells opt in with `tabular-nums`. */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--surface-base);
+    color: var(--fg-default);
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: var(--tracking-heading);
+  }
+
+  /* One focus treatment everywhere. Two rings so the indicator stays visible
+     on both the page and a filled control. */
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* The pointer never gets a ring; the keyboard always does. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  ::selection {
+    background-color: var(--accent-subtle);
+    color: var(--accent-text);
+  }
+
+  /* Belt and braces: the token durations already collapse under reduced
+     motion, but third-party components may animate without them. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
