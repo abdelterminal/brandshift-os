@@ -5,8 +5,8 @@ Multi-tenant ERP + CRM + team-collaboration platform for BrandShift.
 Slack's speed and shell, Odoo's breadth. Built so that no user is ever confused about where they
 are or what to do next.
 
-Status: **Phase 1, milestones 0-4 complete** -- data foundation, design system, app shell and
-authentication. The first vertical slice (People and Work) is next. See [ROADMAP.md](ROADMAP.md).
+Status: **Phase 1 complete** -- data foundation, design system, app shell, authentication and
+the first vertical slice. Phase 2 is next. See [ROADMAP.md](ROADMAP.md).
 
 ## Requirements
 
@@ -76,6 +76,19 @@ Sign in as any seeded person -- the password is `brandshift` for all of them:
 
 Signing in as a member and opening `/en/insights` directly shows the 403 page -- refused, but
 still signed in. Signed-in devices and password change live under Settings.
+
+What is built:
+
+- **Today** -- a coordination queue (blocked / overdue / unassigned) for managers and above, and
+  a Next Task panel plus Now / Next / Later for everyone else.
+- **Work** -- the projects list, and each project as a routed page with Overview / Tasks / Team /
+  Activity. Tasks default to a prioritised list; the board is behind a toggle.
+- A task opens in a side drawer with Start, Complete and Report blocker. The open task is in the
+  URL (`?task=<id>`), so it can be linked to and the back button closes it.
+- **New project** -- five guided steps, with each person's current workload shown at the moment
+  you assign them. Nothing is saved until you publish.
+- **People** -- the directory, server-paginated and filtered through the URL; each person as a
+  routed page with their workload, projects and activity; invites; role and module editing.
 
 Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a project, a person or a department.
 

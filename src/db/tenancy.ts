@@ -1,7 +1,7 @@
 import "server-only";
 
 import { and, eq, getTableName, sql, type GetColumnData, type SQL } from "drizzle-orm";
-import type { PgColumn, PgInsertValue, PgUpdateSetSource } from "drizzle-orm/pg-core";
+import type { PgColumn, PgInsertValue, PgTable, PgUpdateSetSource } from "drizzle-orm/pg-core";
 
 import { activityEvents } from "./schema/activity";
 import { organizations } from "./schema/organizations";
@@ -160,6 +160,52 @@ export function withOrg(organizationId: string, executor: Executor = db) {
         .select(fields)
         .from(table as TenantTable)
         .where(scoped(table, ...where)) as unknown as Promise<
+        Array<{ [K in keyof F]: GetColumnData<F[K]> }>
+      >;
+    },
+
+    /**
+     * A scoped read that needs to join.
+     *
+     * Lists want the assignee's name beside the task and the department's name
+     * beside the project, which `selectFields` cannot express -- it applies its
+     * `where` immediately, and drizzle will not let you join after that.
+     *
+     * Joins are described as data rather than passed as a callback, so this
+     * helper stays in control of the order: joins first, then the tenant
+     * filter. A caller cannot end up with the join but not the filter.
+     *
+     *     scope.selectJoined(
+     *       tasks,
+     *       { id: tasks.id, assignee: users.name },
+     *       [{ table: users, on: eq(users.id, tasks.assigneeUserId), type: "left" }],
+     *       eq(tasks.status, "blocked"),
+     *     )
+     *
+     * Columns coming from a `left` join are typed non-nullable; treat them as
+     * possibly null at the call site.
+     */
+    selectJoined<T extends TenantTable, F extends Record<string, PgColumn>>(
+      table: T,
+      fields: F,
+      joins: Array<{ table: PgTable; on: SQL; type?: "inner" | "left" }>,
+      ...where: Array<SQL | undefined>
+    ): Promise<Array<{ [K in keyof F]: GetColumnData<F[K]> }>> {
+      type Joinable = {
+        innerJoin: (t: PgTable, on: SQL) => Joinable;
+        leftJoin: (t: PgTable, on: SQL) => Joinable;
+        where: (condition: SQL) => unknown;
+      };
+
+      let query = executor.select(fields).from(table as TenantTable) as unknown as Joinable;
+      for (const join of joins) {
+        query =
+          join.type === "left"
+            ? query.leftJoin(join.table, join.on)
+            : query.innerJoin(join.table, join.on);
+      }
+
+      return query.where(scoped(table, ...where)) as Promise<
         Array<{ [K in keyof F]: GetColumnData<F[K]> }>
       >;
     },

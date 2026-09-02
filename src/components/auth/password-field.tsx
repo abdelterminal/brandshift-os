@@ -123,6 +123,8 @@ export function TextField({
   autoComplete,
   required = true,
   defaultValue,
+  value,
+  onValueChange,
   placeholder,
   autoFocus,
 }: {
@@ -134,6 +136,9 @@ export function TextField({
   autoComplete?: string;
   required?: boolean;
   defaultValue?: string;
+  /** Pass `value` and `onValueChange` together to control the field. */
+  value?: string;
+  onValueChange?: (value: string) => void;
   placeholder?: string;
   autoFocus?: boolean;
 }) {
@@ -152,7 +157,9 @@ export function TextField({
         name={name}
         type={type}
         required={required}
-        defaultValue={defaultValue}
+        {...(onValueChange
+          ? { value: value ?? "", onChange: (event) => onValueChange(event.target.value) }
+          : { defaultValue })}
         placeholder={placeholder}
         autoComplete={autoComplete}
         autoFocus={autoFocus}

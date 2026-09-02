@@ -175,20 +175,44 @@ Bugs and violations found while building it:
 - Breadcrumbs showed `settings` and `profile` as raw lowercase segments; their labels live in the
   `Account` namespace, not `Nav`.
 
-### M5 - First vertical slice
+### M5 - First vertical slice  [DONE]
 
-- [ ] **People**: employees list (server-paginated, filterable); person detail as a routed page
-      with Overview / Work / Activity tabs; departments; invite flow; role and permission editing
-- [ ] **Work**: projects list; project detail as a **routed page** with Overview / Tasks / Team /
+- [x] **People**: directory, server-paginated and filtered through the URL; person detail as a
+      routed page with Overview / Work / Activity tabs; invite flow; role and module editing
+- [x] **Work**: projects list; project detail as a **routed page** with Overview / Tasks / Team /
       Activity tabs -- not a modal
-- [ ] Tasks default to a prioritized list (Today - Upcoming - No deadline - Completed);
-      Kanban is the secondary view
-- [ ] Task opens in a **side drawer** with Start / Complete / Report Blocker
-- [ ] Guided project creation: essentials -> department -> assignment with visible workload ->
-      deliverables -> review and publish
-- [ ] **Today**, action-first, using Phase-1 data only:
-      admin = coordination queue (blocked / overdue / unassigned);
-      member = Next Task panel + Now / Next / Later
+- [x] Tasks default to a prioritised list (Overdue - Today - Upcoming - No deadline - Completed);
+      Kanban is behind a toggle and has to be asked for
+- [x] Task opens in a **side drawer** with Start / Complete / Report blocker. The open task is
+      `?task=<id>`, so back closes it and a link to a task opens it.
+- [x] Guided project creation: essentials -> department -> assignment with visible workload ->
+      deliverables -> review and publish. Nothing is written until the last step, and then it is
+      written in one transaction.
+- [x] **Today**, action-first: manager and above get the coordination queue
+      (blocked / overdue / unassigned); a member gets a Next Task panel and Now / Next / Later
+
+Every number on these screens is a count of rows you can click through to. There are no invented
+metrics, which is why there is no chart anywhere yet.
+
+Found while building it:
+- **The role editor started with every module unticked** instead of the person's current access,
+  so saving would have silently revoked it. `PersonRow` carries `permissions` now.
+- **The wizard's name field was uncontrolled**, so its own state never saw what was typed:
+  Continue stayed disabled forever and the name would never have been submitted. `TextField`
+  takes `value` / `onValueChange` now.
+- **next-intl rejects a message key containing a dot**, which is how it expresses nesting -- so
+  the `Activity` catalogue could not be keyed by verb (`task.completed`). The verbs stay dotted in
+  the database; the feed flattens them to `taskCompleted` when it looks the message up.
+- **Client components cannot import a value from a `server-only` module.** `BUCKET_ORDER` did,
+  which dragged the database driver into the browser bundle and failed the build with a stack of
+  missing Node built-ins. The client-safe shapes live in `src/lib/data/task-types.ts` now.
+- **The message-parity test had two false positives of its own.** Its placeholder regex read ICU
+  plural sub-messages as arguments, so `{days, plural, one {in # day} ...}` looked like it had an
+  argument called `in`, and the French `{dans # jour}` failed. It counts braces now and only reads
+  arguments at depth zero.
+- `withOrg()` gained `selectJoined()`: lists need the assignee's name beside the task, and
+  `selectFields` applies its `where` immediately so nothing can be joined after it. Joins are
+  passed as data, not a callback, so the helper still applies the tenant filter last.
 
 ---
 

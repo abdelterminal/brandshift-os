@@ -25,9 +25,39 @@ function leafKeys(messages: Messages, prefix = ""): string[] {
   });
 }
 
-/** ICU placeholders in a string: `{shortcut}`, `{query}`. */
+/**
+ * ICU argument names in a string: `{shortcut}`, `{count, plural, ...}`.
+ *
+ * This has to count braces rather than pattern-match, because a plural's
+ * sub-messages are braced too and some of them are a single word:
+ * `{count, plural, =0 {free} other {# tasks}}` has exactly one argument,
+ * `count`, but any regex loose enough to catch `{shortcut}` also catches
+ * `{free}`. It then reports the French `{disponible}` as a placeholder
+ * mismatch -- a bug in the check, not in the translation.
+ *
+ * So: only the arguments at brace depth zero count, and each one is the word
+ * before its first comma.
+ */
 function placeholders(value: string): string[] {
-  return [...value.matchAll(/\{(\w+)[^}]*\}/g)].map((match) => match[1]!).sort();
+  const names: string[] = [];
+  let depth = 0;
+
+  for (let i = 0; i < value.length; i += 1) {
+    if (value[i] === "}") {
+      depth -= 1;
+      continue;
+    }
+    if (value[i] !== "{") continue;
+
+    if (depth === 0) {
+      const rest = value.slice(i + 1);
+      const name = /^\s*(\w+)\s*[,}]/.exec(rest);
+      if (name) names.push(name[1]!);
+    }
+    depth += 1;
+  }
+
+  return names.sort();
 }
 
 function leafValues(messages: Messages, prefix = ""): Array<[string, string]> {
