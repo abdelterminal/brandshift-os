@@ -11,7 +11,7 @@ Read `ROADMAP.md` to find out what to work on next.
 | Layer | Choice |
 |---|---|
 | Framework | Next.js 16 (App Router, Server Components, Server Actions), React 19, TypeScript strict |
-| Styling | Tailwind CSS v4 + shadcn/ui (Radix), Lucide icons |
+| Styling | Tailwind CSS v4 + shadcn/ui (Base UI, not Radix), Lucide icons |
 | Database | PostgreSQL 17, self-hosted in Docker |
 | ORM | Drizzle + `node-postgres`, migrations via `drizzle-kit` |
 | Auth | Custom HS256 JWT (`jose`) in an HttpOnly cookie + server-side `sessions` table |

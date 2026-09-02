@@ -239,9 +239,12 @@
   }
 
   /* Belt and braces: the token durations already collapse under reduced
-     motion, but third-party components may animate without them. */
+     motion, but third-party components may animate without them.
+     `[data-spinner]` is exempt on purpose -- a frozen spinner tells someone
+     who asked for less motion nothing at all about whether work is happening,
+     which is worse than the movement. It is the only exemption. */
   @media (prefers-reduced-motion: reduce) {
-    *,
+    *:not([data-spinner]),
     ::before,
     ::after {
       animation-duration: 0.01ms !important;

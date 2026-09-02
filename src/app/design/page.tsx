@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 
-import { ThemeToggle } from "@/components/theme";
 import { contrastRatio, ramp, readTokens, resolveToken, type Theme } from "@/lib/tokens";
 
 /**
@@ -237,18 +236,15 @@ const TYPE_SPECIMENS: Array<{
 
 export default function DesignSystemPage() {
   return (
-    <div className="bg-surface-base min-h-full">
+    <div>
       <div className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
-        <header className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-display-lg font-display text-fg-default">Design system</h1>
-            <p className="text-fg-muted mt-2 max-w-2xl text-body-lg">
-              Read live from <code className="text-label">src/app/tokens.css</code>. Every
-              contrast figure on this page is computed by the same module that fails the build
-              when a pair drops below AA.
-            </p>
-          </div>
-          <ThemeToggle />
+        <header>
+          <h1 className="text-display-lg font-display text-fg-default">Tokens</h1>
+          <p className="text-fg-muted mt-2 max-w-2xl text-body-lg">
+            Read live from <code className="text-label">src/app/tokens.css</code>. Every
+            contrast figure on this page is computed by the same module that fails the build
+            when a pair drops below AA.
+          </p>
         </header>
 
         <div className="mt-12 space-y-12">
@@ -522,8 +518,7 @@ export default function DesignSystemPage() {
         </div>
 
         <footer className="border-border text-caption text-fg-subtle mt-14 border-t pt-6">
-          Primitives -- Button, Input, Select, Table, Drawer and the rest -- land next, once the
-          palette and type scale are signed off.
+          The components built on these tokens are on the Primitives page.
         </footer>
       </div>
     </div>

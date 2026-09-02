@@ -5,8 +5,8 @@ Multi-tenant ERP + CRM + team-collaboration platform for BrandShift.
 Slack's speed and shell, Odoo's breadth. Built so that no user is ever confused about where they
 are or what to do next.
 
-Status: **Phase 1, milestone 2** -- data foundation done; design tokens and type scale
-awaiting sign-off. See [ROADMAP.md](ROADMAP.md).
+Status: **Phase 1, milestones 0-2 complete** -- data foundation and design system.
+The app shell is next. See [ROADMAP.md](ROADMAP.md).
 
 ## Requirements
 
@@ -62,8 +62,13 @@ as the app container's healthcheck.
 
 ## Design system
 
-`npm run dev`, then <http://localhost:3000/design>. The reference page is read live from
-`src/app/tokens.css`, so its swatches and contrast ratios are the ones that actually ship.
+`npm run dev`, then:
+
+- <http://localhost:3000/design> -- tokens, read live from `src/app/tokens.css`, so its swatches
+  and contrast ratios are the ones that actually ship
+- <http://localhost:3000/design/primitives> -- every control in every state
+
+Primitives live in `src/components/ui/`, built on Base UI and styled only with semantic tokens.
 
 Components name semantic tokens (`bg-surface-raised`, `text-fg-muted`, `bg-accent`), never
 primitives and never a raw hex. `src/app/tokens.test.ts` resolves every semantic token through

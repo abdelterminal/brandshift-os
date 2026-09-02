@@ -41,7 +41,7 @@ Not in M1, decided while building it:
 - `sessions` carries `organization_id` but is **not** tenant-scoped: it is looked up by token
   digest before any org is known. The exemption is recorded in `ORG_COLUMN_EXCEPTIONS`.
 
-### M2 - Design system  [AWAITING APPROVAL]
+### M2 - Design system  [DONE]
 
 - [x] `src/app/tokens.css` -- full palette as CSS custom properties on `:root`, redefined under
       `@media (prefers-color-scheme: dark)` and `[data-theme="dark"]`; Tailwind v4 `@theme inline`
@@ -54,10 +54,12 @@ Not in M1, decided while building it:
       14px body default and a hard 12px floor, both asserted by the same test
 - [x] `/design` -- the reference page, read live from `tokens.css` by the same parser the test
       uses, so the swatches and ratios it shows cannot drift from what ships
-- [ ] **Present palette and type scale for approval before building screens**  <-- HERE
-- [ ] Primitives: Button, Input, Select, Combobox, Badge/StatusPill, Table, Card, Tabs, Dialog,
-      Drawer, Toast, EmptyState, Skeleton, Avatar, Tooltip -- each with default / hover /
-      focus-visible / active / disabled / loading states
+- [x] **Present palette and type scale for approval before building screens** -- approved
+- [x] Primitives in `src/components/ui/`: Button, Input (+ Textarea, Field), Select, Combobox,
+      Badge / StatusPill / CountBadge, Table, Card, Tabs, Dialog, Drawer, Toast, EmptyState
+      (+ ErrorState), Skeleton (+ TableSkeleton), Avatar (+ AvatarGroup), Tooltip -- each with
+      default / hover / focus-visible / active / disabled / loading states
+- [x] `/design/primitives` -- every control in every state, so a missing one is visible
 
 Decisions taken while building it, for the approval conversation:
 - **#FD0000 carries white text at only 4.06:1**, below the 4.5:1 AA needs for a 14px button
@@ -71,6 +73,20 @@ Decisions taken while building it, for the approval conversation:
   and the test enforces it.
 - Theme has three states, not two: `system` stamps nothing and follows the OS; an explicit
   choice writes `data-theme` and wins in both directions.
+
+Found while building the primitives:
+- **tailwind-merge silently dropped colours.** It infers whether an unknown `text-*` utility is
+  a size or a colour from its value, so it filed `text-label` and `text-caption` as colours and
+  discarded the real colour beside them as a conflict. Every primary button lost its white label
+  and inherited near-black text on red. `src/lib/utils.ts` now registers our type scale, radii
+  and shadows with `extendTailwindMerge`, and `src/lib/utils.test.ts` pins it.
+- The scaffolded shadcn Button nudged itself down a pixel on `:active`. That is a transform, it
+  makes a toolbar twitch under the cursor, and it is gone.
+- Loading and disabled looked identical -- both dimmed to 55%. Greyed out says "you cannot do
+  this" when the truth is "this is happening", so loading keeps full opacity and carries a
+  spinner and a softened label instead.
+- The scaffold installed **Base UI**, not Radix, as shadcn/ui's primitive layer. `CLAUDE.md` said
+  Radix; the stack table now matches the code.
 
 ### M3 - The shell
 
