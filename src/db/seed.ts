@@ -1,0 +1,519 @@
+/**
+ * Demo data for development.
+ *
+ * Run with `npm run db:seed`. Destructive: it clears the tables it owns and
+ * rebuilds them, so the result is identical on every machine. The randomness is
+ * seeded from a fixed constant for the same reason -- a screenshot taken today
+ * and one taken next week differ only by the dates that are meant to move.
+ *
+ * Dates are relative to the day it runs, so "overdue" is genuinely overdue and
+ * "due soon" is genuinely soon, however long the data has been sitting there.
+ *
+ * Writes go through `withOrg()` like everything else. The seed is not exempt
+ * from tenancy; it is the first proof that the scoped path works.
+ */
+
+import { sql } from "drizzle-orm";
+
+import { closeDb, db } from "./client";
+import {
+  BLOCKER_REASONS,
+  DEPARTMENTS,
+  ORGANIZATION,
+  PERSONAL_TASKS,
+  PROJECTS,
+  TASK_TITLES,
+  USERS,
+  type DepartmentSlug,
+} from "./seed-data";
+import {
+  activityEvents,
+  departments,
+  memberships,
+  organizations,
+  projectMembers,
+  projects,
+  sessions,
+  tasks,
+  users,
+  type NewActivityEvent,
+  type NewTask,
+} from "./schema";
+import { withOrg } from "./tenancy";
+import { hashPassword } from "@/lib/password";
+
+/** Every seeded account shares this password. Development only. */
+const DEMO_PASSWORD = "brandshift";
+
+/** Fixed so two runs on the same day produce byte-identical data. */
+const RANDOM_SEED = 0x5b7f_2c11;
+
+// ---------------------------------------------------------------------------
+// Small deterministic helpers
+// ---------------------------------------------------------------------------
+
+/** mulberry32: tiny, seeded, good enough for arranging demo rows. */
+function createRandom(seed: number) {
+  let state = seed >>> 0;
+  return function random(): number {
+    state = (state + 0x6d2b_79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296;
+  };
+}
+
+const random = createRandom(RANDOM_SEED);
+
+/** Integer in [min, max]. */
+function randomInt(min: number, max: number): number {
+  return min + Math.floor(random() * (max - min + 1));
+}
+
+function pick<T>(items: readonly T[]): T {
+  return items[Math.floor(random() * items.length)]!;
+}
+
+const TODAY = new Date();
+
+/** `YYYY-MM-DD`, `offsetDays` from today. Postgres `date` columns take strings. */
+function day(offsetDays: number): string {
+  const d = new Date(TODAY);
+  d.setDate(d.getDate() + offsetDays);
+  return d.toISOString().slice(0, 10);
+}
+
+/** A timestamp `offsetDays` from now, at a plausible hour of the working day. */
+function moment(offsetDays: number): Date {
+  const d = new Date(TODAY);
+  d.setDate(d.getDate() + offsetDays);
+  d.setHours(randomInt(9, 18), randomInt(0, 59), 0, 0);
+  return d;
+}
+
+// ---------------------------------------------------------------------------
+// Seed
+// ---------------------------------------------------------------------------
+
+async function main() {
+  if (process.env.NODE_ENV === "production" && !process.argv.includes("--force")) {
+    throw new Error(
+      "Refusing to seed with NODE_ENV=production. Pass --force if that is genuinely what you want.",
+    );
+  }
+
+  console.log("Clearing existing data...");
+  // One statement so foreign keys never see a half-empty graph. `users` is not
+  // tenant-owned but is seeded here, so it is cleared here too.
+  await db.execute(sql`
+    truncate table
+      ${activityEvents}, ${tasks}, ${projectMembers}, ${projects},
+      ${sessions}, ${memberships}, ${departments}, ${users}, ${organizations}
+    restart identity cascade
+  `);
+
+  // --- Organization ------------------------------------------------------
+  const [organization] = await db
+    .insert(organizations)
+    .values({
+      slug: ORGANIZATION.slug,
+      name: ORGANIZATION.name,
+      timezone: ORGANIZATION.timezone,
+      defaultLocale: ORGANIZATION.defaultLocale,
+    })
+    .returning();
+
+  if (!organization) throw new Error("Failed to create the organization.");
+  const scope = withOrg(organization.id);
+  console.log(`Created organization ${organization.name} (${organization.id})`);
+
+  // --- Users -------------------------------------------------------------
+  // Hashing is intentionally slow, so all twelve are hashed once, in parallel.
+  const passwordHash = await hashPassword(DEMO_PASSWORD);
+
+  const insertedUsers = await db
+    .insert(users)
+    .values(
+      USERS.map((person) => ({
+        email: person.email,
+        name: person.name,
+        passwordHash,
+        locale: person.locale,
+        createdAt: moment(-randomInt(120, 400)),
+        lastLoginAt: moment(-randomInt(0, 6)),
+      })),
+    )
+    .returning();
+
+  /** email -> user id, the key everything below joins on. */
+  const userIdByEmail = new Map(insertedUsers.map((user) => [user.email, user.id]));
+  const userId = (email: string): string => {
+    const id = userIdByEmail.get(email);
+    if (!id) throw new Error(`Unknown seed user: ${email}`);
+    return id;
+  };
+
+  // --- Departments -------------------------------------------------------
+  const insertedDepartments = await scope.insert(
+    departments,
+    DEPARTMENTS.map((department) => ({
+      slug: department.slug,
+      name: department.name,
+    })),
+  );
+
+  const departmentIdBySlug = new Map(
+    insertedDepartments.map((department) => [department.slug as DepartmentSlug, department.id]),
+  );
+  const departmentId = (slug: DepartmentSlug): string => {
+    const id = departmentIdBySlug.get(slug);
+    if (!id) throw new Error(`Unknown seed department: ${slug}`);
+    return id;
+  };
+
+  // --- Memberships -------------------------------------------------------
+  await scope.insert(
+    memberships,
+    USERS.map((person) => ({
+      userId: userId(person.email),
+      departmentId: departmentId(person.department),
+      role: person.role,
+      permissions: person.permissions,
+      jobTitle: person.jobTitle,
+      status: "active" as const,
+      isFounder: person.role === "owner",
+      invitedAt: moment(-randomInt(120, 400)),
+      joinedAt: moment(-randomInt(60, 119)),
+    })),
+  );
+
+  // Department leads, now that their memberships exist.
+  for (const person of USERS.filter((candidate) => candidate.leads)) {
+    await scope.update(
+      departments,
+      { leadUserId: userId(person.email) },
+      sql`${departments.slug} = ${person.department}`,
+    );
+  }
+
+  console.log(
+    `Created ${insertedUsers.length} people across ${insertedDepartments.length} departments`,
+  );
+
+  // --- Projects ----------------------------------------------------------
+  const insertedProjects = await scope.insert(
+    projects,
+    PROJECTS.map((project) => ({
+      key: project.key,
+      name: project.name,
+      description: project.description,
+      status: project.status,
+      priority: project.priority,
+      departmentId: departmentId(project.department),
+      ownerUserId: userId(project.ownerEmail),
+      createdByUserId: userId(project.ownerEmail),
+      startDate: day(project.startsInDays),
+      dueDate: project.dueInDays === null ? null : day(project.dueInDays),
+      completedAt:
+        project.status === "completed" ? moment((project.dueInDays ?? 0) - 1) : null,
+      createdAt: moment(project.startsInDays - 3),
+    })),
+  );
+
+  const projectByKey = new Map(insertedProjects.map((project) => [project.key, project]));
+
+  await scope.insert(
+    projectMembers,
+    PROJECTS.flatMap((project) => {
+      const row = projectByKey.get(project.key)!;
+      return [
+        { projectId: row.id, userId: userId(project.ownerEmail), role: "lead" as const },
+        ...project.memberEmails.map((email) => ({
+          projectId: row.id,
+          userId: userId(email),
+          role: "contributor" as const,
+        })),
+      ];
+    }),
+  );
+
+  console.log(`Created ${insertedProjects.length} projects`);
+
+  // --- Tasks -------------------------------------------------------------
+  const taskRows: Array<Omit<NewTask, "organizationId">> = [];
+
+  for (const project of PROJECTS) {
+    const row = projectByKey.get(project.key)!;
+    const titles = TASK_TITLES[project.key] ?? [];
+    // The owner plus the team; anyone on the project can hold a task.
+    const candidates = [project.ownerEmail, ...project.memberEmails];
+
+    titles.forEach((title, index) => {
+      const progress = titles.length === 1 ? 1 : index / (titles.length - 1);
+      const {
+        status,
+        dueInDays,
+        assigneeEmail,
+      }: {
+        status: NewTask["status"];
+        dueInDays: number | null;
+        assigneeEmail: string | null;
+      } = planTask(project, progress, candidates, index);
+
+      const isDone = status === "done";
+      const isBlocked = status === "blocked";
+
+      taskRows.push({
+        projectId: row.id,
+        title,
+        status,
+        priority: planPriority(project.priority, progress),
+        assigneeUserId: assigneeEmail ? userId(assigneeEmail) : null,
+        createdByUserId: userId(project.ownerEmail),
+        dueDate: dueInDays === null ? null : day(dueInDays),
+        estimateHours: String(randomInt(2, 32)),
+        position: index,
+        startedAt:
+          status === "todo" ? null : moment(Math.min(-1, (dueInDays ?? 0) - randomInt(3, 10))),
+        completedAt: isDone ? moment(Math.min(-1, (dueInDays ?? -2) + randomInt(0, 2))) : null,
+        blockedReason: isBlocked ? pick(BLOCKER_REASONS) : null,
+        blockedAt: isBlocked ? moment(-randomInt(1, 9)) : null,
+        createdAt: moment(project.startsInDays + index),
+      });
+    });
+  }
+
+  // Personal to-dos, sitting outside any project.
+  for (const [index, personal] of PERSONAL_TASKS.entries()) {
+    taskRows.push({
+      projectId: null,
+      title: personal.title,
+      status: index === 0 ? "in_progress" : "todo",
+      priority: "low",
+      assigneeUserId: userId(personal.assigneeEmail),
+      createdByUserId: userId(personal.assigneeEmail),
+      // Half of these have no deadline at all -- the "No deadline" bucket.
+      dueDate: index % 2 === 0 ? day(randomInt(2, 14)) : null,
+      position: index,
+      createdAt: moment(-randomInt(3, 20)),
+    });
+  }
+
+  const insertedTasks = await scope.insert(tasks, taskRows);
+  console.log(`Created ${insertedTasks.length} tasks`);
+
+  // --- Activity ----------------------------------------------------------
+  // One event per project creation and per task that has actually moved. This
+  // is the spine Phase 2 channels attach to, so it is populated from day one.
+  const events: Array<Omit<NewActivityEvent, "organizationId">> = [];
+
+  for (const project of PROJECTS) {
+    const row = projectByKey.get(project.key)!;
+    events.push({
+      actorUserId: userId(project.ownerEmail),
+      verb: "project.created",
+      subjectType: "project",
+      subjectId: row.id,
+      projectId: row.id,
+      metadata: { name: project.name, key: project.key },
+      createdAt: row.createdAt,
+    });
+  }
+
+  for (const task of insertedTasks) {
+    if (!task.assigneeUserId) continue;
+
+    events.push({
+      actorUserId: task.createdByUserId,
+      verb: "task.assigned",
+      subjectType: "task",
+      subjectId: task.id,
+      projectId: task.projectId,
+      taskId: task.id,
+      metadata: { assigneeUserId: task.assigneeUserId },
+      createdAt: task.createdAt,
+    });
+
+    if (task.status === "done" && task.completedAt) {
+      events.push({
+        actorUserId: task.assigneeUserId,
+        verb: "task.completed",
+        subjectType: "task",
+        subjectId: task.id,
+        projectId: task.projectId,
+        taskId: task.id,
+        metadata: {},
+        createdAt: task.completedAt,
+      });
+    }
+
+    if (task.status === "blocked" && task.blockedAt) {
+      events.push({
+        actorUserId: task.assigneeUserId,
+        verb: "task.blocked",
+        subjectType: "task",
+        subjectId: task.id,
+        projectId: task.projectId,
+        taskId: task.id,
+        metadata: { reason: task.blockedReason },
+        createdAt: task.blockedAt,
+      });
+    }
+  }
+
+  await scope.insert(activityEvents, events);
+  console.log(`Created ${events.length} activity events`);
+
+  await report(scope, insertedTasks);
+}
+
+/**
+ * Where a task sits depends on the project it lives in and how far down the
+ * list it is: early work is finished, the middle is moving, the tail has not
+ * started. That is what makes the lists look like a real workload rather than a
+ * random status shuffle.
+ */
+function planTask(
+  project: (typeof PROJECTS)[number],
+  progress: number,
+  candidates: string[],
+  index: number,
+): {
+  status: NewTask["status"];
+  dueInDays: number | null;
+  assigneeEmail: string | null;
+} {
+  const assignee = candidates[index % candidates.length]!;
+
+  if (project.status === "completed") {
+    return { status: "done", dueInDays: -randomInt(28, 60), assigneeEmail: assignee };
+  }
+
+  if (project.status === "planning") {
+    // Nothing has started, and the first item is deliberately unassigned so the
+    // admin coordination queue has an "unassigned" case to show.
+    return {
+      status: "todo",
+      dueInDays: index === 0 ? null : randomInt(10, 70),
+      assigneeEmail: index === 0 ? null : assignee,
+    };
+  }
+
+  if (project.status === "on_hold") {
+    return {
+      status: index === 0 ? "blocked" : "todo",
+      dueInDays: null,
+      assigneeEmail: assignee,
+    };
+  }
+
+  // Active projects.
+  if (progress < 0.4) {
+    return { status: "done", dueInDays: -randomInt(3, 30), assigneeEmail: assignee };
+  }
+
+  if (progress < 0.6) {
+    // The overdue band: in flight and already past its date.
+    return { status: "in_progress", dueInDays: -randomInt(1, 6), assigneeEmail: assignee };
+  }
+
+  if (progress < 0.75) {
+    return { status: "blocked", dueInDays: randomInt(-4, 8), assigneeEmail: assignee };
+  }
+
+  if (progress < 0.85) {
+    return { status: "in_progress", dueInDays: randomInt(1, 5), assigneeEmail: assignee };
+  }
+
+  // The tail: not started. Some are dropped, some are waiting for an owner,
+  // some have no date yet -- each one is a state a screen has to handle.
+  return {
+    status: index % 3 === 0 ? "cancelled" : "todo",
+    dueInDays: index % 5 === 0 ? null : randomInt(2, 40),
+    assigneeEmail: index % 2 === 1 ? null : assignee,
+  };
+}
+
+/** Task priority tracks its project's, easing off toward the tail of the list. */
+function planPriority(
+  projectPriority: (typeof PROJECTS)[number]["priority"],
+  progress: number,
+): NewTask["priority"] {
+  if (projectPriority === "urgent" && progress > 0.5) return pick(["urgent", "high"] as const);
+  if (projectPriority === "high") return pick(["high", "medium", "medium"] as const);
+  if (projectPriority === "low") return pick(["low", "low", "medium"] as const);
+  return pick(["medium", "medium", "high", "low"] as const);
+}
+
+/**
+ * Print what actually landed. The spread is the point of this seed, so it is
+ * asserted rather than hoped for: a change that quietly flattens the data into
+ * sixty identical open tasks fails here instead of on screen.
+ */
+async function report(
+  scope: ReturnType<typeof withOrg>,
+  rows: Array<{
+    status: string;
+    dueDate: string | null;
+    assigneeUserId: string | null;
+  }>,
+) {
+  const today = day(0);
+  const counts = rows.reduce<Record<string, number>>((acc, task) => {
+    acc[task.status] = (acc[task.status] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const overdue = rows.filter(
+    (task) =>
+      task.dueDate !== null &&
+      task.dueDate < today &&
+      task.status !== "done" &&
+      task.status !== "cancelled",
+  ).length;
+  const unassigned = rows.filter(
+    (task) => task.assigneeUserId === null && task.status !== "done",
+  ).length;
+  const undated = rows.filter((task) => task.dueDate === null).length;
+
+  console.log("\nTask spread");
+  for (const [status, count] of Object.entries(counts).sort()) {
+    console.log(`  ${status.padEnd(12)} ${count}`);
+  }
+  console.log(`  ${"overdue".padEnd(12)} ${overdue}`);
+  console.log(`  ${"unassigned".padEnd(12)} ${unassigned}`);
+  console.log(`  ${"no deadline".padEnd(12)} ${undated}`);
+
+  const expectations: Array<[string, boolean]> = [
+    ["at least 50 tasks", rows.length >= 50],
+    ["some overdue work", overdue >= 4],
+    ["some blocked work", (counts.blocked ?? 0) >= 3],
+    ["some unassigned work", unassigned >= 2],
+    ["some undated work", undated >= 4],
+    [
+      "every status present",
+      ["todo", "in_progress", "blocked", "done", "cancelled"].every((s) => counts[s]),
+    ],
+  ];
+
+  const failures = expectations.filter(([, ok]) => !ok).map(([label]) => label);
+  if (failures.length > 0) {
+    throw new Error(`Seed data is not realistic enough -- missing: ${failures.join(", ")}`);
+  }
+
+  console.log(`\nSeeded organization ${scope.organizationId}`);
+  console.log(`Sign in as any address in src/db/seed-data.ts, password: ${DEMO_PASSWORD}`);
+  console.log("  owner   amina.benali@brandshift.test");
+  console.log("  admin   tom.decker@brandshift.test");
+  console.log("  manager elena.rossi@brandshift.test");
+  console.log("  member  lukas.weber@brandshift.test");
+}
+
+main()
+  .then(closeDb)
+  .catch(async (error) => {
+    console.error("\nSeed failed:", error);
+    await closeDb();
+    process.exit(1);
+  });

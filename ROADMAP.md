@@ -16,19 +16,30 @@ milestone before starting the next.
 - [x] `CLAUDE.md`, `DECISIONS.md`, `ROADMAP.md`, `README.md`
 - [x] Private GitHub repo `abdelterminal/brandshift-os`, pushed
 
-### M1 - Data foundation
+### M1 - Data foundation  [DONE]
 
-- [ ] `docker-compose.yml`: `postgres:17-alpine` (named volume + healthcheck) and `app`
+- [x] `docker-compose.yml`: `postgres:17-alpine` (named volume + healthcheck) and `app`
       (Next standalone, depends on healthy db). Postgres not exposed beyond loopback.
-- [ ] `.env.example`: `DATABASE_URL`, `JWT_SECRET`, `SESSION_TTL`
-- [ ] `drizzle.config.ts` + `db:generate` / `db:migrate` / `db:seed` scripts
-- [ ] Schema in `src/db/schema/` -- every tenant-owned table carries `organization_id`:
+      Host port is `DB_PORT`, so a machine already running Postgres on 5432 can move it.
+- [x] `.env.example`: `DATABASE_URL`, `JWT_SECRET`, `SESSION_TTL`, validated by `src/lib/env.ts`
+- [x] `drizzle.config.ts` + `db:generate` / `db:migrate` / `db:seed` scripts
+- [x] Schema in `src/db/schema/` -- every tenant-owned table carries `organization_id`:
       `organizations`, `users`, `memberships`, `sessions`, `departments`,
       `projects`, `project_members`, `tasks`, `activity_events`
-- [ ] `src/db/tenancy.ts` -- `withOrg()`, the only sanctioned tenant-table query path
-- [ ] `src/db/seed.ts` -- 1 org, ~12 users across 4 departments and all 4 roles, ~8 projects,
-      ~60 tasks with realistic status/priority/due-date spread including overdue and blocked
-- [ ] `/api/health` returning db readiness
+- [x] `src/db/tenancy.ts` -- `withOrg()`, the only sanctioned tenant-table query path.
+      `src/db/tenancy.test.ts` fails the build on a tenant table touched from outside
+      `src/db`, and on a new `organization_id` table that is neither scoped nor exempted.
+- [x] `src/db/seed.ts` -- 1 org, 12 users across 4 departments and all 4 roles, 8 projects,
+      60 tasks; the spread (overdue, blocked, unassigned, undated, every status) is asserted
+      at the end of the run rather than left to chance
+- [x] `/api/health` returning db readiness -- 200 / 503, no driver detail in the response
+
+Not in M1, decided while building it:
+- `src/lib/password.ts` uses Node's built-in scrypt. bcrypt and argon2 are native modules, and
+  this repo is built on Windows and shipped on Alpine; a prebuilt binary missing on one of them
+  is a recurring build failure for no security gain.
+- `sessions` carries `organization_id` but is **not** tenant-scoped: it is looked up by token
+  digest before any org is known. The exemption is recorded in `ORG_COLUMN_EXCEPTIONS`.
 
 ### M2 - Design system
 
