@@ -105,8 +105,13 @@ function Button({
       {loading ? (
         <>
           <Spinner className={cn(size === "lg" ? "size-4.5" : "size-4")} />
-          {/* The label stays in the flow so the button keeps its width. */}
-          {iconOnly ? null : <span className="opacity-70">{children}</span>}
+          {/*
+            The label stays in the flow so the button keeps its width, and at
+            full opacity: dimming it to 70% put white-on-red at roughly 2.5:1.
+            The spinner is what says "working"; the label does not need to fade
+            to agree with it.
+          */}
+          {iconOnly ? null : children}
           <span className="sr-only">Loading</span>
         </>
       ) : (

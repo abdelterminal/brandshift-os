@@ -8,7 +8,8 @@ RUN npm ci
 
 FROM node:24-alpine AS builder
 WORKDIR /app
-ENV NEXT_TELEMETRY_DISABLED=1
+# Asks next.config.ts for the standalone bundle this image is built around.
+ENV NEXT_TELEMETRY_DISABLED=1 NEXT_OUTPUT=standalone
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

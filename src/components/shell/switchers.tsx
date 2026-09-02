@@ -13,6 +13,7 @@ import { PersonAvatar } from "../ui/avatar";
 import {
   Menu,
   MenuContent,
+  MenuGroup,
   MenuGroupLabel,
   MenuItem,
   MenuLinkItem,
@@ -55,7 +56,10 @@ export function LocaleSwitcher() {
         <span className="uppercase">{locale}</span>
       </MenuTrigger>
       <MenuContent>
-        <MenuGroupLabel>{t("label")}</MenuGroupLabel>
+        {/* The label lives inside the radio group, not beside it: Base UI's
+            group parts read a context that only Menu.Group and
+            Menu.RadioGroup provide, and outside one they throw -- which took
+            down the whole page the moment this menu was opened. */}
         <MenuRadioGroup
           value={locale}
           onValueChange={(next) => {
@@ -67,6 +71,7 @@ export function LocaleSwitcher() {
             });
           }}
         >
+          <MenuGroupLabel>{t("label")}</MenuGroupLabel>
           {routing.locales.map((value) => (
             <MenuRadioItem key={value} value={value}>
               {t(value)}
@@ -104,28 +109,33 @@ export function OrgSwitcher({
         <ChevronsUpDown aria-hidden className="text-fg-subtle size-3.5 shrink-0" />
       </MenuTrigger>
       <MenuContent align="start">
-        <MenuGroupLabel>{t("label")}</MenuGroupLabel>
-        {organizations.map((org) => (
-          <MenuItem
-            key={org.id}
-            className={org.id === currentId ? "font-medium" : undefined}
-            onClick={() => {
-              if (org.id === currentId) return;
-              // Changing tenant is not a security boundary -- the membership
-              // already decided what is visible -- so it needs no password.
-              startTransition(async () => {
-                await switchOrganization(org.id);
-                router.refresh();
-              });
-            }}
-          >
-            <Building2 aria-hidden />
-            <span className="truncate">{org.name}</span>
-            {org.id === currentId ? (
-              <span className="text-caption text-fg-subtle ml-auto">{t("current")}</span>
-            ) : null}
-          </MenuItem>
-        ))}
+        {/* The label has to sit inside a Menu.Group: Base UI's group parts read
+            a context only Menu.Group and Menu.RadioGroup provide, and throw
+            without it -- which took the whole page down when this was opened. */}
+        <MenuGroup>
+          <MenuGroupLabel>{t("label")}</MenuGroupLabel>
+          {organizations.map((org) => (
+            <MenuItem
+              key={org.id}
+              className={org.id === currentId ? "font-medium" : undefined}
+              onClick={() => {
+                if (org.id === currentId) return;
+                // Changing tenant is not a security boundary -- the membership
+                // already decided what is visible -- so it needs no password.
+                startTransition(async () => {
+                  await switchOrganization(org.id);
+                  router.refresh();
+                });
+              }}
+            >
+              <Building2 aria-hidden />
+              <span className="truncate">{org.name}</span>
+              {org.id === currentId ? (
+                <span className="text-caption text-fg-subtle ml-auto">{t("current")}</span>
+              ) : null}
+            </MenuItem>
+          ))}
+        </MenuGroup>
       </MenuContent>
     </Menu>
   );
@@ -156,7 +166,15 @@ export function AccountMenu({
     <Menu>
       <MenuTrigger
         aria-label={t("menu")}
-        className={cn("rounded-pill", focusRing, transition, "hover:opacity-85")}
+        // A ring, not `hover:opacity-85`. Dimming the trigger dimmed the
+        // initials inside it to 4.19:1 -- fading a control that contains text
+        // is a contrast failure wearing a hover state.
+        className={cn(
+          "rounded-pill ring-offset-2 ring-offset-surface-base",
+          "hover:ring-border-hover hover:ring-2",
+          focusRing,
+          transition,
+        )}
       >
         <PersonAvatar name={name} src={avatarUrl} size="md" />
       </MenuTrigger>

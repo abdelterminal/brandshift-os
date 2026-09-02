@@ -36,10 +36,11 @@
   --neutral-200: #e6e3e1; /* L 0.917 */
   --neutral-300: #d7d2d1; /* L 0.868 */
   --neutral-400: #aeaaa8; /* L 0.740 */
-  --neutral-450: #958f8d; /* L 0.655 -- solved: 3:1 on light surfaces */
+  --neutral-450: #958f8d; /* L 0.655 -- 3:1 on light, and dark fg-subtle */
   --neutral-500: #8d8886; /* L 0.630 */
-  --neutral-550: #77716f; /* L 0.555 -- solved: 4.5:1 on light surfaces */
-  --neutral-600: #706a68; /* L 0.530 -- solved: 4.5:1 light text, 3:1 dark border */
+  --neutral-550: #726c6a; /* L 0.537 -- solved: 4.5:1 on EVERY light surface */
+  --neutral-600: #625c5a; /* L 0.480 -- light fg-muted, clear of fg-subtle */
+  --neutral-650: #706a68; /* L 0.530 -- 3:1 as a dark control border */
   --neutral-700: #56504e; /* L 0.436 */
   --neutral-800: #3d3736; /* L 0.343 */
   --neutral-825: #35302e; /* L 0.312 */
@@ -55,7 +56,7 @@
   --red-100: #fedbd5;
   --red-200: #febbb0;
   --red-300: #fd8c7c;
-  --red-400: #f85746;
+  --red-400: #ff5d4c; /* L 0.690 -- 4.5:1 on the lightest dark surface */
   --red-500: #fd0000; /* THE brand red */
   --red-550: #e61810;
   --red-600: #cb0c06;
@@ -120,8 +121,11 @@
   --surface-raised: var(--neutral-0);
   --surface-overlay: var(--neutral-0);
   --surface-inset: var(--neutral-50);
-  --surface-hover: var(--neutral-100);
-  --surface-active: var(--neutral-200);
+  /* One step lighter than they were. Text sits on these -- a row keeps its
+     labels while you hover and press it -- and at neutral-100/200 the muted
+     and subtle levels dropped under AA the moment the pointer arrived. */
+  --surface-hover: var(--neutral-50);
+  --surface-active: var(--neutral-100);
 
   /* Text */
   --fg-default: var(--neutral-1000);
@@ -222,12 +226,14 @@
 
     --fg-default: var(--neutral-50);
     --fg-muted: var(--neutral-400);
-    --fg-subtle: var(--neutral-500);
+    /* 450, not 500: on --surface-overlay (the lightest dark surface) 500 came
+       to 4.10:1. */
+    --fg-subtle: var(--neutral-450);
     --fg-on-accent: var(--neutral-0);
 
     --border: var(--neutral-825);
     --border-hover: var(--neutral-700);
-    --border-control: var(--neutral-600);
+    --border-control: var(--neutral-650);
 
     --brand: var(--red-500);
     --accent: var(--red-600);
@@ -305,12 +311,13 @@
 
   --fg-default: var(--neutral-50);
   --fg-muted: var(--neutral-400);
-  --fg-subtle: var(--neutral-500);
+  /* 450, not 500 -- see the note in the media-query block. */
+  --fg-subtle: var(--neutral-450);
   --fg-on-accent: var(--neutral-0);
 
   --border: var(--neutral-825);
   --border-hover: var(--neutral-700);
-  --border-control: var(--neutral-600);
+  --border-control: var(--neutral-650);
 
   --brand: var(--red-500);
   --accent: var(--red-600);

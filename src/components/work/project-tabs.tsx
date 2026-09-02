@@ -22,6 +22,7 @@ import { STATUS_TONE, TaskList } from "./task-list";
  * actually arrive with.
  */
 export function ProjectTabs({
+  defaultTab = "overview",
   description,
   priority,
   buckets,
@@ -29,6 +30,8 @@ export function ProjectTabs({
   members,
   activity,
 }: {
+  /** Which tab opens first. `tasks` when the URL names a task. */
+  defaultTab?: "overview" | "tasks" | "team" | "activity";
   description: string | null;
   priority: string;
   buckets: Record<TaskBucket, TaskRow[]>;
@@ -39,7 +42,7 @@ export function ProjectTabs({
   const t = useTranslations("Work");
 
   return (
-    <Tabs defaultValue="overview">
+    <Tabs defaultValue={defaultTab}>
       <TabsList>
         <TabsTab value="overview">{t("overview")}</TabsTab>
         <TabsTab value="tasks">{t("tasks")}</TabsTab>

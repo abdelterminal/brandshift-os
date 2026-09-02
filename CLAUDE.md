@@ -32,7 +32,8 @@ npm run build            # production build (standalone output)
 npm run lint             # eslint
 npx tsc --noEmit         # type check
 npm run test             # vitest -- unit, tenancy guard, contrast, message parity
-                         # e2e: not set up yet, see KNOWN-GAPS.md
+npm run test:e2e         # playwright -- auth, tasks, wizard, responsive, axe
+npm run test:e2e:ui      # the same, with the Playwright UI
 npm run db:generate      # drizzle-kit generate  (after editing src/db/schema)
 npm run db:migrate       # apply migrations
 npm run db:seed          # load demo data

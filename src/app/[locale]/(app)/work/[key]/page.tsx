@@ -34,9 +34,13 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/work/[ke
   return { title: project?.name ?? key };
 }
 
-export default async function ProjectPage({ params }: PageProps<"/[locale]/work/[key]">) {
+export default async function ProjectPage({
+  params,
+  searchParams,
+}: PageProps<"/[locale]/work/[key]">) {
   const session = await requireUser();
   const { key } = await params;
+  const { task } = await searchParams;
 
   const project = await getProjectByKey(session.actor, key);
   if (!project) notFound();
@@ -117,6 +121,14 @@ export default async function ProjectPage({ params }: PageProps<"/[locale]/work/
 
       <div className="mt-8">
         <ProjectTabs
+          /*
+           * A link to a task has to land on the task. Without this the drawer
+           * is mounted inside the Tasks panel, which an inactive tab does not
+           * render -- so `?task=<id>` opened Overview and showed nothing, and
+           * the shareable link was only shareable with someone already looking
+           * at the right tab.
+           */
+          defaultTab={typeof task === "string" && task ? "tasks" : "overview"}
           description={project.description}
           priority={priorities(project.priority)}
           buckets={buckets}

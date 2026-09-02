@@ -25,21 +25,36 @@ const THEMES: Theme[] = ["light", "dark"];
 /** [foreground, background, minimum ratio] */
 type Pair = [string, string, number];
 
-const TEXT_ON_SURFACE: Pair[] = [
-  ["--fg-default", "--surface-base", 4.5],
-  ["--fg-default", "--surface-raised", 4.5],
-  ["--fg-default", "--surface-sunken", 4.5],
-  ["--fg-default", "--surface-overlay", 4.5],
-  ["--fg-default", "--surface-inset", 4.5],
-  ["--fg-muted", "--surface-base", 4.5],
-  ["--fg-muted", "--surface-raised", 4.5],
-  ["--fg-muted", "--surface-sunken", 4.5],
-  ["--fg-muted", "--surface-overlay", 4.5],
-  ["--fg-subtle", "--surface-base", 4.5],
-  ["--fg-subtle", "--surface-raised", 4.5],
-  ["--accent-text", "--surface-base", 4.5],
-  ["--accent-text", "--surface-raised", 4.5],
+/**
+ * Every text token on every surface token. The whole cross product, not a
+ * hand-picked list.
+ *
+ * The hand-picked version checked `--fg-subtle` against `base` and `raised`
+ * and stopped there, so nobody noticed it fell to 4.20:1 the moment a row was
+ * hovered, or 3.76:1 while one was pressed. Nine combinations were failing and
+ * this file said the palette was AA. axe found them in the browser instead,
+ * which is exactly the wrong place to find them.
+ *
+ * Generating the pairs means a new surface or a new text level is covered the
+ * day it is added, without anyone remembering to extend a list.
+ */
+const TEXT_TOKENS = ["--fg-default", "--fg-muted", "--fg-subtle", "--accent-text"];
+
+const SURFACE_TOKENS = [
+  "--surface-base",
+  "--surface-raised",
+  "--surface-sunken",
+  "--surface-overlay",
+  "--surface-inset",
+  // Interaction surfaces carry text too: a row keeps its labels while you
+  // hover and press it.
+  "--surface-hover",
+  "--surface-active",
 ];
+
+const TEXT_ON_SURFACE: Pair[] = TEXT_TOKENS.flatMap((text) =>
+  SURFACE_TOKENS.map((surface) => [text, surface, 4.5] as Pair),
+);
 
 /**
  * Filled controls that carry a label. Status `-solid` tokens are deliberately

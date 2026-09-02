@@ -2,9 +2,17 @@ import createNextIntlPlugin from "next-intl/plugin";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Self-hosted on Docker Compose (see DECISIONS.md), so the build emits a
-  // standalone server bundle rather than targeting a serverless platform.
-  output: "standalone",
+  /**
+   * Standalone output is for the Docker image and nothing else, so the
+   * Dockerfile asks for it by name.
+   *
+   * It used to be unconditional, which meant `next start` refused to run
+   * locally -- Next will not serve a standalone build that way -- and the
+   * end-to-end suite could not start a production server to test against.
+   * Opt-in keeps both: the image gets its bundle, and a local production build
+   * is something you can actually run.
+   */
+  output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   serverExternalPackages: ["pg"],
   experimental: {
     // Enables `unauthorized()` / `forbidden()` and their `unauthorized.tsx` /

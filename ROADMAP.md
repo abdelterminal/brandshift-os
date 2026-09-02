@@ -238,12 +238,12 @@ Ordered, not yet scheduled.
 ```bash
 npm run lint && npx tsc --noEmit
 npm run test
+npm run test:e2e
 docker compose up -d --build && curl localhost:3000/api/health
 ```
 
-Manual: both themes - both locales - 320/375/768/1024/1440px - keyboard-only pass - axe clean.
+`test:e2e` covers both locales, 320/375/768/1024/1440px, and axe on every route -- so those are
+no longer a manual pass. What is still manual: keyboard-only navigation, and looking at the thing.
 Screenshot the real running app; do not report a screen done from the code alone.
 
-Three parts of that gate are not automated yet -- e2e, sub-654px widths, and axe. They are
-tracked in `KNOWN-GAPS.md` rather than quietly skipped. Say so in the milestone report when a
-gate item was not run.
+A new screen needs its route added to `e2e/routes.ts`, or the two sweeps will not know it exists.

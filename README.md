@@ -52,13 +52,17 @@ docker compose up -d --build
 
 ```bash
 npm run lint && npm run typecheck
-npm run test              # includes the tenancy guard and the contrast check
+npm run test              # unit: tenancy guard, colour contrast, message parity
+npm run test:e2e          # end to end: auth, tasks, the wizard, responsive, axe
 curl -s localhost:3000/api/health
 ```
 
-There are no end-to-end tests yet, and Playwright is not installed. See
-[KNOWN-GAPS.md](KNOWN-GAPS.md) for that and the two other things this codebase does not currently
-verify.
+The end-to-end suite builds the app, starts it on port 3100, and runs against its own
+`brandshift_test` database, rebuilt from the seed each run -- so running it never touches the
+data you were working with. It needs Postgres up (`docker compose up -d db`) and a browser the
+first time (`npx playwright install chromium`).
+
+See [KNOWN-GAPS.md](KNOWN-GAPS.md) for what is deliberately not covered.
 
 `/api/health` answers 200 when the database is reachable and 503 when it is not; Compose uses it
 as the app container's healthcheck.
