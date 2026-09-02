@@ -6,6 +6,7 @@ import { useTransition } from "react";
 
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
+import { signOut, switchOrganization } from "@/lib/auth/actions";
 import { cn } from "@/lib/utils";
 
 import { PersonAvatar } from "../ui/avatar";
@@ -91,6 +92,8 @@ export function OrgSwitcher({
   currentId: string;
 }) {
   const t = useTranslations("Org");
+  const router = useRouter();
+  const [, startTransition] = useTransition();
   const current = organizations.find((org) => org.id === currentId);
 
   return (
@@ -103,7 +106,19 @@ export function OrgSwitcher({
       <MenuContent align="start">
         <MenuGroupLabel>{t("label")}</MenuGroupLabel>
         {organizations.map((org) => (
-          <MenuItem key={org.id} className={org.id === currentId ? "font-medium" : undefined}>
+          <MenuItem
+            key={org.id}
+            className={org.id === currentId ? "font-medium" : undefined}
+            onClick={() => {
+              if (org.id === currentId) return;
+              // Changing tenant is not a security boundary -- the membership
+              // already decided what is visible -- so it needs no password.
+              startTransition(async () => {
+                await switchOrganization(org.id);
+                router.refresh();
+              });
+            }}
+          >
             <Building2 aria-hidden />
             <span className="truncate">{org.name}</span>
             {org.id === currentId ? (
@@ -162,8 +177,9 @@ export function AccountMenu({
           {t("settings")}
         </MenuLinkItem>
         <MenuSeparator />
-        {/* Wired up in M4, along with the session it ends. */}
-        <MenuItem disabled>
+        {/* Revokes the session row as well as clearing the cookie, so the
+            token cannot be replayed even if it was captured. */}
+        <MenuItem onClick={() => void signOut()}>
           <LogOut aria-hidden />
           {t("signOut")}
         </MenuItem>

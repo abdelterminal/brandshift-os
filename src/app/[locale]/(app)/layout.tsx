@@ -10,7 +10,7 @@ import { ToastProvider, ToastViewport } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { bottomNavFor, overflowFor, railFor } from "@/lib/navigation";
 import { paletteIndex } from "@/lib/palette";
-import { getCurrentUser } from "@/lib/session";
+import { requireUser } from "@/lib/auth/guards";
 
 /**
  * Everything inside the shell is per-person: the rail comes from your role,
@@ -33,7 +33,9 @@ export const dynamic = "force-dynamic";
 export default async function AppLayout({ children, panel, params }: LayoutProps<"/[locale]">) {
   await params;
 
-  const [session, t] = await Promise.all([getCurrentUser(), getTranslations("Shell")]);
+  // Full session check on every render: digest, revocation, expiry and
+  // password-change invalidation. The middleware only checked the signature.
+  const [session, t] = await Promise.all([requireUser(), getTranslations("Shell")]);
   const { actor, user, membership, organization, organizations } = session;
 
   const entries = await paletteIndex(actor);

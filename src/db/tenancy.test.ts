@@ -71,12 +71,28 @@ describe("no unscoped access to tenant tables", () => {
    */
   const ALLOWED_PREFIX = join("src", "db") + sep;
 
-  const tableIdentifiers = Object.keys(TENANT_TABLES);
-  // `db.select().from(tasks)`, `db.insert(tasks)`, `.update(projects)`, ...
-  const pattern = new RegExp(
-    String.raw`\.(?:from|insert|update|delete)\(\s*(${tableIdentifiers.join("|")})\s*[,)]`,
-    "g",
-  );
+  const tables = Object.keys(TENANT_TABLES).join("|");
+
+  /**
+   * Two patterns, because one was not precise enough.
+   *
+   * `.from(tasks)` only ever appears in a raw select chain -- the scoped
+   * helpers take the table as an argument and build the `from` themselves --
+   * so any occurrence outside `src/db` is a violation.
+   *
+   * For insert/update/delete the receiver has to be checked. `db.insert(x)`
+   * and `tx.insert(x)` are violations, but `withOrg(id).insert(x)` and
+   * `withOrg(id, tx).insert(x)` are the sanctioned path. Matching the bare
+   * method name flagged the correct call alongside the wrong one, which is the
+   * kind of false positive that gets a guard deleted rather than fixed.
+   */
+  const patterns = [
+    new RegExp(String.raw`\.from\(\s*(?:${tables})\s*[,)]`, "g"),
+    new RegExp(
+      String.raw`\b(?:db|tx|executor)\s*\.\s*(?:insert|update|delete)\(\s*(?:${tables})\s*[,)]`,
+      "g",
+    ),
+  ];
 
   it("finds none outside src/db", () => {
     const offenders: string[] = [];
@@ -86,9 +102,11 @@ describe("no unscoped access to tenant tables", () => {
       if (relativePath.startsWith(ALLOWED_PREFIX)) continue;
 
       const contents = readFileSync(file, "utf8");
-      for (const match of contents.matchAll(pattern)) {
-        const line = contents.slice(0, match.index).split("\n").length;
-        offenders.push(`${relativePath}:${line} -> ${match[0].trim()}`);
+      for (const pattern of patterns) {
+        for (const match of contents.matchAll(pattern)) {
+          const line = contents.slice(0, match.index).split("\n").length;
+          offenders.push(`${relativePath}:${line} -> ${match[0].trim()}`);
+        }
       }
     }
 

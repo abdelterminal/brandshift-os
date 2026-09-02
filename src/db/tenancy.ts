@@ -11,6 +11,12 @@ import { tasks } from "./schema/tasks";
 import { db, type Database } from "./client";
 
 /**
+ * Anything that can run a query: the pool, or a transaction opened on it.
+ * Derived from `Database` so the two cannot drift apart.
+ */
+export type Executor = Database | Parameters<Parameters<Database["transaction"]>[0]>[0];
+
+/**
  * The one sanctioned path to a tenant-owned table.
  *
  * Auth here is custom, so Postgres row-level security is not in play (see
@@ -71,7 +77,7 @@ export const ORG_COLUMN_EXCEPTIONS: Readonly<Record<string, string>> = {
  * in a feature module so the exception stays in the file that owns tenancy.
  * Everything downstream of it goes through `withOrg()`.
  */
-export async function findMembershipsForUser(userId: string, executor: Database = db) {
+export async function findMembershipsForUser(userId: string, executor: Executor = db) {
   if (!UUID_RE.test(userId)) {
     throw new Error("findMembershipsForUser() needs a verified user id.");
   }
@@ -116,7 +122,7 @@ export type OrgScope = ReturnType<typeof withOrg>;
  * Pass a transaction as `executor` to keep a multi-statement Server Action
  * inside the same scope: `db.transaction((tx) => withOrg(orgId, tx). ...)`.
  */
-export function withOrg(organizationId: string, executor: Database = db) {
+export function withOrg(organizationId: string, executor: Executor = db) {
   const orgId = assertOrganizationId(organizationId);
 
   /** `organization_id = $orgId AND (...extra)`, the predicate every query gets. */
@@ -176,9 +182,12 @@ export function withOrg(organizationId: string, executor: Database = db) {
      */
     insert<T extends TenantTable>(
       table: T,
+      // `$inferInsert` rather than `PgInsertValue<T>`: the latter does not
+      // resolve per-table when `T` is generic, so every caller was offered a
+      // shape with none of its own columns on it.
       values:
-        | Omit<PgInsertValue<T>, "organizationId">
-        | Array<Omit<PgInsertValue<T>, "organizationId">>,
+        | Omit<T["$inferInsert"], "organizationId">
+        | Array<Omit<T["$inferInsert"], "organizationId">>,
     ) {
       const rows = (Array.isArray(values) ? values : [values]).map((row) => ({
         ...row,

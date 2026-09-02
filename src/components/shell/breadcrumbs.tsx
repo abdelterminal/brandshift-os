@@ -20,8 +20,8 @@ import { focusRing, transition } from "../ui/styles";
  * always being computed.
  */
 
-/** Path segments that have a name in the `Nav` catalogue. */
-const NAMED = new Set([
+/** Path segments named in the `Nav` catalogue. */
+const NAV_SEGMENTS = new Set([
   "today",
   "work",
   "people",
@@ -32,8 +32,16 @@ const NAMED = new Set([
   "myWork",
 ]);
 
+/**
+ * Segments named elsewhere. Profile and Settings live in the avatar menu, so
+ * their labels live in `Account` rather than `Nav` -- without this they showed
+ * as the raw path segment, lowercase.
+ */
+const ACCOUNT_SEGMENTS = new Set(["profile", "settings"]);
+
 export function Breadcrumbs({ trailingLabel }: { trailingLabel?: string }) {
   const t = useTranslations("Nav");
+  const account = useTranslations("Account");
   const shell = useTranslations("Shell");
   const pathname = usePathname();
 
@@ -43,7 +51,11 @@ export function Breadcrumbs({ trailingLabel }: { trailingLabel?: string }) {
   const crumbs = segments.map((segment, index) => ({
     segment,
     href: `/${segments.slice(0, index + 1).join("/")}`,
-    label: NAMED.has(segment) ? t(segment) : segment,
+    label: NAV_SEGMENTS.has(segment)
+      ? t(segment)
+      : ACCOUNT_SEGMENTS.has(segment)
+        ? account(segment as "profile" | "settings")
+        : segment,
     last: index === segments.length - 1,
   }));
 

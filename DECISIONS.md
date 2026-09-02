@@ -40,6 +40,33 @@ Two findings from the old `ARCHITECTURE.md` are fixed by construction here rathe
 2. **Tasks embedded in the project document** was flagged as a document-growth and write-contention
    risk. `tasks` is a first-class table here.
 
+## Added during M4 (authentication)
+
+**The `sessions` digest check runs in the page, not the middleware.**
+The roadmap said "digest check in middleware". Doing that literally means a database round trip
+-- and a second connection pool -- in front of every request, including static assets, which is a
+bad trade for a self-hosted app. Instead the middleware verifies the JWT's signature and expiry
+(no database, no Node-only crypto) and uses that to route; `requireUser()` does the full check --
+digest, revocation, expiry, password-change invalidation -- and the `(app)` layout calls it on
+every render. A revoked session therefore still cannot see a single page. The middleware is a
+routing decision; the page is the security boundary. The only practical difference is one wasted
+redirect for a cookie that is signed but no longer live.
+
+**Only a digest of the token's `jti` is stored.** The cookie holds an HS256 JWT carrying a random
+32-byte `jti`; `sessions.token_digest` holds SHA-256 of it. A leaked database yields nothing
+replayable as a cookie. The signature proves we issued the token; the digest lookup proves the
+session is still live. Both are required, which is the whole reason the table exists rather than
+trusting the JWT alone.
+
+**Changing a password invalidates every other session without a sweep.** `getCurrentUser()`
+refuses any session row created before `users.password_changed_at`, so one column does the work of
+a bulk update. The device doing the change is re-issued, so nobody signs themselves out of the
+browser they are sitting in front of.
+
+**403 never costs you your session.** `unauthorized()` clears the cookie; `forbidden()` touches
+nothing. The old app signed people out on a permission error, which lost whatever they were in the
+middle of and taught them that clicking the wrong link is expensive.
+
 ## Deliberately not chosen
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the

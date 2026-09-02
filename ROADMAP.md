@@ -137,15 +137,43 @@ Bugs found while building it:
   HTML served to everyone, and it needed a database at build time, which the Docker image has no
   access to. The `(app)` segment is `force-dynamic`.
 
-### M4 - Auth, orgs, RBAC
+### M4 - Auth, orgs, RBAC  [DONE]
 
-- [ ] Login, logout, signup-with-org, password change
-- [ ] HttpOnly cookie JWT + `sessions` digest check in middleware
-- [ ] Session list with per-device revoke
-- [ ] `src/lib/authz.ts` -- `can(user, action, resource)`, used by both UI and Server Actions
-- [ ] 403 preserves the session; 401 clears it
-- [ ] Routine writes never prompt for a password; re-auth window for destructive actions only
-- [ ] Login page fixes the old accessibility bugs: real labels, named password-visibility toggle
+- [x] Login, logout, signup-with-org (organization + owner in one transaction), password change
+- [x] HttpOnly cookie JWT + `sessions` digest. **The digest check runs in the page, not the
+      middleware** -- see DECISIONS.md for why, and for what that does and does not change.
+- [x] Session list with per-device revoke, and "sign out everywhere else"
+- [x] `src/lib/authz.ts` -- `can(actor, action, resource)`, called by the rail and by the pages.
+      `/insights` enforces the same `insights.view` the rail hides it on.
+- [x] 403 preserves the session; 401 clears it (`forbidden.tsx` / `unauthorized.tsx`)
+- [x] Routine writes never prompt for a password. The 15-minute re-auth window guards device
+      revocation only; signing in counts as authenticating, so it rarely fires.
+- [x] Login page fixes the old accessibility bugs: real `<label for>`, a named
+      password-visibility `<button>` carrying `aria-pressed`, and errors as text in a live region
+
+Also done here:
+- Sign-in cannot be used to enumerate accounts: one message for both halves of the credential, and
+  a dummy hash verified when no user matches, so a missing email takes as long as a wrong password.
+- `?next=` is validated -- a path within the app, never an absolute or protocol-relative URL,
+  which is the classic open redirect on a sign-in link.
+- Rejected forms keep what was already typed, except the password.
+
+Bugs and violations found while building it:
+- **The tenancy guard caught two real violations** in the new auth actions: a raw
+  `.from(memberships)` and a raw `tx.insert(memberships)`. The first became
+  `findMembershipsForUser()`, the second `withOrg(orgId, tx).insert(...)` -- which needed
+  `withOrg()` to accept a transaction, so it now does.
+- **The guard itself was too blunt** and flagged the correct scoped call alongside the wrong one.
+  It now anchors insert/update/delete on the receiver, so `db.insert(x)` is a violation and
+  `withOrg(id).insert(x)` is not. Verified by planting a violation and watching it fail.
+- **`withOrg().insert()` typed its values as `PgInsertValue<T>`**, which does not resolve
+  per-table when `T` is generic -- every caller was offered a shape with none of its own columns.
+  It uses `T["$inferInsert"]` now.
+- **`relativeTime` had no reference point**, so the server rendered "2 seconds ago" and the client
+  re-rendered "3 seconds ago" -- an intermittent hydration mismatch. `now` is fixed per request in
+  `src/i18n/request.ts`.
+- Breadcrumbs showed `settings` and `profile` as raw lowercase segments; their labels live in the
+  `Account` namespace, not `Nav`.
 
 ### M5 - First vertical slice
 

@@ -19,5 +19,14 @@ export default getRequestConfig(async ({ requestLocale }) => {
     messages: (await import(`../../messages/${locale}.json`)).default,
     // Deadlines and "due today" are read in the organization's timezone.
     timeZone: "Europe/Paris",
+    /**
+     * The reference point for every relative time on the page.
+     *
+     * Without it each `relativeTime` call reaches for the current clock, so
+     * the server renders "2 seconds ago" and the client re-renders "3 seconds
+     * ago" -- a hydration mismatch that appears only sometimes, which is the
+     * worst kind. Fixing it per request makes both halves agree.
+     */
+    now: new Date(),
   };
 });
