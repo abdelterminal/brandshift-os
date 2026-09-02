@@ -52,10 +52,13 @@ docker compose up -d --build
 
 ```bash
 npm run lint && npm run typecheck
-npm run test              # includes the tenancy guard
-npx playwright test
+npm run test              # includes the tenancy guard and the contrast check
 curl -s localhost:3000/api/health
 ```
+
+There are no end-to-end tests yet, and Playwright is not installed. See
+[KNOWN-GAPS.md](KNOWN-GAPS.md) for that and the two other things this codebase does not currently
+verify.
 
 `/api/health` answers 200 when the database is reachable and 503 when it is not; Compose uses it
 as the app container's healthcheck.
@@ -119,6 +122,7 @@ explicitly exempted with a reason.
 ## Documentation
 
 - [CLAUDE.md](CLAUDE.md) -- stack, conventions, and the design rules that are not negotiable
+- [KNOWN-GAPS.md](KNOWN-GAPS.md) -- what is deliberately unfinished, unverified, or accepted
 - [DECISIONS.md](DECISIONS.md) -- what was decided, and why
 - [ROADMAP.md](ROADMAP.md) -- what is done and what is next
 

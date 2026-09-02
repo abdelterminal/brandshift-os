@@ -3,6 +3,8 @@
 Work top to bottom. Check items off as they land. Stop for confirmation at the end of each
 milestone before starting the next.
 
+Anything deferred rather than done goes in `KNOWN-GAPS.md`, in the same commit.
+
 ---
 
 ## Phase 1 -- Foundation + first vertical slice
@@ -236,9 +238,12 @@ Ordered, not yet scheduled.
 ```bash
 npm run lint && npx tsc --noEmit
 npm run test
-npx playwright test
 docker compose up -d --build && curl localhost:3000/api/health
 ```
 
 Manual: both themes - both locales - 320/375/768/1024/1440px - keyboard-only pass - axe clean.
 Screenshot the real running app; do not report a screen done from the code alone.
+
+Three parts of that gate are not automated yet -- e2e, sub-654px widths, and axe. They are
+tracked in `KNOWN-GAPS.md` rather than quietly skipped. Say so in the milestone report when a
+gate item was not run.

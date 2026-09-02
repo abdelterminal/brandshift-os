@@ -5,6 +5,10 @@ BrandShift's brand. The guiding constraint on every decision: **a user must neve
 
 Read `DECISIONS.md` before proposing anything that contradicts a locked choice.
 Read `ROADMAP.md` to find out what to work on next.
+Read `KNOWN-GAPS.md` for what is deliberately unfinished or unverified, and **update it in the
+same commit as the work** -- add a row when something is deferred, delete the row when it is
+closed. A caveat repeated at the end of every milestone and written down nowhere is a caveat
+nobody ever acts on.
 
 ## Stack
 
@@ -27,8 +31,8 @@ npm run dev              # dev server
 npm run build            # production build (standalone output)
 npm run lint             # eslint
 npx tsc --noEmit         # type check
-npm run test             # vitest
-npx playwright test      # e2e
+npm run test             # vitest -- unit, tenancy guard, contrast, message parity
+                         # e2e: not set up yet, see KNOWN-GAPS.md
 npm run db:generate      # drizzle-kit generate  (after editing src/db/schema)
 npm run db:migrate       # apply migrations
 npm run db:seed          # load demo data
