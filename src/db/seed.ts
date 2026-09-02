@@ -29,6 +29,7 @@ import {
 import {
   activityEvents,
   departments,
+  notifications,
   memberships,
   organizations,
   projectMembers,
@@ -108,7 +109,7 @@ async function main() {
   // tenant-owned but is seeded here, so it is cleared here too.
   await db.execute(sql`
     truncate table
-      ${activityEvents}, ${tasks}, ${projectMembers}, ${projects},
+      ${notifications}, ${activityEvents}, ${tasks}, ${projectMembers}, ${projects},
       ${sessions}, ${memberships}, ${departments}, ${users}, ${organizations}
     restart identity cascade
   `);
@@ -362,8 +363,55 @@ async function main() {
     }
   }
 
-  await scope.insert(activityEvents, events);
-  console.log(`Created ${events.length} activity events`);
+  const insertedEvents = await scope.insert(activityEvents, events);
+  console.log(`Created ${insertedEvents.length} activity events`);
+
+  // --- Notifications -----------------------------------------------------
+  // Fanned out with the same rules the app uses, so a fresh inbox looks like
+  // one the app produced rather than a list of rows nobody would have been
+  // sent. Anything older than a week is already read; the recent handful is
+  // not, which is what puts a plausible number on the rail.
+  const assigneeByTask = new Map(insertedTasks.map((task) => [task.id, task.assigneeUserId]));
+  const ownerByProject = new Map(
+    PROJECTS.map((project) => [
+      projectByKey.get(project.key)!.id,
+      userId(project.ownerEmail),
+    ]),
+  );
+
+  const oneWeekAgo = Date.now() - 7 * 86_400_000;
+  const notificationRows: Array<Omit<typeof notifications.$inferInsert, "organizationId">> = [];
+
+  for (const event of insertedEvents) {
+    const recipients = new Set<string>();
+    const assignee = event.taskId ? assigneeByTask.get(event.taskId) : null;
+    const owner = event.projectId ? ownerByProject.get(event.projectId) : null;
+
+    if (event.verb === "task.assigned" && assignee) recipients.add(assignee);
+    if (event.verb === "task.blocked") {
+      if (assignee) recipients.add(assignee);
+      if (owner) recipients.add(owner);
+    }
+    if (event.verb === "task.completed" && owner) recipients.add(owner);
+
+    // Nobody is told what they did themselves.
+    if (event.actorUserId) recipients.delete(event.actorUserId);
+
+    for (const recipient of recipients) {
+      notificationRows.push({
+        userId: recipient,
+        activityEventId: event.id,
+        readAt: event.createdAt.getTime() < oneWeekAgo ? event.createdAt : null,
+        createdAt: event.createdAt,
+      });
+    }
+  }
+
+  if (notificationRows.length > 0) {
+    await scope.insert(notifications, notificationRows);
+  }
+  const unread = notificationRows.filter((row) => row.readAt === null).length;
+  console.log(`Created ${notificationRows.length} notifications (${unread} unread)`);
 
   await report(scope, insertedTasks);
 }

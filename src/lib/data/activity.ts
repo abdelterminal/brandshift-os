@@ -7,6 +7,7 @@ import { users } from "@/db/schema/people";
 import { withOrg, type Executor } from "@/db/tenancy";
 
 import type { Actor } from "../authz";
+import { fanOut } from "./notifications";
 
 /**
  * The feed.
@@ -102,7 +103,7 @@ export async function recordActivity(
   },
   executor?: Executor,
 ): Promise<void> {
-  await withOrg(actor.organizationId, executor).insert(activityEvents, {
+  const [created] = await withOrg(actor.organizationId, executor).insert(activityEvents, {
     actorUserId: actor.userId,
     verb: event.verb,
     subjectType: event.subjectType,
@@ -111,4 +112,24 @@ export async function recordActivity(
     taskId: event.taskId ?? null,
     metadata: event.metadata ?? {},
   });
+
+  if (!created) return;
+
+  // Recording and notifying happen together, through one entry point, so an
+  // action cannot write history and quietly tell nobody.
+  await fanOut(
+    actor,
+    created.id,
+    {
+      verb: event.verb,
+      subjectId: event.subjectId,
+      projectId: created.projectId,
+      taskId: created.taskId,
+      metadataAssignee:
+        typeof event.metadata?.assigneeUserId === "string"
+          ? event.metadata.assigneeUserId
+          : null,
+    },
+    executor,
+  );
 }

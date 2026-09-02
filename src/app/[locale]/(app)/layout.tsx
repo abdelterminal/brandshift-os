@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/theme";
 import { ToastProvider, ToastViewport } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { bottomNavFor, overflowFor, railFor } from "@/lib/navigation";
+import { unreadCount } from "@/lib/data/notifications";
 import { paletteIndex } from "@/lib/palette";
 import { requireUser } from "@/lib/auth/guards";
 
@@ -38,7 +39,14 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
   const [session, t] = await Promise.all([requireUser(), getTranslations("Shell")]);
   const { actor, user, membership, organization, organizations } = session;
 
-  const entries = await paletteIndex(actor);
+  const [entries, inboxUnread] = await Promise.all([
+    paletteIndex(actor),
+    unreadCount(actor),
+  ]);
+
+  // The only number on the rail, and it is a count of rows you can go and act
+  // on -- not a badge that means "something happened somewhere".
+  const counts = { inbox: inboxUnread };
 
   return (
     <TooltipProvider delay={400}>
@@ -51,7 +59,11 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
         </a>
 
         <div className="flex min-h-dvh">
-          <Sidebar destinations={railFor(actor)} organizationName={organization.name} />
+          <Sidebar
+            destinations={railFor(actor)}
+            organizationName={organization.name}
+            counts={counts}
+          />
 
           <div className="flex min-w-0 flex-1 flex-col">
             <header className="border-border bg-surface-base/90 sticky top-0 z-30 border-b backdrop-blur">
@@ -103,7 +115,11 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
           </div>
         </div>
 
-        <BottomNav destinations={bottomNavFor(actor)} overflow={overflowFor(actor)} />
+        <BottomNav
+          destinations={bottomNavFor(actor)}
+          overflow={overflowFor(actor)}
+          counts={counts}
+        />
         <ToastViewport />
       </ToastProvider>
     </TooltipProvider>

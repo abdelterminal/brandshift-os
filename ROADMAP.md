@@ -222,7 +222,29 @@ Found while building it:
 
 Ordered, not yet scheduled.
 
-- Inbox and notifications
+### Inbox and notifications  [DONE]
+
+- [x] `notifications` table: one row per person per event, attached to `activity_events` rather
+      than duplicating it -- the spine DECISIONS.md set aside for exactly this
+- [x] Fan-out on write, in one readable table of rules in `src/lib/data/notifications.ts`, called
+      from `recordActivity()` so an action cannot record history and tell nobody
+- [x] **You are never notified of your own action.** An inbox that echoes what you just did is one
+      people learn to ignore, and then it swallows the message that mattered
+- [x] Inbox screen: grouped Today / Earlier, unread marked three ways, opening one marks it read
+      and takes you to the thing it is about
+- [x] Unread count on the rail and a dot on the mobile bar -- a real count of rows you can act on
+- [x] Seeded, with the same rules, so a fresh database has a plausible inbox rather than none
+
+Decisions worth knowing:
+- Fan-out on write rather than deriving the inbox from a query. It costs a few rows per event and
+  buys per-person read state and an unread count that is one indexed count, not a scan of the
+  whole feed re-filtered for relevance on every page load.
+- Read state only -- there is no archive or dismiss yet. Read/unread covers the core; a third
+  state can wait until somebody wants it.
+- Still no email or push. That needs a mail transport, which nothing here has yet.
+
+### Next
+
 - Channels: project and deal channels on the `activity_events` spine, presence, read state
 - Calendar and Meetings
 - Attendance and leave

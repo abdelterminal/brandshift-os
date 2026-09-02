@@ -96,6 +96,9 @@ What is built:
   you assign them. Nothing is saved until you publish.
 - **People** -- the directory, server-paginated and filtered through the URL; each person as a
   routed page with their workload, projects and activity; invites; role and module editing.
+- **Inbox** -- what involves you: work you were given, a blocker on something you run, a change to
+  what you may do. Never your own actions. The unread count on the rail is a real count of rows
+  you can go and act on.
 
 Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a project, a person or a department.
 

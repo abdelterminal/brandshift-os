@@ -33,9 +33,11 @@ function isActive(pathname: string, href: string): boolean {
 export function BottomNav({
   destinations,
   overflow,
+  counts,
 }: {
   destinations: Destination[];
   overflow: Destination[];
+  counts?: Partial<Record<string, number>>;
 }) {
   const t = useTranslations("Nav");
   const pathname = usePathname();
@@ -58,6 +60,7 @@ export function BottomNav({
       {destinations.map((destination) => {
         const active = isActive(pathname, destination.href);
         const Icon = NAV_ICONS[destination.icon];
+        const count = counts?.[destination.id] ?? 0;
 
         return (
           <Link
@@ -69,8 +72,19 @@ export function BottomNav({
               active ? "text-accent-text font-medium" : "text-fg-muted hover:text-fg-default",
             )}
           >
-            <Icon aria-hidden className="size-5" />
-            <span className="truncate">{t(destination.id)}</span>
+            <span className="relative">
+              <Icon aria-hidden className="size-5" />
+              {count > 0 ? (
+                <span
+                  aria-hidden
+                  className="bg-accent absolute -top-0.5 -right-1 size-2 rounded-pill"
+                />
+              ) : null}
+            </span>
+            <span className="truncate">
+              {t(destination.id)}
+              {count > 0 ? <span className="sr-only"> ({count})</span> : null}
+            </span>
           </Link>
         );
       })}

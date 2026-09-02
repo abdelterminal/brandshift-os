@@ -366,5 +366,32 @@
     "medium": "Moyenne",
     "high": "Haute",
     "urgent": "Urgente"
+  },
+  "Inbox": {
+    "title": "Boîte de réception",
+    "subtitle": "Ce qui s'est passé et qui vous concerne.",
+    "unread": "{count, plural, =0 {Tout est lu} one {# non lu} other {# non lus}}",
+    "markAllRead": "Tout marquer comme lu",
+    "markRead": "Marquer comme lu",
+    "today": "Aujourd'hui",
+    "earlier": "Plus tôt",
+    "empty": "Rien pour vous",
+    "emptyBody": "Dès qu'on vous attribue du travail, qu'une tâche de votre projet est bloquée ou que vos accès changent, cela apparaît ici.",
+    "allCaughtUp": "Vous êtes à jour",
+    "allCaughtUpBody": "Tout a été lu.",
+    "view": "Ouvrir",
+    "newBadge": "Nouveau"
+  },
+  "Notification": {
+    "taskAssigned": "vous a attribué {title}",
+    "taskBlocked": "a signalé un blocage sur {title}",
+    "taskUnblocked": "a levé le blocage sur {title}",
+    "taskCompleted": "a terminé {title}",
+    "projectCreated": "vous a ajouté à {title}",
+    "memberRoleChanged": "a changé votre rôle en {to}",
+    "unknown": "a fait une modification",
+    "aTask": "une tâche",
+    "aProject": "un projet",
+    "system": "Système"
   }
 }

@@ -366,5 +366,32 @@
     "medium": "Medium",
     "high": "High",
     "urgent": "Urgent"
+  },
+  "Inbox": {
+    "title": "Inbox",
+    "subtitle": "What happened that involves you.",
+    "unread": "{count, plural, =0 {All read} one {# unread} other {# unread}}",
+    "markAllRead": "Mark all as read",
+    "markRead": "Mark as read",
+    "today": "Today",
+    "earlier": "Earlier",
+    "empty": "Nothing for you",
+    "emptyBody": "When someone assigns you work, blocks a task on your project, or changes what you can do, it lands here.",
+    "allCaughtUp": "You are all caught up",
+    "allCaughtUpBody": "Everything here has been read.",
+    "view": "Open",
+    "newBadge": "New"
+  },
+  "Notification": {
+    "taskAssigned": "assigned you {title}",
+    "taskBlocked": "reported a blocker on {title}",
+    "taskUnblocked": "cleared the blocker on {title}",
+    "taskCompleted": "completed {title}",
+    "projectCreated": "added you to {title}",
+    "memberRoleChanged": "changed your role to {to}",
+    "unknown": "made a change",
+    "aTask": "a task",
+    "aProject": "a project",
+    "system": "System"
   }
 }

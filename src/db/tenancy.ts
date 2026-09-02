@@ -4,6 +4,7 @@ import { and, eq, getTableName, sql, type GetColumnData, type SQL } from "drizzl
 import type { PgColumn, PgInsertValue, PgTable, PgUpdateSetSource } from "drizzle-orm/pg-core";
 
 import { activityEvents } from "./schema/activity";
+import { notifications } from "./schema/notifications";
 import { organizations } from "./schema/organizations";
 import { departments, memberships } from "./schema/people";
 import { projectMembers, projects } from "./schema/projects";
@@ -43,6 +44,7 @@ export const TENANT_TABLES = {
   projectMembers,
   tasks,
   activityEvents,
+  notifications,
 } as const;
 
 export type TenantTable = (typeof TENANT_TABLES)[keyof typeof TENANT_TABLES];

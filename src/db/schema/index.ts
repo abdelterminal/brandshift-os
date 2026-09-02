@@ -9,4 +9,5 @@ export * from "./sessions";
 export * from "./projects";
 export * from "./tasks";
 export * from "./activity";
+export * from "./notifications";
 export * from "./relations";

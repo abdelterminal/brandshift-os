@@ -3,6 +3,7 @@
 import { ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { CountBadge } from "@/components/ui/badge";
 import { Link, usePathname } from "@/i18n/navigation";
 import type { Destination } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
@@ -27,9 +28,12 @@ function isActive(pathname: string, href: string): boolean {
 export function Sidebar({
   destinations,
   organizationName,
+  counts,
 }: {
   destinations: Destination[];
   organizationName: string;
+  /** Unread counts by destination id. Only real, actionable numbers belong here. */
+  counts?: Partial<Record<string, number>>;
 }) {
   const t = useTranslations("Nav");
   const pathname = usePathname();
@@ -50,6 +54,7 @@ export function Sidebar({
         {destinations.map((destination) => {
           const active = isActive(pathname, destination.href);
           const Icon = NAV_ICONS[destination.icon];
+          const count = counts?.[destination.id] ?? 0;
 
           return (
             <li key={destination.id}>
@@ -76,9 +81,15 @@ export function Sidebar({
                 <Icon aria-hidden className="size-4 shrink-0" />
                 <span className="truncate">{t(destination.id)}</span>
 
+                {count > 0 ? (
+                  <CountBadge tone="accent" className="ml-auto">
+                    {count}
+                  </CountBadge>
+                ) : null}
+
                 {/* Phase 2 nests channels under Work; the affordance is
                     already here so the rail does not change shape later. */}
-                {destination.expandable ? (
+                {destination.expandable && count === 0 ? (
                   <ChevronRight
                     aria-hidden
                     className="text-fg-subtle ml-auto size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"

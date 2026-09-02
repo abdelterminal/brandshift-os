@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 
 import { activityEvents } from "./activity";
+import { notifications } from "./notifications";
 import { organizations } from "./organizations";
 import { departments, memberships, users } from "./people";
 import { projectMembers, projects } from "./projects";
@@ -25,6 +26,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
 
 export const usersRelations = relations(users, ({ many }) => ({
   memberships: many(memberships),
+  notifications: many(notifications),
   sessions: many(sessions),
   ownedProjects: many(projects),
   projectMemberships: many(projectMembers),
@@ -96,7 +98,19 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
   activityEvents: many(activityEvents),
 }));
 
-export const activityEventsRelations = relations(activityEvents, ({ one }) => ({
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [notifications.organizationId],
+    references: [organizations.id],
+  }),
+  user: one(users, { fields: [notifications.userId], references: [users.id] }),
+  event: one(activityEvents, {
+    fields: [notifications.activityEventId],
+    references: [activityEvents.id],
+  }),
+}));
+
+export const activityEventsRelations = relations(activityEvents, ({ one, many }) => ({
   organization: one(organizations, {
     fields: [activityEvents.organizationId],
     references: [organizations.id],
@@ -104,4 +118,5 @@ export const activityEventsRelations = relations(activityEvents, ({ one }) => ({
   actor: one(users, { fields: [activityEvents.actorUserId], references: [users.id] }),
   project: one(projects, { fields: [activityEvents.projectId], references: [projects.id] }),
   task: one(tasks, { fields: [activityEvents.taskId], references: [tasks.id] }),
+  notifications: many(notifications),
 }));
