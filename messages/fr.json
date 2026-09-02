@@ -1,0 +1,100 @@
+{
+  "Nav": {
+    "primary": "Navigation principale",
+    "today": "Aujourd'hui",
+    "work": "Travaux",
+    "myWork": "Mes travaux",
+    "people": "Équipe",
+    "team": "Mon équipe",
+    "insights": "Analyses",
+    "inbox": "Boîte de réception",
+    "calendar": "Agenda",
+    "more": "Plus",
+    "collapse": "Réduire le panneau latéral",
+    "expand": "Déployer le panneau latéral",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu"
+  },
+  "Shell": {
+    "skipToContent": "Aller au contenu",
+    "breadcrumb": "Fil d'Ariane",
+    "home": "Accueil",
+    "contextPanel": "Détails",
+    "closePanel": "Fermer le panneau",
+    "openPanel": "Afficher les détails"
+  },
+  "Search": {
+    "open": "Rechercher",
+    "placeholder": "Rechercher un projet, une personne ou un département",
+    "shortcutHint": "Appuyez sur {shortcut} pour rechercher",
+    "empty": "Aucun résultat pour « {query} »",
+    "loading": "Recherche en cours…",
+    "hintTitle": "Accéder à n'importe quoi",
+    "hintBody": "Commencez à taper pour trouver un projet, une personne ou un département.",
+    "groupProjects": "Projets",
+    "groupPeople": "Personnes",
+    "groupDepartments": "Départements",
+    "groupActions": "Actions",
+    "close": "Fermer la recherche"
+  },
+  "Actions": {
+    "newProject": "Nouveau projet",
+    "newTask": "Nouvelle tâche",
+    "invitePerson": "Inviter quelqu'un",
+    "goToToday": "Aller à Aujourd'hui",
+    "toggleTheme": "Changer de thème"
+  },
+  "Theme": {
+    "label": "Thème de couleur",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
+  },
+  "Locale": {
+    "label": "Langue",
+    "en": "English",
+    "fr": "Français"
+  },
+  "Account": {
+    "menu": "Compte",
+    "profile": "Profil",
+    "settings": "Paramètres",
+    "signOut": "Se déconnecter",
+    "signedInAs": "Connecté en tant que"
+  },
+  "Org": {
+    "label": "Organisation",
+    "switch": "Changer d'organisation",
+    "current": "Organisation actuelle"
+  },
+  "Roles": {
+    "owner": "Propriétaire",
+    "admin": "Administrateur",
+    "manager": "Responsable",
+    "member": "Membre"
+  },
+  "Status": {
+    "todo": "À faire",
+    "in_progress": "En cours",
+    "blocked": "Bloqué",
+    "done": "Terminé",
+    "cancelled": "Annulé",
+    "overdue": "En retard",
+    "dueSoon": "Échéance proche",
+    "noDeadline": "Sans échéance",
+    "unassigned": "Non attribué"
+  },
+  "Common": {
+    "loading": "Chargement",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "retry": "Réessayer",
+    "close": "Fermer",
+    "errorTitle": "Une erreur est survenue",
+    "errorBody": "La page n'a pas pu être chargée. Le problème est peut-être temporaire."
+  },
+  "Placeholder": {
+    "comingSoon": "Pas encore construit",
+    "comingSoonBody": "Cet écran arrive dans un jalon ultérieur. La coquille autour est bien réelle."
+  }
+}

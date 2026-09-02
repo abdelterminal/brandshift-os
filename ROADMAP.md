@@ -88,18 +88,54 @@ Found while building the primitives:
 - The scaffold installed **Base UI**, not Radix, as shadcn/ui's primitive layer. `CLAUDE.md` said
   Radix; the stack table now matches the code.
 
-### M3 - The shell
+### M3 - The shell  [DONE]
 
-- [ ] `src/app/[locale]/(app)/layout.tsx`
-- [ ] Left rail, max 5 destinations per role
+- [x] `next-intl` wired end to end: `src/i18n/`, `src/middleware.ts`, routes under
+      `src/app/[locale]/`, `messages/en.json` and `messages/fr.json` both complete.
+      `src/i18n/messages.test.ts` fails the build on a key, placeholder or empty string that
+      exists in one catalogue and not the other.
+- [x] `src/app/[locale]/(app)/layout.tsx`
+- [x] Left rail, max 5 destinations per role -- the cap is enforced in `railFor()`, which throws
+      rather than quietly rendering a sixth
       - Admin: Today - Work - People - Insights - Inbox
       - Member: Today - My Work - Calendar - Inbox - Team
-      - Profile and Settings only in the avatar menu
-- [ ] Cmd+K command palette: jump to any project, person or department; run actions
-- [ ] Org switcher, theme toggle, `en`/`fr` switcher, breadcrumbs
-- [ ] Right-hand context panel slot
-- [ ] Mobile bottom nav (Today - Work - Calendar - Inbox - More), bottom-sheet filters
-- [ ] Rail data shape leaves room to nest channels under Work items in Phase 2
+      - Profile and Settings only in the avatar menu, asserted by `navigation.test.ts`
+- [x] Cmd+K command palette: jumps to any project, person or department, accent-insensitively
+- [x] Org switcher, theme toggle, `en`/`fr` switcher, breadcrumbs
+- [x] Right-hand context panel slot -- a `@panel` parallel route, so a page fills it by rendering
+      into it and every other page leaves it empty without saying so
+- [x] Mobile bottom nav: the first four rail destinations, the rest behind More in a bottom sheet
+- [x] Rail data shape leaves room to nest channels under Work items in Phase 2 (`children`,
+      `expandable`)
+
+Built here although the roadmap places them later, because the shell could not be honest without
+them:
+- **`src/lib/authz.ts`.** Which destinations you see is a permission decision, and CLAUDE.md says
+  those live in exactly one place. Writing nav-only rules would have created the second place M4
+  then had to merge. M4 extends it with session enforcement, Server Action guards and the re-auth
+  window; the shape is built to be extended.
+- **`src/lib/session.ts` is a stopgap.** There is no sign-in yet, so `getCurrentUser()` reads a
+  real person out of the seeded org -- `DEV_USER_EMAIL` picks which -- and the shell renders real
+  names, roles and organizations rather than invented ones. M4 replaces the body of that one
+  function and nothing above it changes.
+- **`findMembershipsForUser()` in `tenancy.ts`.** The one read of a tenant table that cannot be
+  scoped, because it is what establishes the scope. It is filtered by user id instead, and lives
+  in the file that owns tenancy so the exception stays visible.
+
+Bugs found while building it:
+- **A single-string middleware matcher silently matches nothing** in Next 16 once the lookahead
+  contains the `.*\..*` alternative. `/today` never reached the middleware and 404ed instead of
+  redirecting. Split into the three patterns next-intl documents, it works.
+- **Middleware must live in `src/`**, not the repo root, when `app/` is under `src/`.
+- **Icons cannot cross the RSC boundary.** The rail is assembled on the server and handed to a
+  Client Component; a React component is a function. Destinations name their icon as a string and
+  `nav-icons.ts` resolves it on the client.
+- **The command palette was mounted twice**, once per breakpoint, so Cmd+K opened two stacked
+  dialogs -- the portal is outside the `lg:hidden` wrapper that was meant to hide one. One
+  instance now, with a trigger that adapts.
+- **The shell was being statically prerendered** with one user's rail and organization baked into
+  HTML served to everyone, and it needed a database at build time, which the Docker image has no
+  access to. The `(app)` segment is `force-dynamic`.
 
 ### M4 - Auth, orgs, RBAC
 

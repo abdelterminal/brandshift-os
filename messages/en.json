@@ -1,0 +1,100 @@
+{
+  "Nav": {
+    "primary": "Primary",
+    "today": "Today",
+    "work": "Work",
+    "myWork": "My Work",
+    "people": "People",
+    "team": "Team",
+    "insights": "Insights",
+    "inbox": "Inbox",
+    "calendar": "Calendar",
+    "more": "More",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "Shell": {
+    "skipToContent": "Skip to content",
+    "breadcrumb": "Breadcrumb",
+    "home": "Home",
+    "contextPanel": "Details",
+    "closePanel": "Close panel",
+    "openPanel": "Show details"
+  },
+  "Search": {
+    "open": "Search",
+    "placeholder": "Search projects, people and departments",
+    "shortcutHint": "Press {shortcut} to search",
+    "empty": "Nothing matches “{query}”",
+    "loading": "Searching…",
+    "hintTitle": "Jump to anything",
+    "hintBody": "Start typing to find a project, a person or a department.",
+    "groupProjects": "Projects",
+    "groupPeople": "People",
+    "groupDepartments": "Departments",
+    "groupActions": "Actions",
+    "close": "Close search"
+  },
+  "Actions": {
+    "newProject": "New project",
+    "newTask": "New task",
+    "invitePerson": "Invite someone",
+    "goToToday": "Go to Today",
+    "toggleTheme": "Switch theme"
+  },
+  "Theme": {
+    "label": "Colour theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "Locale": {
+    "label": "Language",
+    "en": "English",
+    "fr": "Français"
+  },
+  "Account": {
+    "menu": "Account",
+    "profile": "Profile",
+    "settings": "Settings",
+    "signOut": "Sign out",
+    "signedInAs": "Signed in as"
+  },
+  "Org": {
+    "label": "Organization",
+    "switch": "Switch organization",
+    "current": "Current organization"
+  },
+  "Roles": {
+    "owner": "Owner",
+    "admin": "Admin",
+    "manager": "Manager",
+    "member": "Member"
+  },
+  "Status": {
+    "todo": "To do",
+    "in_progress": "In progress",
+    "blocked": "Blocked",
+    "done": "Complete",
+    "cancelled": "Cancelled",
+    "overdue": "Overdue",
+    "dueSoon": "Due soon",
+    "noDeadline": "No deadline",
+    "unassigned": "Unassigned"
+  },
+  "Common": {
+    "loading": "Loading",
+    "cancel": "Cancel",
+    "save": "Save",
+    "retry": "Try again",
+    "close": "Close",
+    "errorTitle": "Something went wrong",
+    "errorBody": "The page could not be loaded. It may be a temporary problem."
+  },
+  "Placeholder": {
+    "comingSoon": "Not built yet",
+    "comingSoonBody": "This screen arrives in a later milestone. The shell around it is real."
+  }
+}

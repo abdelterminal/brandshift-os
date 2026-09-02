@@ -5,8 +5,8 @@ Multi-tenant ERP + CRM + team-collaboration platform for BrandShift.
 Slack's speed and shell, Odoo's breadth. Built so that no user is ever confused about where they
 are or what to do next.
 
-Status: **Phase 1, milestones 0-2 complete** -- data foundation and design system.
-The app shell is next. See [ROADMAP.md](ROADMAP.md).
+Status: **Phase 1, milestones 0-3 complete** -- data foundation, design system and the app
+shell. Auth is next. See [ROADMAP.md](ROADMAP.md).
 
 ## Requirements
 
@@ -59,6 +59,18 @@ curl -s localhost:3000/api/health
 
 `/api/health` answers 200 when the database is reachable and 503 when it is not; Compose uses it
 as the app container's healthcheck.
+
+## The app
+
+`npm run dev`, then <http://localhost:3000> -- it redirects to `/en/today`. Every route is
+locale-scoped: `/en/...` and `/fr/...`, both complete.
+
+There is no sign-in yet (that is M4). Until then the shell renders as a real person from the
+seed: set `DEV_USER_EMAIL` in `.env` to any seeded address to see a different role's rail. An
+owner or admin gets Today / Work / People / Insights / Inbox; a member gets
+Today / My Work / Calendar / Inbox / Team.
+
+Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a project, a person or a department.
 
 ## Design system
 

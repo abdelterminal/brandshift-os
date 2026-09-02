@@ -139,7 +139,7 @@ export const USERS: SeedUser[] = [
   },
   {
     email: "ines.ferreira@brandshift.test",
-    name: "Ines Ferreira",
+    name: "Inès Ferreira",
     role: "member",
     department: "engineering",
     jobTitle: "Backend Engineer",

@@ -1,9 +1,10 @@
 import "server-only";
 
-import { and, eq, getTableName, sql, type SQL } from "drizzle-orm";
-import type { PgInsertValue, PgUpdateSetSource } from "drizzle-orm/pg-core";
+import { and, eq, getTableName, sql, type GetColumnData, type SQL } from "drizzle-orm";
+import type { PgColumn, PgInsertValue, PgUpdateSetSource } from "drizzle-orm/pg-core";
 
 import { activityEvents } from "./schema/activity";
+import { organizations } from "./schema/organizations";
 import { departments, memberships } from "./schema/people";
 import { projectMembers, projects } from "./schema/projects";
 import { tasks } from "./schema/tasks";
@@ -60,6 +61,39 @@ export const ORG_COLUMN_EXCEPTIONS: Readonly<Record<string, string>> = {
     "make sign-in impossible. Session queries filter by user id or token digest instead.",
 };
 
+/**
+ * The one read of a tenant table that cannot be scoped, because it is what
+ * establishes the scope: before you know which organizations someone belongs
+ * to, there is no organization id to filter by.
+ *
+ * It is filtered by `userId` instead, which is just as narrow -- it returns
+ * one person's memberships and nothing else -- and it lives here rather than
+ * in a feature module so the exception stays in the file that owns tenancy.
+ * Everything downstream of it goes through `withOrg()`.
+ */
+export async function findMembershipsForUser(userId: string, executor: Database = db) {
+  if (!UUID_RE.test(userId)) {
+    throw new Error("findMembershipsForUser() needs a verified user id.");
+  }
+
+  return executor
+    .select({
+      membershipId: memberships.id,
+      organizationId: memberships.organizationId,
+      organizationName: organizations.name,
+      organizationSlug: organizations.slug,
+      role: memberships.role,
+      permissions: memberships.permissions,
+      departmentId: memberships.departmentId,
+      jobTitle: memberships.jobTitle,
+      status: memberships.status,
+    })
+    .from(memberships)
+    .innerJoin(organizations, eq(organizations.id, memberships.organizationId))
+    .where(and(eq(memberships.userId, userId), eq(memberships.status, "active")))
+    .orderBy(organizations.name);
+}
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
@@ -105,16 +139,23 @@ export function withOrg(organizationId: string, executor: Database = db) {
     /**
      * Read chosen columns. Lists are server-paginated, so most screens want
      * this rather than dragging every column across the wire.
+     *
+     * The return type is spelled out so callers keep full inference on the
+     * columns they asked for. Casting the field map to `never` -- the obvious
+     * way to satisfy drizzle's overloads -- compiles but hands every caller
+     * `never[]`, which then fails at the first property access.
      */
-    selectFields<T extends TenantTable, F extends Record<string, unknown>>(
+    selectFields<T extends TenantTable, F extends Record<string, PgColumn>>(
       table: T,
       fields: F,
       ...where: Array<SQL | undefined>
-    ) {
+    ): Promise<Array<{ [K in keyof F]: GetColumnData<F[K]> }>> {
       return executor
-        .select(fields as never)
+        .select(fields)
         .from(table as TenantTable)
-        .where(scoped(table, ...where));
+        .where(scoped(table, ...where)) as unknown as Promise<
+        Array<{ [K in keyof F]: GetColumnData<F[K]> }>
+      >;
     },
 
     /** Row count matching the scope, for pagination footers. */
