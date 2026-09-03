@@ -23,9 +23,12 @@ import {
   COMPANIES,
   CONTACTS,
   DEALS,
+  EXPENSES,
   GENERAL_CHANNEL,
+  INVOICES,
   LEAVE,
   MEETINGS,
+  QUOTES,
   ORGANIZATION,
   PERSONAL_TASKS,
   PROJECTS,
@@ -40,7 +43,12 @@ import {
   companies,
   contacts,
   deals,
+  quoteLines,
+  quotes,
   departments,
+  expenses,
+  invoiceLines,
+  invoices,
   leaveRequests,
   meetingAttendees,
   meetings,
@@ -59,6 +67,7 @@ import {
 import { withOrg } from "./tenancy";
 import { hashPassword } from "@/lib/password";
 import { addDays, instantFromLocal } from "@/lib/calendar-dates";
+import { lineTotal, parseMoney, parseQuantity, toDecimalString, totalsFor } from "@/lib/money";
 import { workingDays } from "@/lib/leave-days";
 import { slugify } from "@/lib/slug";
 
@@ -128,6 +137,7 @@ async function main() {
   // tenant-owned but is seeded here, so it is cleared here too.
   await db.execute(sql`
     truncate table
+      ${expenses}, ${invoiceLines}, ${invoices}, ${quoteLines}, ${quotes},
       ${deals}, ${contacts}, ${companies},
       ${leaveRequests},
       ${meetingAttendees}, ${meetings},
@@ -703,6 +713,146 @@ async function main() {
 
   console.log(
     `Created ${companyRows.length} companies, ${contactRows.length} contacts, ${dealRows.length} deals`,
+  );
+
+  // --- Finance -----------------------------------------------------------
+  // Amounts are written in the seed the way somebody would type them, and
+  // parsed with the same functions the form uses -- so a seeded figure and a
+  // typed one go through identical arithmetic, in integer cents.
+  function toLines(raw: (typeof QUOTES)[number]["lines"]) {
+    return raw.map((line) => {
+      const quantityThousandths = parseQuantity(line.quantity);
+      const unitPrice = parseMoney(line.unitPrice);
+      if (quantityThousandths === null || unitPrice === null) {
+        throw new Error(`Unusable seeded amount: ${line.quantity} x ${line.unitPrice}`);
+      }
+      return {
+        quantityThousandths,
+        unitPrice,
+        taxRateBasisPoints: line.tax,
+        description: line.description,
+      };
+    });
+  }
+
+  const quoteRows = await scope.insert(
+    quotes,
+    QUOTES.map((quote, index) => {
+      const lines = toLines(quote.lines);
+      const totals = totalsFor(lines);
+      const issueDate = addDays(todayInOrg, quote.issuedInDays);
+      const decided = quote.status === "accepted" || quote.status === "declined";
+
+      return {
+        number: `Q-${issueDate.slice(0, 4)}-${String(index + 1).padStart(4, "0")}`,
+        companyId: companyByName.get(quote.companyName)!.id,
+        title: quote.title,
+        status: quote.status,
+        issueDate,
+        validUntil: quote.validForDays === null ? null : addDays(issueDate, quote.validForDays),
+        subtotal: toDecimalString(totals.subtotal),
+        taxTotal: toDecimalString(totals.tax),
+        total: toDecimalString(totals.total),
+        sentAt: quote.status === "draft" ? null : new Date(),
+        decidedAt: decided ? new Date() : null,
+        declineReason: quote.declineReason ?? null,
+        ownerUserId: userId(quote.ownerEmail),
+        createdByUserId: userId(quote.ownerEmail),
+      };
+    }),
+  );
+
+  await scope.insert(
+    quoteLines,
+    QUOTES.flatMap((quote, index) =>
+      toLines(quote.lines).map((line, position) => ({
+        quoteId: quoteRows[index]!.id,
+        position,
+        description: line.description,
+        quantityThousandths: line.quantityThousandths,
+        unitPrice: toDecimalString(line.unitPrice),
+        taxRateBasisPoints: line.taxRateBasisPoints,
+        lineTotal: toDecimalString(lineTotal(line.quantityThousandths, line.unitPrice)),
+      })),
+    ),
+  );
+
+  const invoiceRows = await scope.insert(
+    invoices,
+    INVOICES.map((invoice, index) => {
+      const lines = toLines(invoice.lines);
+      const totals = totalsFor(lines);
+      const issueDate = addDays(todayInOrg, invoice.issuedInDays);
+      const paid =
+        invoice.status === "paid"
+          ? totals.total
+          : invoice.paid
+            ? (parseMoney(invoice.paid) ?? 0)
+            : 0;
+
+      return {
+        number: `INV-${issueDate.slice(0, 4)}-${String(index + 1).padStart(4, "0")}`,
+        companyId: companyByName.get(invoice.companyName)!.id,
+        projectId: invoice.projectKey ? projectByKey.get(invoice.projectKey)!.id : null,
+        title: invoice.title,
+        status: invoice.status,
+        issueDate,
+        dueDate: addDays(todayInOrg, invoice.dueInDays),
+        subtotal: toDecimalString(totals.subtotal),
+        taxTotal: toDecimalString(totals.tax),
+        total: toDecimalString(totals.total),
+        paidAmount: toDecimalString(paid),
+        sentAt: invoice.status === "draft" ? null : new Date(),
+        paidAt: invoice.status === "paid" ? new Date() : null,
+        voidedAt: invoice.status === "void" ? new Date() : null,
+        voidReason: invoice.voidReason ?? null,
+        createdByUserId: userId("tom.decker@brandshift.test"),
+      };
+    }),
+  );
+
+  await scope.insert(
+    invoiceLines,
+    INVOICES.flatMap((invoice, index) =>
+      toLines(invoice.lines).map((line, position) => ({
+        invoiceId: invoiceRows[index]!.id,
+        position,
+        description: line.description,
+        quantityThousandths: line.quantityThousandths,
+        unitPrice: toDecimalString(line.unitPrice),
+        taxRateBasisPoints: line.taxRateBasisPoints,
+        lineTotal: toDecimalString(lineTotal(line.quantityThousandths, line.unitPrice)),
+      })),
+    ),
+  );
+
+  const expenseRows = await scope.insert(
+    expenses,
+    EXPENSES.map((expense) => {
+      const amount = parseMoney(expense.amount);
+      const tax = parseMoney(expense.tax);
+      if (amount === null || tax === null) {
+        throw new Error(`Unusable seeded expense: ${expense.amount}`);
+      }
+
+      return {
+        description: expense.description,
+        category: expense.category,
+        spentOn: addDays(todayInOrg, expense.spentInDays),
+        amount: toDecimalString(amount),
+        taxAmount: toDecimalString(tax),
+        supplier: expense.supplier,
+        projectId: expense.projectKey ? projectByKey.get(expense.projectKey)!.id : null,
+        paidByUserId: userId(expense.paidByEmail),
+        reimbursable: expense.reimbursable,
+        reimbursedAt: expense.reimbursed ? new Date() : null,
+        createdByUserId: userId(expense.paidByEmail),
+      };
+    }),
+  );
+
+  console.log(
+    `Created ${quoteRows.length} quotes, ${invoiceRows.length} invoices, ${expenseRows.length} expenses`,
   );
 
   await report(scope, insertedTasks);

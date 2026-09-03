@@ -56,6 +56,45 @@ export const dealStageEnum = pgEnum("deal_stage", [
   "lost",
 ]);
 
+/**
+ * A quote's life.
+ *
+ * `accepted` is the end of it -- there is no separate order. For an agency the
+ * confirmed engagement is an accepted quote plus the project the work becomes.
+ */
+export const quoteStatusEnum = pgEnum("quote_status", [
+  "draft",
+  "sent",
+  "accepted",
+  "declined",
+  "expired",
+]);
+
+/**
+ * An invoice's life.
+ *
+ * A sent invoice is never deleted, only voided: deleting one leaves a hole in
+ * a sequence that an auditor reads as a missing document. `part_paid` is a
+ * real state, because part payments are real.
+ */
+export const invoiceStatusEnum = pgEnum("invoice_status", [
+  "draft",
+  "sent",
+  "part_paid",
+  "paid",
+  "void",
+]);
+
+/** Where the money went. Short on purpose: a long list is one nobody uses. */
+export const expenseCategoryEnum = pgEnum("expense_category", [
+  "subcontractor",
+  "software",
+  "travel",
+  "equipment",
+  "production",
+  "other",
+]);
+
 /** What a company is to us now. Stored, not derived -- see `crm.ts`. */
 export const companyStatusEnum = pgEnum("company_status", ["prospect", "client", "former"]);
 
@@ -103,4 +142,7 @@ export const activitySubjectEnum = pgEnum("activity_subject", [
   "leave",
   "company",
   "deal",
+  "quote",
+  "invoice",
+  "expense",
 ]);

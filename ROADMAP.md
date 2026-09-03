@@ -416,9 +416,49 @@ Decisions worth knowing:
 - Company status is stored, not derived from whether a deal was won: a client of ten years may have
   no open deal, and a deal won in 2019 does not make a current client.
 
+### ERP  [DONE]
+
+- [x] `quotes` / `quote_lines` / `invoices` / `invoice_lines` / `expenses`, all tenant-owned,
+      every amount an integer number of cents from the parse to the format
+- [x] `src/lib/money.ts` -- the arithmetic, on its own, with 18 tests. Quantities in thousandths
+      because agencies bill in eighths of a day; tax in basis points because 5.5% is a real French
+      rate; rounding **half away from zero**, which is what a tax authority specifies and what
+      `Math.round` does not do to a credit
+- [x] **Tax per line, not on the subtotal.** Design at 20% and print at 5.5% give a different
+      answer each way, and per line is the one that is correct
+- [x] Document numbers -- `Q-2026-0001`, `INV-2026-0001` -- allocated with `SELECT ... FOR UPDATE`
+      inside the same transaction that writes the document, behind a unique index that would refuse
+      a duplicate anyway
+- [x] Totals are **stored on the document**, deliberately the opposite of leave balances. A balance
+      is a fact about the present and is computed; an invoice is a record of what was sent, and
+      what it said is what it said
+- [x] A **quote becomes a project**: each accepted line becomes a task, which is the handover
+      `KNOWN-GAPS` had flagged as retyping since CRM
+- [x] Payments are recorded against an invoice and the status follows the arithmetic --
+      `part_paid` until the sum reaches the total, then `paid`. Nobody sets it by hand
+- [x] An issued invoice is **voided, never deleted**. A number that was sent to a client does not
+      get reused
+- [x] A **fourth rail**, for whoever holds `finance`: Today / Finance / Work / People / Inbox.
+      `finance` is read before `crm` because the owner and the operations lead hold both, and it
+      is the narrower statement of the two about what somebody's day actually is
+- [x] A fifth e2e role holding the `finance` module, and 23 specs including the axe and responsive
+      sweeps on all six routes
+- [x] Seeded: six quotes, six invoices and six expenses across every status
+
+Decisions worth knowing:
+- **No `orders` table.** For an agency the confirmed engagement is an accepted quote plus the
+  project the work becomes. A third entity between the deal and the project is a table nobody
+  fills in and a status nobody keeps current.
+- **The line editor does its arithmetic with the same functions the server does.** The running
+  total under the form is not a second implementation that can disagree with the one that is
+  stored; it is `totalsFor` in the browser and `totalsFor` again in the transaction.
+- **A form field never reads as zero.** `parseMoney` takes `12 500`, `12,500` and `1 234,56`, and
+  refuses `about forty thousand` with a message rather than storing nothing.
+- Expenses are money out with a category and a receipt reference, reimbursed or not. They are not
+  a purchase-order workflow, and there is no approval chain on them.
+
 ### Next
 
-- **ERP**: quotes, orders, invoices, expenses
 - Data migration from the old MongoDB app, once the schema has settled
 
 ---

@@ -29,6 +29,21 @@ export const SALES = {
   role: "manager",
 } as const;
 
+/**
+ * Operations, and the only signed-in fixture holding the `finance` module.
+ *
+ * A fifth role for the same reason there is a fourth: a fixture whose
+ * permissions do not match the job it is named after stops being evidence of
+ * anything, and the suite needs somebody who can see the money and somebody
+ * who cannot.
+ */
+export const FINANCE = {
+  email: "tom.decker@brandshift.test",
+  name: "Tom Decker",
+  /** Admin with `finance`: quotes, invoices and expenses are his. */
+  role: "admin",
+} as const;
+
 export const MEMBER = {
   email: "lukas.weber@brandshift.test",
   name: "Lukas Weber",

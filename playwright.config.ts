@@ -75,6 +75,14 @@ export default defineConfig({
       dependencies: ["setup"],
       use: { ...devices["Desktop Chrome"], storageState: "e2e/.auth/sales.json" },
     },
+    {
+      // Operations: the only fixture holding the `finance` module flag, and so
+      // the only one that can see a quote, an invoice or an expense.
+      name: "finance",
+      testMatch: /finance\/.*\.spec\.ts/,
+      dependencies: ["setup"],
+      use: { ...devices["Desktop Chrome"], storageState: "e2e/.auth/finance.json" },
+    },
   ],
 
   webServer: {

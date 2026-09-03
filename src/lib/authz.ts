@@ -61,6 +61,7 @@ export type Action =
   | "channel.view"
   | "leave.view"
   | "crm.view"
+  | "finance.view"
   // Doing
   | "project.create"
   | "task.create"
@@ -70,6 +71,7 @@ export type Action =
   | "leave.request"
   | "leave.approve"
   | "crm.manage"
+  | "finance.manage"
   | "member.invite"
   | "member.editRole"
   | "organization.switch"
@@ -122,6 +124,13 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   // call cannot record what was said.
   "crm.view": (actor) => hasModule(actor, "crm"),
   "crm.manage": (actor) => hasModule(actor, "crm"),
+
+  // What the company is owed and what it has spent is the most sensitive data
+  // in here. The `finance` module gates the whole area, and reading and writing
+  // are the same flag for the same reason as CRM: the person chasing a payment
+  // is the person who records that it arrived.
+  "finance.view": (actor) => hasModule(actor, "finance"),
+  "finance.manage": (actor) => hasModule(actor, "finance"),
 
   "project.create": (actor) => atLeast(actor, "manager"),
   "task.create": () => true,

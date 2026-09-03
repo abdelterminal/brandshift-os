@@ -57,6 +57,13 @@
       "when": 1788450729201,
       "tag": "0007_burly_nova",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788457436738,
+      "tag": "0008_public_ultimo",
+      "breakpoints": true
     }
   ]
 }

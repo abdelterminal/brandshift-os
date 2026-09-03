@@ -76,8 +76,8 @@ Sign in as any seeded person -- the password is `brandshift` for all of them:
 
 | Role | Email | Rail |
 |---|---|---|
-| owner | `amina.benali@brandshift.test` | Today / Work / People / Insights / Inbox |
-| admin | `tom.decker@brandshift.test` | Today / Work / People / Insights / Inbox |
+| owner | `amina.benali@brandshift.test` | Today / Finance / Work / People / Inbox |
+| admin | `tom.decker@brandshift.test` | Today / Finance / Work / People / Inbox |
 | manager | `elena.rossi@brandshift.test` | Today / Work / People / Insights / Inbox |
 | member | `lukas.weber@brandshift.test` | Today / My Work / Calendar / Inbox / Team |
 | client services | `sofia.laurent@brandshift.test` | Today / Pipeline / Work / People / Inbox |
@@ -129,6 +129,13 @@ What is built:
   board behind a toggle, both addressable by URL. Losing a deal asks why, and the reason stays on
   the deal. Every deal gets a channel on the same spine a project does. The one figure on the
   screen is a sum of real values, never a weighted forecast.
+
+- **Finance** -- quotes, invoices and expenses. Every amount is an integer number of cents from
+  the moment it is typed to the moment it is shown, and tax is worked out per line rather than on
+  the subtotal, because a document with design at 20% and print at 5.5% gives a different answer
+  each way. Numbers are allocated under a lock and never reused; an issued invoice is voided, not
+  deleted. Payments are recorded and the status follows the arithmetic. An accepted quote becomes
+  a project with a task per line, which is the handover that used to be retyping.
 
 Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a screen, a project, a person or a department.
 

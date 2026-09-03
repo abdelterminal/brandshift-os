@@ -46,6 +46,14 @@ export const SALES_ROUTES = [
   "/en/crm/contacts",
 ] as const;
 
+/** Behind the `finance` module flag. Swept by `e2e/finance/`. */
+export const FINANCE_ROUTES = [
+  "/en/finance",
+  "/en/finance/quotes",
+  "/en/finance/invoices",
+  "/en/finance/expenses",
+] as const;
+
 /** The widths the definition of done names. */
 export const VIEWPORTS = [
   { name: "320", width: 320, height: 640 },

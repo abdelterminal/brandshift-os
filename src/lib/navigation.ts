@@ -31,7 +31,8 @@ export type NavIconName =
   | "channel"
   | "channels"
   | "leave"
-  | "crm";
+  | "crm"
+  | "finance";
 
 export type Destination = {
   /** Key into the `Nav` message catalogue, unless `label` overrides it. */
@@ -114,6 +115,38 @@ const SALES_RAIL: Destination[] = [
   { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" },
 ];
 
+/**
+ * Money.
+ *
+ * The same argument as the sales rail, one milestone later: somebody who can
+ * see the money should not be the one person who has to know its name to reach
+ * it. Finance takes the slot Insights holds on the coordination rail.
+ *
+ * `finance` is checked before `crm` because the owner and the operations lead
+ * hold both, and it is the narrower statement of the two about what somebody's
+ * day is -- `crm` ends up on every manager who has been near a client, where
+ * `finance` is only ever given to the people who send the invoices. Whichever
+ * flag loses, its screen is still one keystroke away in the palette.
+ */
+const FINANCE_RAIL: Destination[] = [
+  { id: "today", href: "/today", icon: "today" },
+  {
+    id: "finance",
+    href: "/finance",
+    icon: "finance",
+    requires: "finance.view",
+  },
+  {
+    id: "work",
+    href: "/work",
+    icon: "work",
+    requires: "work.view",
+    expandable: true,
+  },
+  { id: "people", href: "/people", icon: "people", requires: "people.view" },
+  { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" },
+];
+
 const MEMBER_RAIL: Destination[] = [
   { id: "today", href: "/today", icon: "today" },
   {
@@ -149,18 +182,41 @@ const MEMBER_RAIL: Destination[] = [
 export const ALL_DESTINATIONS: Destination[] = [
   { id: "today", href: "/today", icon: "today" },
   { id: "work", href: "/work", icon: "work", requires: "work.view" },
-  { id: "channels", href: "/channels", icon: "channels", requires: "channel.view" },
-  { id: "calendar", href: "/calendar", icon: "calendar", requires: "calendar.view" },
+  {
+    id: "channels",
+    href: "/channels",
+    icon: "channels",
+    requires: "channel.view",
+  },
+  {
+    id: "calendar",
+    href: "/calendar",
+    icon: "calendar",
+    requires: "calendar.view",
+  },
   { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" },
   { id: "crm", href: "/crm", icon: "crm", requires: "crm.view" },
+  {
+    id: "finance",
+    href: "/finance",
+    icon: "finance",
+    requires: "finance.view",
+  },
   { id: "leave", href: "/leave", icon: "leave", requires: "leave.view" },
   { id: "people", href: "/people", icon: "people", requires: "people.view" },
-  { id: "insights", href: "/insights", icon: "insights", requires: "insights.view" },
+  {
+    id: "insights",
+    href: "/insights",
+    icon: "insights",
+    requires: "insights.view",
+  },
 ];
 
 /** The ones this person may actually open. */
 export function destinationsFor(actor: Actor): Destination[] {
-  return ALL_DESTINATIONS.filter((item) => !item.requires || can(actor, item.requires));
+  return ALL_DESTINATIONS.filter(
+    (item) => !item.requires || can(actor, item.requires),
+  );
 }
 
 /**
@@ -168,14 +224,18 @@ export function destinationsFor(actor: Actor): Destination[] {
  * the cap is enforced rather than trusted.
  */
 export function railFor(actor: Actor): Destination[] {
-  // The module decides before the role does. Holding `crm` is what says this
-  // person's day is the pipeline, whatever their seniority.
-  const rail = hasModule(actor, "crm")
-    ? SALES_RAIL
-    : atLeast(actor, "manager")
-      ? ADMIN_RAIL
-      : MEMBER_RAIL;
-  const visible = rail.filter((item) => !item.requires || can(actor, item.requires));
+  // A module decides before the role does. Holding one of these flags is what
+  // says what this person's day is, whatever their seniority.
+  const rail = hasModule(actor, "finance")
+    ? FINANCE_RAIL
+    : hasModule(actor, "crm")
+      ? SALES_RAIL
+      : atLeast(actor, "manager")
+        ? ADMIN_RAIL
+        : MEMBER_RAIL;
+  const visible = rail.filter(
+    (item) => !item.requires || can(actor, item.requires),
+  );
 
   if (visible.length > MAX_PRIMARY_DESTINATIONS) {
     throw new Error(

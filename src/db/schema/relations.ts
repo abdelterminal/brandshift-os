@@ -3,6 +3,7 @@ import { relations } from "drizzle-orm";
 import { activityEvents } from "./activity";
 import { channelMembers, channels, messages } from "./channels";
 import { companies, contacts, deals } from "./crm";
+import { expenses, invoiceLines, invoices, quoteLines, quotes } from "./finance";
 import { leaveRequests } from "./leave";
 import { meetingAttendees, meetings } from "./meetings";
 import { notifications } from "./notifications";
@@ -162,6 +163,45 @@ export const dealsRelations = relations(deals, ({ one }) => ({
     references: [contacts.id],
   }),
   owner: one(users, { fields: [deals.ownerUserId], references: [users.id] }),
+}));
+
+export const quotesRelations = relations(quotes, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [quotes.organizationId],
+    references: [organizations.id],
+  }),
+  company: one(companies, { fields: [quotes.companyId], references: [companies.id] }),
+  deal: one(deals, { fields: [quotes.dealId], references: [deals.id] }),
+  project: one(projects, { fields: [quotes.projectId], references: [projects.id] }),
+  lines: many(quoteLines),
+}));
+
+export const quoteLinesRelations = relations(quoteLines, ({ one }) => ({
+  quote: one(quotes, { fields: [quoteLines.quoteId], references: [quotes.id] }),
+}));
+
+export const invoicesRelations = relations(invoices, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [invoices.organizationId],
+    references: [organizations.id],
+  }),
+  company: one(companies, { fields: [invoices.companyId], references: [companies.id] }),
+  project: one(projects, { fields: [invoices.projectId], references: [projects.id] }),
+  quote: one(quotes, { fields: [invoices.quoteId], references: [quotes.id] }),
+  lines: many(invoiceLines),
+}));
+
+export const invoiceLinesRelations = relations(invoiceLines, ({ one }) => ({
+  invoice: one(invoices, { fields: [invoiceLines.invoiceId], references: [invoices.id] }),
+}));
+
+export const expensesRelations = relations(expenses, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [expenses.organizationId],
+    references: [organizations.id],
+  }),
+  project: one(projects, { fields: [expenses.projectId], references: [projects.id] }),
+  paidBy: one(users, { fields: [expenses.paidByUserId], references: [users.id] }),
 }));
 
 export const leaveRequestsRelations = relations(leaveRequests, ({ one }) => ({

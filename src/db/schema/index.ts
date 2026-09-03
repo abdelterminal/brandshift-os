@@ -14,4 +14,5 @@ export * from "./channels";
 export * from "./meetings";
 export * from "./leave";
 export * from "./crm";
+export * from "./finance";
 export * from "./relations";

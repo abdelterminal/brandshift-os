@@ -60,7 +60,9 @@ function projectConditions(filter: ProjectFilter): Array<SQL | undefined> {
 
   return [
     filter.includeArchived ? undefined : isNull(projects.archivedAt),
-    trimmed ? or(ilike(projects.name, `%${trimmed}%`), ilike(projects.key, `%${trimmed}%`)) : undefined,
+    trimmed
+      ? or(ilike(projects.name, `%${trimmed}%`), ilike(projects.key, `%${trimmed}%`))
+      : undefined,
     filter.status ? eq(projects.status, filter.status) : undefined,
     filter.departmentId ? eq(projects.departmentId, filter.departmentId) : undefined,
   ];
@@ -148,4 +150,67 @@ export async function listProjectsForUser(actor: Actor, userId: string): Promise
 
   const all = await listProjects(actor);
   return all.filter((project) => ids.has(project.id));
+}
+
+/**
+ * Create a project from an accepted quote.
+ *
+ * The handover CRM left open: selling the work and doing it were two halves
+ * with retyping between them. Each quote line becomes a task, because the
+ * lines are what was agreed and therefore what has to be delivered.
+ *
+ * Kept here rather than in `finance.ts` so that `projects` is still only
+ * written to from one module -- the key uniqueness check and the owner rule
+ * live here and there is no second copy of either.
+ */
+export async function createProjectFromQuote(
+  actor: Actor,
+  input: { key: string; name: string; description: string; deliverables: string[] },
+): Promise<{ id: string; key: string } | null> {
+  const { db } = await import("@/db/client");
+  const { tasks } = await import("@/db/schema/tasks");
+
+  return db.transaction(async (tx) => {
+    const scope = withOrg(actor.organizationId, tx);
+
+    const clash = await scope.selectFields(
+      projects,
+      { id: projects.id },
+      eq(projects.key, input.key),
+    );
+    if (clash.length > 0) return null;
+
+    const [project] = await scope.insert(projects, {
+      key: input.key,
+      name: input.name,
+      description: input.description,
+      status: "planning",
+      priority: "medium",
+      ownerUserId: actor.userId,
+      createdByUserId: actor.userId,
+    });
+    if (!project) return null;
+
+    await scope.insert(projectMembers, {
+      projectId: project.id,
+      userId: actor.userId,
+      role: "lead" as const,
+    });
+
+    if (input.deliverables.length > 0) {
+      await scope.insert(
+        tasks,
+        input.deliverables.map((title, position) => ({
+          projectId: project.id,
+          title: title.slice(0, 200),
+          status: "todo" as const,
+          priority: "medium" as const,
+          position,
+          createdByUserId: actor.userId,
+        })),
+      );
+    }
+
+    return { id: project.id, key: project.key };
+  });
 }

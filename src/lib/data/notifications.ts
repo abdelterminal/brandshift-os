@@ -44,7 +44,10 @@ export type NotificationRow = {
     | "meeting"
     | "leave"
     | "company"
-    | "deal";
+    | "deal"
+    | "quote"
+    | "invoice"
+    | "expense";
   subjectId: string;
   actorName: string | null;
   taskId: string | null;

@@ -30,7 +30,10 @@ export type ActivityRow = {
     | "meeting"
     | "leave"
     | "company"
-    | "deal";
+    | "deal"
+    | "quote"
+    | "invoice"
+    | "expense";
   subjectId: string;
   projectId: string | null;
   taskId: string | null;

@@ -1,0 +1,121 @@
+import { getFormatter, getTranslations } from "next-intl/server";
+
+import type { DocumentLine } from "@/lib/data/finance";
+import { quantityToString } from "@/lib/money";
+import { cn } from "@/lib/utils";
+
+/**
+ * The lines of a quote or an invoice, as the client would read them.
+ *
+ * A table, and a scrolling one below about 34rem: a document is columns of
+ * figures, and squeezing them into a phone by shrinking the type would put
+ * money below 12px. It scrolls inside its own box rather than moving the page.
+ *
+ * `relative` because `sr-only` is `position: absolute` -- without a positioned
+ * ancestor those spans escape the clip and widen the whole document.
+ */
+export async function DocumentLines({
+  lines,
+  currency,
+  subtotal,
+  tax,
+  total,
+  paid,
+}: {
+  lines: DocumentLine[];
+  currency: string;
+  subtotal: number;
+  tax: number;
+  total: number;
+  /** Only invoices have this. */
+  paid?: number;
+}) {
+  const [t, format] = await Promise.all([getTranslations("Finance"), getFormatter()]);
+
+  const money = (cents: number) => format.number(cents / 100, { style: "currency", currency });
+
+  return (
+    <div className="border-border bg-surface-raised relative overflow-x-auto rounded-card border">
+      <table className="w-full min-w-[34rem] border-collapse">
+        <thead>
+          <tr className="border-border border-b">
+            <th scope="col" className="text-caption text-fg-muted px-4 py-2 text-left font-medium">
+              {t("description")}
+            </th>
+            <th scope="col" className="text-caption text-fg-muted px-4 py-2 text-right font-medium">
+              {t("quantity")}
+            </th>
+            <th scope="col" className="text-caption text-fg-muted px-4 py-2 text-right font-medium">
+              {t("unitPrice")}
+            </th>
+            <th scope="col" className="text-caption text-fg-muted px-4 py-2 text-right font-medium">
+              {t("taxRate")}
+            </th>
+            <th scope="col" className="text-caption text-fg-muted px-4 py-2 text-right font-medium">
+              {t("lineTotal")}
+            </th>
+          </tr>
+        </thead>
+
+        <tbody className="divide-border divide-y">
+          {lines.map((line) => (
+            <tr key={line.id}>
+              <td className="text-body text-fg-default px-4 py-2">{line.description}</td>
+              <td className="text-body text-fg-muted px-4 py-2 text-right tabular-nums">
+                {quantityToString(line.quantityThousandths)}
+              </td>
+              <td className="text-body text-fg-muted px-4 py-2 text-right tabular-nums">
+                {money(line.unitPrice)}
+              </td>
+              <td className="text-body text-fg-muted px-4 py-2 text-right tabular-nums">
+                {line.taxRateBasisPoints / 100}%
+              </td>
+              <td className="text-body text-fg-default px-4 py-2 text-right tabular-nums">
+                {money(line.lineTotal)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+
+        <tfoot className="border-border border-t">
+          {(
+            [
+              ["subtotal", subtotal, false],
+              ["tax", tax, false],
+              ["total", total, true],
+              ...(paid !== undefined && paid > 0
+                ? ([
+                    ["paid", paid, false],
+                    ["owed", total - paid, true],
+                  ] as const)
+                : []),
+            ] as const
+          ).map(([key, value, strong]) => (
+            <tr key={key}>
+              <th
+                scope="row"
+                colSpan={4}
+                className={cn(
+                  "px-4 py-1.5 text-right",
+                  strong
+                    ? "text-body text-fg-default font-semibold"
+                    : "text-body text-fg-muted font-normal",
+                )}
+              >
+                {t(key)}
+              </th>
+              <td
+                className={cn(
+                  "px-4 py-1.5 text-right tabular-nums",
+                  strong ? "text-body text-fg-default font-semibold" : "text-body text-fg-muted",
+                )}
+              >
+                {money(value)}
+              </td>
+            </tr>
+          ))}
+        </tfoot>
+      </table>
+    </div>
+  );
+}

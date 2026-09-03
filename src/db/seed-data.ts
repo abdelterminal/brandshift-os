@@ -1056,3 +1056,295 @@ export const DEALS: SeedDeal[] = [
     lostReason: "Priced above budget by about a third. Worth revisiting at a smaller scope.",
   },
 ];
+
+/**
+ * Quotes, invoices and expenses.
+ *
+ * Every status is represented, because the states that go wrong quietly are
+ * the ones nobody looks at: an invoice past its date, a part payment, a void
+ * with a reason on it, a quote that expired without an answer.
+ *
+ * Amounts are written the way somebody would type them. The seed parses them
+ * with the same function the form does, so a seeded figure and a typed one go
+ * through identical arithmetic.
+ */
+export type SeedLine = {
+  description: string;
+  /** As typed: "1", "1.5", "0.125". */
+  quantity: string;
+  /** As typed: "800", "12 500", "1 234,56". */
+  unitPrice: string;
+  /** Basis points: 2000 is 20%. */
+  tax: number;
+};
+
+export type SeedQuote = {
+  companyName: string;
+  title: string;
+  status: "draft" | "sent" | "accepted" | "declined" | "expired";
+  /** Days from today. Negative is in the past. */
+  issuedInDays: number;
+  validForDays: number | null;
+  ownerEmail: string;
+  declineReason?: string;
+  lines: SeedLine[];
+};
+
+export const QUOTES: SeedQuote[] = [
+  {
+    companyName: "Verdant Foods",
+    title: "Packaging refresh, full range",
+    status: "sent",
+    issuedInDays: -8,
+    validForDays: 30,
+    ownerEmail: "sofia.laurent@brandshift.test",
+    lines: [
+      { description: "Discovery and audit", quantity: "5", unitPrice: "900", tax: 2000 },
+      { description: "Structural design, six SKUs", quantity: "18", unitPrice: "850", tax: 2000 },
+      { description: "Artwork and print liaison", quantity: "12", unitPrice: "750", tax: 2000 },
+      { description: "Print sample production", quantity: "1", unitPrice: "4 200", tax: 550 },
+    ],
+  },
+  {
+    companyName: "Kestrel Partners",
+    title: "Annual report and investor deck",
+    status: "sent",
+    issuedInDays: -3,
+    validForDays: 21,
+    ownerEmail: "claire.moreau@brandshift.test",
+    lines: [
+      { description: "Editorial and structure", quantity: "8", unitPrice: "950", tax: 2000 },
+      { description: "Layout, 64 pages", quantity: "20", unitPrice: "800", tax: 2000 },
+      { description: "Investor deck, 30 slides", quantity: "10", unitPrice: "850", tax: 2000 },
+    ],
+  },
+  {
+    companyName: "Harbour Group",
+    title: "Onboarding revamp",
+    status: "accepted",
+    issuedInDays: -45,
+    validForDays: 30,
+    ownerEmail: "tom.decker@brandshift.test",
+    lines: [
+      { description: "Service design workshops", quantity: "6", unitPrice: "1 100", tax: 2000 },
+      {
+        description: "Journey mapping and prototypes",
+        quantity: "22",
+        unitPrice: "820",
+        tax: 2000,
+      },
+      { description: "Handover and training", quantity: "4", unitPrice: "900", tax: 2000 },
+    ],
+  },
+  {
+    companyName: "Orbit Media",
+    title: "Q4 retainer renewal",
+    status: "declined",
+    issuedInDays: -80,
+    validForDays: 30,
+    ownerEmail: "amina.benali@brandshift.test",
+    declineReason: "Their new CMO brought an agency with her. Nothing to do with the price.",
+    lines: [
+      { description: "Retainer, three months", quantity: "3", unitPrice: "18 000", tax: 2000 },
+    ],
+  },
+  {
+    companyName: "Lumen Energy",
+    title: "Sustainability campaign, EU",
+    status: "expired",
+    issuedInDays: -70,
+    validForDays: 21,
+    ownerEmail: "sofia.laurent@brandshift.test",
+    lines: [
+      { description: "Campaign strategy", quantity: "10", unitPrice: "1 000", tax: 2000 },
+      {
+        description: "Film production, five markets",
+        quantity: "1",
+        unitPrice: "78 000",
+        tax: 2000,
+      },
+      { description: "Paid media assets", quantity: "15", unitPrice: "700", tax: 2000 },
+    ],
+  },
+  {
+    companyName: "Meridian Bank",
+    title: "Phase two: internal brand",
+    status: "draft",
+    issuedInDays: 0,
+    validForDays: 45,
+    ownerEmail: "claire.moreau@brandshift.test",
+    lines: [
+      { description: "Internal audit and interviews", quantity: "8", unitPrice: "950", tax: 2000 },
+      { description: "Toolkit and templates", quantity: "16", unitPrice: "820", tax: 2000 },
+    ],
+  },
+];
+
+export type SeedInvoice = {
+  companyName: string;
+  projectKey: string | null;
+  title: string;
+  status: "draft" | "sent" | "part_paid" | "paid" | "void";
+  issuedInDays: number;
+  dueInDays: number;
+  /** As typed, for part payments. */
+  paid?: string;
+  voidReason?: string;
+  lines: SeedLine[];
+};
+
+export const INVOICES: SeedInvoice[] = [
+  {
+    companyName: "Meridian Bank",
+    projectKey: "MER",
+    title: "Meridian rebrand, stage one",
+    status: "paid",
+    issuedInDays: -55,
+    dueInDays: -25,
+    lines: [
+      { description: "Positioning and strategy", quantity: "20", unitPrice: "950", tax: 2000 },
+      { description: "Identity development", quantity: "30", unitPrice: "880", tax: 2000 },
+    ],
+  },
+  {
+    companyName: "Meridian Bank",
+    projectKey: "MER",
+    title: "Meridian rebrand, stage two",
+    status: "part_paid",
+    issuedInDays: -20,
+    dueInDays: 10,
+    paid: "15 000",
+    lines: [
+      { description: "Rollout kit, 40 branches", quantity: "35", unitPrice: "860", tax: 2000 },
+      { description: "Signage specification", quantity: "12", unitPrice: "800", tax: 2000 },
+    ],
+  },
+  {
+    companyName: "Northwind Retail",
+    projectKey: "NOR",
+    title: "Replatform, milestone two",
+    status: "sent",
+    // Past its date and unpaid: the finance screen opens on this.
+    issuedInDays: -50,
+    dueInDays: -20,
+    lines: [
+      { description: "Catalogue migration", quantity: "28", unitPrice: "820", tax: 2000 },
+      { description: "Checkout rebuild", quantity: "34", unitPrice: "880", tax: 2000 },
+    ],
+  },
+  {
+    companyName: "Harbour Group",
+    projectKey: "HAR",
+    title: "Onboarding revamp, deposit",
+    status: "sent",
+    issuedInDays: -5,
+    dueInDays: 25,
+    lines: [
+      { description: "Deposit, 40% of agreed fee", quantity: "1", unitPrice: "13 400", tax: 2000 },
+    ],
+  },
+  {
+    companyName: "Lumen Energy",
+    projectKey: "LUM",
+    title: "Campaign assets, first batch",
+    status: "draft",
+    issuedInDays: 0,
+    dueInDays: 30,
+    lines: [
+      { description: "Social cutdowns, nine formats", quantity: "9", unitPrice: "650", tax: 2000 },
+    ],
+  },
+  {
+    companyName: "Orbit Media",
+    projectKey: "ORB",
+    title: "Retainer, September",
+    status: "void",
+    issuedInDays: -35,
+    dueInDays: -5,
+    voidReason: "Issued against the old retainer rate. Replaced by INV-2026-0007.",
+    lines: [{ description: "Retainer, one month", quantity: "1", unitPrice: "6 000", tax: 2000 }],
+  },
+];
+
+export type SeedExpense = {
+  description: string;
+  category: "subcontractor" | "software" | "travel" | "equipment" | "production" | "other";
+  spentInDays: number;
+  amount: string;
+  tax: string;
+  supplier: string | null;
+  projectKey: string | null;
+  paidByEmail: string;
+  reimbursable: boolean;
+  reimbursed?: boolean;
+};
+
+export const EXPENSES: SeedExpense[] = [
+  {
+    description: "Freelance motion designer, two weeks",
+    category: "subcontractor",
+    spentInDays: -12,
+    amount: "4 800",
+    tax: "960",
+    supplier: "Callum Reid",
+    projectKey: "LUM",
+    paidByEmail: "amina.benali@brandshift.test",
+    reimbursable: false,
+  },
+  {
+    description: "Figma, annual, twelve seats",
+    category: "software",
+    spentInDays: -40,
+    amount: "5 760",
+    tax: "1 152",
+    supplier: "Figma",
+    projectKey: null,
+    paidByEmail: "tom.decker@brandshift.test",
+    reimbursable: false,
+  },
+  {
+    description: "Train to Lyon, Verdant pitch",
+    category: "travel",
+    spentInDays: -6,
+    amount: "184.50",
+    tax: "18.45",
+    supplier: "SNCF",
+    projectKey: null,
+    paidByEmail: "sofia.laurent@brandshift.test",
+    reimbursable: true,
+  },
+  {
+    description: "Print samples, packaging mock-ups",
+    category: "production",
+    spentInDays: -9,
+    amount: "612.40",
+    tax: "122.48",
+    supplier: "Atelier Papier",
+    projectKey: "VER",
+    paidByEmail: "marc.dubois@brandshift.test",
+    reimbursable: true,
+  },
+  {
+    description: "Colour-calibrated monitor",
+    category: "equipment",
+    spentInDays: -70,
+    amount: "1 240",
+    tax: "248",
+    supplier: "Eizo",
+    projectKey: null,
+    paidByEmail: "yusuf.karim@brandshift.test",
+    reimbursable: true,
+    reimbursed: true,
+  },
+  {
+    description: "Photography, Northwind product shoot",
+    category: "production",
+    spentInDays: -22,
+    amount: "3 400",
+    tax: "680",
+    supplier: "Studio Nord",
+    projectKey: "NOR",
+    paidByEmail: "elena.rossi@brandshift.test",
+    reimbursable: false,
+  },
+];

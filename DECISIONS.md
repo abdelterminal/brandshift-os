@@ -203,6 +203,57 @@ the pipeline was the only person who could reach it solely by name in the comman
 decimal, and never allowed to become a float. This is the column ERP will invoice against, and a
 float that has been through a sum is a rounding error waiting for a customer to find it.
 
+## Added during ERP
+
+**Integer cents, from the parse to the format.** Every amount is a whole number of minor units the
+moment it leaves the input and stays one until it is formatted for the screen. Nothing in between
+touches a float. `0.1 + 0.2` is `0.30000000000000004`, and an invoice is a column of numbers added
+up and then multiplied by a tax rate -- a float that has been through that is a rounding error
+waiting for a client to find it. `numeric` in the database, an exact decimal string on the wire,
+`Cents` in the code.
+
+**Tax is computed per line and then added, never applied to the subtotal.** A document with design
+at 20% and print at 5.5% gives a different total each way, and per line is the one that is correct.
+The consequence is worth stating: a hundred lines at 7 cents plus 20% comes to 100 cents of tax,
+which is not 20% of 700. That is not drift -- it is what adding up line by line means, and it is
+what the client's own accountant will do.
+
+**Round half away from zero.** `Math.round` rounds half *up*, which sends -0.5 to 0 and makes a
+credit note disagree with the invoice it reverses. Tax authorities specify away from zero; so does
+`roundHalfAwayFromZero`, and it is the only rounding in the app.
+
+**An invoice stores its totals. A leave balance does not.** These look like the same decision made
+two different ways, and they are not. A balance is a fact about the present: it is whatever the
+approved requests currently add up to, and storing it invites the stored number and the rows to
+disagree. An invoice is a *document*: once it has been sent, what it said is what it said, and
+recomputing it next year against a changed tax rate would silently rewrite history.
+
+**Numbers are allocated with `SELECT ... FOR UPDATE` inside the writing transaction.** Two people
+clicking Create at the same second must not both get `INV-2026-0007`. The lock does the work and a
+unique index sits behind it, so the worst case is a refused write rather than a duplicate.
+
+**An issued invoice is voided, never deleted.** A number that went to a client cannot be reused and
+the document cannot vanish. Void is a status, it keeps the row, and it says who did it.
+
+**A fourth rail, and `finance` outranks `crm` on it.** Finance shipped as a route, a permission
+and a palette entry, and for one commit the only way to reach it was to know its name -- exactly
+the fault the sales rail had been added to fix a milestone earlier. It landed hardest on the two
+people who hold both flags, the owner and the operations lead, because the pipeline rail had
+already claimed them. So a module still decides before the role does, and `finance` is now read
+first: `crm` ends up on every manager who has been near a client, where `finance` is only ever
+given to the people who send the invoices. The cap of five was not bent -- Finance takes the slot
+Insights holds on the coordination rail, and Insights stays one keystroke away in the palette.
+
+**No `orders` table.** The roadmap said quotes, orders, invoices, expenses. For an agency the
+confirmed engagement is already an accepted quote plus the project the work becomes; a third entity
+between the deal and the project is a table nobody fills in and a status nobody keeps current.
+What was built instead is the quote-to-project handover, which is the thing that was actually
+missing. Revisit if a customer sells anything that is not a project.
+
+**The running total in the form is the same function as the stored one.** `totalsFor` runs in the
+browser under the line editor and again inside the transaction. A second implementation for the
+preview is a second implementation that can disagree with the invoice.
+
 ## Deliberately not chosen
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the

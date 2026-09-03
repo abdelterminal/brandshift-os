@@ -35,6 +35,10 @@ const NAV_SEGMENTS = new Set([
   "companies",
   "contacts",
   "deals",
+  "finance",
+  "quotes",
+  "invoices",
+  "expenses",
   "team",
   "myWork",
 ]);

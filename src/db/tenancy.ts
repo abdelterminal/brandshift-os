@@ -6,6 +6,13 @@ import type { PgColumn, PgInsertValue, PgTable, PgUpdateSetSource } from "drizzl
 import { activityEvents } from "./schema/activity";
 import { channelMembers, channels, messages } from "./schema/channels";
 import { companies, contacts, deals } from "./schema/crm";
+import {
+  expenses,
+  invoiceLines,
+  invoices,
+  quoteLines,
+  quotes,
+} from "./schema/finance";
 import { leaveRequests } from "./schema/leave";
 import { meetingAttendees, meetings } from "./schema/meetings";
 import { notifications } from "./schema/notifications";
@@ -58,6 +65,11 @@ export const TENANT_TABLES = {
   companies,
   contacts,
   deals,
+  quotes,
+  quoteLines,
+  invoices,
+  invoiceLines,
+  expenses,
 } as const;
 
 export type TenantTable = (typeof TENANT_TABLES)[keyof typeof TENANT_TABLES];
