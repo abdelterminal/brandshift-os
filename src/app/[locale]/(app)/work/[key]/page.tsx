@@ -1,3 +1,4 @@
+import { MessagesSquare } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
@@ -5,6 +6,8 @@ import { ActivityFeed } from "@/components/work/activity-feed";
 import { ProjectTabs } from "@/components/work/project-tabs";
 import { PersonAvatar } from "@/components/ui/avatar";
 import { CountBadge, StatusPill } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import { requireUser } from "@/lib/auth/guards";
 import { listProjectActivity } from "@/lib/data/activity";
 import { getProjectByKey, listProjectMembers } from "@/lib/data/projects";
@@ -45,15 +48,17 @@ export default async function ProjectPage({
   const project = await getProjectByKey(session.actor, key);
   if (!project) notFound();
 
-  const [t, statusLabels, priorities, format, tasks, members, activity] = await Promise.all([
-    getTranslations("Work"),
-    getTranslations("ProjectStatus"),
-    getTranslations("Priority"),
-    getFormatter(),
-    listProjectTasks(session.actor, project.id),
-    listProjectMembers(session.actor, project.id),
-    listProjectActivity(session.actor, project.id),
-  ]);
+  const [t, channels, statusLabels, priorities, format, tasks, members, activity] =
+    await Promise.all([
+      getTranslations("Work"),
+      getTranslations("Channels"),
+      getTranslations("ProjectStatus"),
+      getTranslations("Priority"),
+      getFormatter(),
+      listProjectTasks(session.actor, project.id),
+      listProjectMembers(session.actor, project.id),
+      listProjectActivity(session.actor, project.id),
+    ]);
 
   const open = tasks.filter(
     (task) => task.status === "todo" || task.status === "in_progress" || task.status === "blocked",
@@ -74,9 +79,18 @@ export default async function ProjectPage({
             <StatusPill tone={STATUS_TONE[project.status]}>
               {statusLabels(project.status)}
             </StatusPill>
-            {blocked.length > 0 ? (
-              <CountBadge tone="blocked">{blocked.length}</CountBadge>
-            ) : null}
+            {blocked.length > 0 ? <CountBadge tone="blocked">{blocked.length}</CountBadge> : null}
+
+            {/*
+              A link, not a tab. The conversation has one home at
+              `/channels/<slug>`, so the URL somebody pastes into a message and
+              the one they reach from here are the same page -- and this route
+              creates the channel first for a project that predates them.
+            */}
+            <Button size="sm" render={<Link href={`/work/${project.key}/channel`} />}>
+              <MessagesSquare aria-hidden className="size-4" />
+              {channels("openChannel")}
+            </Button>
           </div>
         </div>
 

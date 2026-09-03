@@ -28,6 +28,7 @@ const NAV_SEGMENTS = new Set([
   "insights",
   "inbox",
   "calendar",
+  "channels",
   "team",
   "myWork",
 ]);

@@ -21,8 +21,74 @@ import { NAV_ICONS } from "./nav-icons";
  */
 
 /** Active if it is the page, or an ancestor of it: /work matches /work/MER. */
-function isActive(pathname: string, href: string): boolean {
+function isActive(pathname: string, href: string, exact = false): boolean {
+  if (exact) return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/**
+ * One row of the rail, at either level.
+ *
+ * Shared rather than duplicated so a channel gets the same active treatment as
+ * a primary destination -- the red bar, the tinted ground and the weight
+ * change together, because "where am I" is the question this rail exists to
+ * answer and colour alone would not answer it for everyone.
+ */
+function RailLink({
+  destination,
+  counts,
+  nested = false,
+}: {
+  destination: Destination;
+  counts?: Partial<Record<string, number>>;
+  nested?: boolean;
+}) {
+  const t = useTranslations("Nav");
+  const pathname = usePathname();
+
+  const active = isActive(pathname, destination.href, destination.exact);
+  const Icon = NAV_ICONS[destination.icon];
+  const count = counts?.[destination.id] ?? 0;
+
+  return (
+    <Link
+      href={destination.href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "group relative flex items-center gap-2.5 rounded-control py-2 pr-2 text-label",
+        nested ? "pl-8" : "pl-3",
+        focusRing,
+        transition,
+        active
+          ? "bg-sidebar-active-bg text-accent-text font-semibold"
+          : "text-sidebar-fg hover:bg-sidebar-hover hover:text-sidebar-fg-active",
+      )}
+    >
+      {/* The red bar. Most of the rail's share of the 5% budget. */}
+      <span
+        aria-hidden
+        className={cn(
+          "absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-pill",
+          active ? "bg-brand" : "bg-transparent",
+        )}
+      />
+      <Icon aria-hidden className={cn("shrink-0", nested ? "size-3.5" : "size-4")} />
+      <span className="truncate">{destination.label ?? t(destination.id)}</span>
+
+      {count > 0 ? (
+        <CountBadge tone="accent" className="ml-auto">
+          {count}
+        </CountBadge>
+      ) : null}
+
+      {destination.expandable && count === 0 && !destination.children?.length ? (
+        <ChevronRight
+          aria-hidden
+          className="text-fg-subtle ml-auto size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+        />
+      ) : null}
+    </Link>
+  );
 }
 
 export function Sidebar({
@@ -36,7 +102,6 @@ export function Sidebar({
   counts?: Partial<Record<string, number>>;
 }) {
   const t = useTranslations("Nav");
-  const pathname = usePathname();
 
   return (
     <nav
@@ -50,55 +115,28 @@ export function Sidebar({
         </span>
       </div>
 
-      <ul className="flex flex-1 flex-col gap-0.5 px-2 py-2">
-        {destinations.map((destination) => {
-          const active = isActive(pathname, destination.href);
-          const Icon = NAV_ICONS[destination.icon];
-          const count = counts?.[destination.id] ?? 0;
+      <ul className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-2">
+        {destinations.map((destination) => (
+          <li key={destination.id}>
+            <RailLink destination={destination} counts={counts} />
 
-          return (
-            <li key={destination.id}>
-              <Link
-                href={destination.href}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "group relative flex items-center gap-2.5 rounded-control py-2 pr-2 pl-3 text-label",
-                  focusRing,
-                  transition,
-                  active
-                    ? "bg-sidebar-active-bg text-accent-text font-semibold"
-                    : "text-sidebar-fg hover:bg-sidebar-hover hover:text-sidebar-fg-active",
-                )}
-              >
-                {/* The red bar. Most of the rail's share of the 5% budget. */}
-                <span
-                  aria-hidden
-                  className={cn(
-                    "absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-pill",
-                    active ? "bg-brand" : "bg-transparent",
-                  )}
-                />
-                <Icon aria-hidden className="size-4 shrink-0" />
-                <span className="truncate">{t(destination.id)}</span>
-
-                {count > 0 ? (
-                  <CountBadge tone="accent" className="ml-auto">
-                    {count}
-                  </CountBadge>
-                ) : null}
-
-                {/* Phase 2 nests channels under Work; the affordance is
-                    already here so the rail does not change shape later. */}
-                {destination.expandable && count === 0 ? (
-                  <ChevronRight
-                    aria-hidden
-                    className="text-fg-subtle ml-auto size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-                  />
-                ) : null}
-              </Link>
-            </li>
-          );
-        })}
+            {/*
+              Channels, nested. They are children rather than a sixth
+              destination because the cap of five is what keeps this rail
+              scannable -- and because a project's channel belongs to that
+              work, not beside it.
+            */}
+            {destination.children && destination.children.length > 0 ? (
+              <ul className="mt-0.5 flex flex-col gap-0.5">
+                {destination.children.map((child) => (
+                  <li key={child.id}>
+                    <RailLink destination={child} counts={counts} nested />
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </li>
+        ))}
       </ul>
     </nav>
   );

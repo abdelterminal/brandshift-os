@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 
 import { activityEvents } from "./activity";
+import { channelMembers, channels, messages } from "./channels";
 import { notifications } from "./notifications";
 import { organizations } from "./organizations";
 import { departments, memberships, users } from "./people";
@@ -22,6 +23,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   projects: many(projects),
   tasks: many(tasks),
   activityEvents: many(activityEvents),
+  channels: many(channels),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -73,6 +75,7 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
     references: [departments.id],
   }),
   owner: one(users, { fields: [projects.ownerUserId], references: [users.id] }),
+  channel: one(channels, { fields: [projects.id], references: [channels.projectId] }),
   members: many(projectMembers),
   tasks: many(tasks),
   activityEvents: many(activityEvents),
@@ -96,6 +99,34 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
   assignee: one(users, { fields: [tasks.assigneeUserId], references: [users.id] }),
   createdBy: one(users, { fields: [tasks.createdByUserId], references: [users.id] }),
   activityEvents: many(activityEvents),
+}));
+
+export const channelsRelations = relations(channels, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [channels.organizationId],
+    references: [organizations.id],
+  }),
+  project: one(projects, { fields: [channels.projectId], references: [projects.id] }),
+  members: many(channelMembers),
+  messages: many(messages),
+}));
+
+export const channelMembersRelations = relations(channelMembers, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [channelMembers.organizationId],
+    references: [organizations.id],
+  }),
+  channel: one(channels, { fields: [channelMembers.channelId], references: [channels.id] }),
+  user: one(users, { fields: [channelMembers.userId], references: [users.id] }),
+}));
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [messages.organizationId],
+    references: [organizations.id],
+  }),
+  channel: one(channels, { fields: [messages.channelId], references: [channels.id] }),
+  author: one(users, { fields: [messages.authorUserId], references: [users.id] }),
 }));
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({

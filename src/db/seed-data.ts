@@ -283,8 +283,7 @@ export const PROJECTS: SeedProject[] = [
   {
     key: "ORB",
     name: "Orbit retainer, Q4",
-    description:
-      "Rolling design and content retainer for Orbit. Scoped monthly, invoiced monthly.",
+    description: "Rolling design and content retainer for Orbit. Scoped monthly, invoiced monthly.",
     department: "client-services",
     status: "active",
     priority: "medium",
@@ -401,3 +400,137 @@ export const BLOCKER_REASONS = [
   "Needs the supplier quote before we can size the work.",
   "Waiting for brand sign-off on the colour change.",
 ];
+
+/**
+ * What people said, per project channel.
+ *
+ * Written as real exchanges rather than filler, because a channel full of
+ * "Message 1 / Message 2" tells you nothing about whether the screen works.
+ * These are the conversations that go with the tasks seeded above -- a blocker
+ * being chased, a decision being made -- so the interleaved feed reads as one
+ * story rather than two lists that happen to share a page.
+ *
+ * `minutesAgo` counts back from the seed run, so the newest lines are recent
+ * enough to be genuinely unread.
+ */
+export type SeedMessage = {
+  authorEmail: string;
+  body: string;
+  minutesAgo: number;
+};
+
+export const CHANNEL_MESSAGES: Record<string, SeedMessage[]> = {
+  MER: [
+    {
+      authorEmail: "claire.moreau@brandshift.test",
+      body: "Meridian have moved the board presentation forward a week. Everything in the rollout kit now needs to be signed off by the 14th.",
+      minutesAgo: 4320,
+    },
+    {
+      authorEmail: "nadia.haddad@brandshift.test",
+      body: "That is tight but doable. The branch signage spec is the long pole -- I need the final wordmark locked before I can size anything.",
+      minutesAgo: 4180,
+    },
+    {
+      authorEmail: "yusuf.karim@brandshift.test",
+      body: "Wordmark is locked as of this morning. Uploaded to the shared drive, same folder as the last round.",
+      minutesAgo: 2900,
+    },
+    {
+      authorEmail: "sofia.laurent@brandshift.test",
+      body: "I have told the client we are holding to the 14th. They asked whether the 40-branch rollout still lands in the same quarter -- I said yes, flag it here if that changes.",
+      minutesAgo: 240,
+    },
+    {
+      authorEmail: "marc.dubois@brandshift.test",
+      body: "One thing worth deciding here rather than in a call: are we producing the window vinyls in two sizes or three? Three covers every branch, two covers 36 of 40 and saves about a fortnight.",
+      minutesAgo: 55,
+    },
+  ],
+  ATL: [
+    {
+      authorEmail: "yusuf.karim@brandshift.test",
+      body: "Dark mode contrast pass is done. Two of the muted greys were below AA on hover, both fixed at the token level rather than per component.",
+      minutesAgo: 5600,
+    },
+    {
+      authorEmail: "priya.raman@brandshift.test",
+      body: "Good catch. Can we get a test that fails the build for that, rather than someone noticing it again in six months?",
+      minutesAgo: 5400,
+    },
+    {
+      authorEmail: "yusuf.karim@brandshift.test",
+      body: "Already in. It generates every text-on-surface pair rather than a hand-picked list, which is how the hover states got missed the first time.",
+      minutesAgo: 5280,
+    },
+    {
+      authorEmail: "lukas.weber@brandshift.test",
+      body: "Pulling the new tokens into Northwind today. Will shout if anything moves unexpectedly.",
+      minutesAgo: 180,
+    },
+  ],
+  NOR: [
+    {
+      authorEmail: "elena.rossi@brandshift.test",
+      body: "Nine days to go. I want the catalogue migration finished by Friday so hypercare starts on a stable base rather than during the fix.",
+      minutesAgo: 2880,
+    },
+    {
+      authorEmail: "ines.ferreira@brandshift.test",
+      body: "Catalogue is at about 80%. The remainder is all products with variant pricing, which the old exporter never handled properly.",
+      minutesAgo: 2760,
+    },
+    {
+      authorEmail: "lukas.weber@brandshift.test",
+      body: "Staging has been down since this morning, so I cannot verify the checkout fix. Raised it with their infra team, no reply yet.",
+      minutesAgo: 420,
+    },
+    {
+      authorEmail: "elena.rossi@brandshift.test",
+      body: "I will chase Northwind directly. If it is not back by tomorrow we move hypercare rather than pretending we tested it.",
+      minutesAgo: 90,
+    },
+  ],
+  LUM: [
+    {
+      authorEmail: "sofia.laurent@brandshift.test",
+      body: "Five markets confirmed. The German cutdowns need different legal copy at the end -- Inès has the wording.",
+      minutesAgo: 1500,
+    },
+    {
+      authorEmail: "marc.dubois@brandshift.test",
+      body: "Noted. Everything else is one master edit with market-specific end cards, so that is a small change rather than a separate grade.",
+      minutesAgo: 1440,
+    },
+  ],
+};
+
+/**
+ * The one channel that is not about a project.
+ *
+ * Every organization has a room like this, and having one in the seed is what
+ * proves a channel with no subject renders properly -- no project header, no
+ * activity interleaved, just what people said.
+ */
+export const GENERAL_CHANNEL = {
+  name: "General",
+  slug: "general",
+  description: "Everything that does not belong to one project.",
+  messages: [
+    {
+      authorEmail: "amina.benali@brandshift.test",
+      body: "Reminder that the studio is closed on Monday. Anything due that day, move it to Tuesday now rather than on the morning.",
+      minutesAgo: 3000,
+    },
+    {
+      authorEmail: "tom.decker@brandshift.test",
+      body: "The Q4 all-hands is booked for the 22nd, 3pm, main room. Dial-in details will go out nearer the time.",
+      minutesAgo: 1200,
+    },
+    {
+      authorEmail: "oscar.lindqvist@brandshift.test",
+      body: "New starter handbook is ready for review. It is short on purpose -- if you find yourself scrolling, tell me what to cut.",
+      minutesAgo: 300,
+    },
+  ] satisfies SeedMessage[],
+};

@@ -15,6 +15,13 @@
       "when": 1788384837776,
       "tag": "0001_purple_blacklash",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788393360226,
+      "tag": "0002_rapid_arclight",
+      "breakpoints": true
     }
   ]
 }

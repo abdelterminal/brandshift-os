@@ -11,7 +11,7 @@ written down nowhere is a gap nobody ever fixes.
 delete the row when it is closed — do not leave a struck-through list of things that are actually
 finished. `CLAUDE.md` points here for the same reason.
 
-Last reviewed: after Inbox and notifications landed.
+Last reviewed: after Channels landed.
 
 ---
 
@@ -40,6 +40,11 @@ files them as bugs.
 | The e2e suite runs serially, on one database | It completes tasks and publishes projects, so parallel workers would race each other through shared rows. One worker takes about a minute, which is not worth engineering around yet. |
 | axe covers WCAG 2.1 A and AA, not its best-practice rules | Those are opinions worth reading and not worth failing a build over. A suite that cries wolf gets muted, and then it catches nothing. |
 | Notifications have read state but no archive | Read and unread cover the core of an inbox. A third state is worth adding when somebody actually wants to keep a read item out of the way, not before. |
+| Presence is per process | It is derived from the SSE connections one container is holding, which is why there is nothing to expire and nothing to clean up after a crash. One container is what this deployment runs. The day it runs two, people on different containers will not see each other in the "here now" row -- messages still reach both, because those go through Postgres. Fixing it means shared state, which is a Redis nobody has yet. |
+| The composer sits at the end of the column, not pinned to the viewport | Pinning it means the shell owning the scroll region -- `h-dvh` with `overflow-hidden`, and `main` scrolling inside it -- which changes the layout of every screen in the app. The unpinned version was chosen after the pinned one was seen to cover the newest message on desktop and land underneath the bottom nav on a phone. Worth revisiting as a shell change, on its own, with the responsive sweep watching. |
+| A channel loads its last 100 entries and no further | No infinite scroll and no "load earlier". A hundred entries is several weeks of a real project channel, and the project's Activity tab holds the full history. Paging back is worth building when somebody actually runs out. |
+| No threads, no mentions, no attachments, no reactions | Each is a feature in its own right rather than a corner of this one. Mentions are the first that matters, because they are the reason a message would ever belong in the inbox -- see the note in `src/lib/data/channels.ts`. |
+| `next start` logs "The destination stream closed early" whenever a channel is left | Next's own message for a streaming response the client abandoned, which for SSE is every navigation away. The route closes its stream on both `cancel` and `abort`, and the log line still appears -- it comes from Next piping the response, not from the handler. Nothing leaks: the presence entry and the Postgres listener are both torn down. |
 | Notifications are in-app only | No email, no push. Both need a mail transport, which this deployment does not have. Inbox was the milestone that would have brought one and did not -- it turned out to be a separate piece of infrastructure, not part of the feature. |
 
 ---

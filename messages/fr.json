@@ -13,7 +13,9 @@
     "collapse": "Réduire le panneau latéral",
     "expand": "Déployer le panneau latéral",
     "openMenu": "Ouvrir le menu",
-    "closeMenu": "Fermer le menu"
+    "closeMenu": "Fermer le menu",
+    "channels": "Canaux",
+    "allChannels": "Tous les canaux"
   },
   "Shell": {
     "skipToContent": "Aller au contenu",
@@ -393,5 +395,36 @@
     "aTask": "une tâche",
     "aProject": "un projet",
     "system": "Système"
+  },
+  "Channels": {
+    "title": "Canaux",
+    "subtitle": "L'endroit où l'on parle du travail. Chaque projet a le sien.",
+    "yours": "Vos canaux",
+    "browse": "Ailleurs dans l'organisation",
+    "noneJoined": "Vous n'avez rejoint aucun canal.",
+    "noneTitle": "Aucun canal",
+    "noneBody": "Un canal apparaît ici dès qu'un projet en possède un. Ouvrez un projet et choisissez Canal pour lancer la conversation.",
+    "empty": "Rien n'a encore été dit",
+    "emptyBody": "Tout ce qui se passe sur ce travail apparaîtra ici. Lancez la conversation.",
+    "openChannel": "Canal",
+    "join": "Rejoindre",
+    "leave": "Quitter",
+    "send": "Envoyer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "edit": "Modifier",
+    "edited": "(modifié)",
+    "editLabel": "Modifier le message",
+    "delete": "Supprimer",
+    "deleted": "Ce message a été supprimé.",
+    "deleteTitle": "Supprimer ce message ?",
+    "deleteBody": "Il cesse d'être lisible, et la place qu'il occupait reste dans la conversation pour que la suite garde son sens.",
+    "messageActions": "Actions du message",
+    "composerLabel": "Message",
+    "composerPlaceholder": "Écrivez un message",
+    "viewingNow": "{count, plural, one {# autre personne ici en ce moment} other {# autres personnes ici en ce moment}}",
+    "unread": "{count, plural, one {# message non lu} other {# messages non lus}}",
+    "openProject": "Aller au projet {key}",
+    "collapsedUpdates": "{count, plural, one {# mise à jour sur ce travail} other {# mises à jour sur ce travail}}"
   }
 }

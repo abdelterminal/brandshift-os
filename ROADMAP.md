@@ -243,9 +243,48 @@ Decisions worth knowing:
   state can wait until somebody wants it.
 - Still no email or push. That needs a mail transport, which nothing here has yet.
 
+### Channels  [DONE]
+
+- [x] `channels` / `channel_members` / `messages`, all tenant-owned and registered in
+      `TENANT_TABLES`. Read state is one `last_read_at` per person per channel, not a receipt per
+      message: "everything before this moment is read" is what an unread badge needs, and it stays
+      one row however long the channel gets
+- [x] **A project channel is the project's history with people talking in it.** The feed
+      interleaves `activity_events` and `messages` in one column, in the order they happened --
+      the spine `DECISIONS.md` set aside for exactly this
+- [x] Long runs of routine activity fold to a count; blockers, status changes and role changes are
+      never folded. Fifteen "assigned a task" lines in a row turn a conversation into a log
+- [x] Nested under Work in the rail, with a per-channel unread badge and "All channels" as the way
+      to the ones you have not joined. Children, not a sixth destination -- the cap of five is
+      what keeps the rail scannable
+- [x] **Live, on Postgres.** A write calls `pg_notify`; one `LISTEN` connection per process fans
+      it out over Server-Sent Events. No Redis, no websocket gateway, nothing new to run
+- [x] Presence derived from the open SSE connections, so a closed tab removes somebody with
+      nothing to expire and nothing to clean up after a crash
+- [x] Read means "you reached the end", not "you opened it", and the badge clears where you are
+      standing rather than on the next navigation
+- [x] Edit and delete keep the row and stamp a time -- a channel where a message can vanish
+      without trace is one nobody can rely on as the record of a decision
+- [x] Seeded: nine channels, forty memberships and eighteen real exchanges that go with the seeded
+      tasks, so a fresh database reads like a week of use
+
+Decisions worth knowing:
+- **A message does not reach the inbox.** Unread state is the channel's own signal; the inbox
+  stays for the few things that need one specific person. Two queues saying the same thing means
+  people read neither. Mentions will change this, and will be the reason to.
+- **A `change` event carries no message in it.** The browser refetches through the same server
+  components a page load uses, so what arrives live and what arrives on a refresh come from one
+  code path and cannot drift apart. It costs a round trip and buys never reconciling two renders
+  of the same conversation.
+- SSE rather than websockets, because the traffic is one-way and this deploys as one Docker
+  container on a local network.
+- Opening a channel does not join it -- if it did, Leave would undo itself on the next render.
+  Pressing Join does, and so does saying something.
+- Deals get channels when CRM does. `channel_kind` already names them, so that is a row, not a
+  migration.
+
 ### Next
 
-- Channels: project and deal channels on the `activity_events` spine, presence, read state
 - Calendar and Meetings
 - Attendance and leave
 - Insights and reporting

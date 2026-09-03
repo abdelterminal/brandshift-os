@@ -1,9 +1,11 @@
 import {
   CalendarDays,
   FolderKanban,
+  Hash,
   Inbox,
   LayoutGrid,
   ListTodo,
+  MessagesSquare,
   Sun,
   Users,
   type LucideIcon,
@@ -27,4 +29,6 @@ export const NAV_ICONS: Record<NavIconName, LucideIcon> = {
   insights: LayoutGrid,
   inbox: Inbox,
   calendar: CalendarDays,
+  channel: Hash,
+  channels: MessagesSquare,
 };

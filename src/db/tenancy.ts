@@ -4,6 +4,7 @@ import { and, eq, getTableName, sql, type GetColumnData, type SQL } from "drizzl
 import type { PgColumn, PgInsertValue, PgTable, PgUpdateSetSource } from "drizzle-orm/pg-core";
 
 import { activityEvents } from "./schema/activity";
+import { channelMembers, channels, messages } from "./schema/channels";
 import { notifications } from "./schema/notifications";
 import { organizations } from "./schema/organizations";
 import { departments, memberships } from "./schema/people";
@@ -45,13 +46,16 @@ export const TENANT_TABLES = {
   tasks,
   activityEvents,
   notifications,
+  channels,
+  channelMembers,
+  messages,
 } as const;
 
 export type TenantTable = (typeof TENANT_TABLES)[keyof typeof TENANT_TABLES];
 
 /** Table names as they exist in Postgres, for the guard test and diagnostics. */
-export const TENANT_TABLE_NAMES: readonly string[] = Object.values(TENANT_TABLES).map(
-  (table) => getTableName(table),
+export const TENANT_TABLE_NAMES: readonly string[] = Object.values(TENANT_TABLES).map((table) =>
+  getTableName(table),
 );
 
 /**
@@ -222,6 +226,51 @@ export function withOrg(organizationId: string, executor: Executor = db) {
         .from(table as TenantTable)
         .where(scoped(table, ...where));
       return row?.value ?? 0;
+    },
+
+    /**
+     * Counts grouped by one column, in one query.
+     *
+     * The unread badge beside every channel in the rail is one number per
+     * channel, and the honest way to get it is a `group by` -- not a count per
+     * row, and not every message pulled into memory to be tallied there. Joins
+     * are data for the same reason they are in `selectJoined`: this helper
+     * keeps the tenant filter last, so a caller cannot get the join without it.
+     *
+     * Keys come back as strings because that is what `group by` on a uuid
+     * yields; callers look them up by id, which is already a string.
+     */
+    async groupCount<T extends TenantTable>(
+      table: T,
+      by: PgColumn,
+      joins: Array<{ table: PgTable; on: SQL; type?: "inner" | "left" }> = [],
+      ...where: Array<SQL | undefined>
+    ): Promise<Map<string, number>> {
+      type Groupable = {
+        innerJoin: (t: PgTable, on: SQL) => Groupable;
+        leftJoin: (t: PgTable, on: SQL) => Groupable;
+        where: (condition: SQL) => { groupBy: (column: PgColumn) => unknown };
+      };
+
+      let query = executor
+        .select({ key: by, value: sql<number>`count(*)::int` })
+        .from(table as TenantTable) as unknown as Groupable;
+
+      for (const join of joins) {
+        query =
+          join.type === "left"
+            ? query.leftJoin(join.table, join.on)
+            : query.innerJoin(join.table, join.on);
+      }
+
+      const rows = (await query.where(scoped(table, ...where)).groupBy(by)) as Array<{
+        key: unknown;
+        value: number;
+      }>;
+
+      return new Map(
+        rows.filter((row) => row.key != null).map((row) => [String(row.key), row.value]),
+      );
     },
 
     /**

@@ -67,6 +67,40 @@ browser they are sitting in front of.
 nothing. The old app signed people out on a permission error, which lost whatever they were in the
 middle of and taught them that clicking the wrong link is expensive.
 
+## Added during Channels
+
+**Postgres is the message bus.** A write calls `pg_notify`; one `LISTEN` connection per process
+fans it out to browsers over Server-Sent Events. The alternative was Redis or a websocket gateway,
+and this deploys as one Next container and one Postgres on a local network -- every extra service
+is another thing that can be down at 9am on a Monday. Postgres was already required, already
+running, and already where the write went.
+
+**SSE, not websockets.** The traffic is one-way: the server says "this channel changed" and the
+browser refetches through the same server components a page load uses. That means there is no
+second client-side rendering path for a message, so a live update and a refresh cannot show
+different things -- which is the usual way a live feed starts disagreeing with the page it is on.
+It costs one round trip per change.
+
+**Presence is derived from open connections, not written down.** A browser with the channel open
+holds a socket; when the tab closes, the socket closes and the avatar goes. There is no heartbeat
+table, nothing to expire, and nothing to clean up after a crash, because the evidence and the fact
+are the same thing. The cost is that presence is per process -- recorded in `KNOWN-GAPS.md`.
+
+**A message is not a notification.** Unread state belongs to the channel and shows as a badge on
+the rail; the inbox stays for the handful of things that need one specific person. Copying every
+message into the inbox would produce two queues saying the same thing, and people would read
+neither. Mentions are the thing that will change this, and will be the reason to.
+
+**A project channel is the project's history with talk in it.** The feed interleaves
+`activity_events` and `messages` in one column rather than putting chat in a tab beside the
+activity log. This is what `activity_events` was designed as a spine for. Long runs of routine
+activity fold to a count so the column still reads as a conversation; blockers, status changes and
+role changes are never folded.
+
+**One home per channel.** Everything lives at `/channels/<slug>`. `/work/<key>/channel` creates
+the channel if the project predates channels and forwards there, so a link followed from a project
+and a link pasted into a message are the same URL.
+
 ## Deliberately not chosen
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the

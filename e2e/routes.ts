@@ -16,6 +16,9 @@ export const MEMBER_ROUTES = [
   "/en/people",
   "/en/calendar",
   "/en/inbox",
+  "/en/channels",
+  "/en/channels/general",
+  "/en/channels/northwind-e-commerce-replatform",
   "/en/settings",
   "/en/profile",
 ] as const;

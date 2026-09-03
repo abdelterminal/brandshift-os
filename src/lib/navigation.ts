@@ -27,20 +27,33 @@ export type NavIconName =
   | "people"
   | "insights"
   | "inbox"
-  | "calendar";
+  | "calendar"
+  | "channel"
+  | "channels";
 
 export type Destination = {
-  /** Key into the `Nav` message catalogue. */
+  /** Key into the `Nav` message catalogue, unless `label` overrides it. */
   id: string;
   href: string;
   icon: NavIconName;
+  /**
+   * A name that is data rather than vocabulary -- a channel is called whatever
+   * somebody called it, in every locale. Catalogue keys stay the default so a
+   * fixed destination cannot ship an untranslated label by accident.
+   */
+  label?: string;
+  /**
+   * Active only on an exact path match.
+   *
+   * The default is prefix matching, so /work stays lit while you are on
+   * /work/MER. A leaf that sits beside its own children needs the opposite:
+   * without this, "All channels" and the open channel are both marked as where
+   * you are, and the rail answers "where am I" twice.
+   */
+  exact?: boolean;
   /** Hidden unless the actor may do this. */
   requires?: Action;
-  /**
-   * Phase 2 nests project and deal channels under Work. The field exists now
-   * so the rail's shape does not have to change when it arrives, and so a
-   * destination that will grow children is marked as such today.
-   */
+  /** Channels nest under Work. Children are never counted against the cap. */
   children?: Destination[];
   expandable?: boolean;
 };
@@ -55,16 +68,38 @@ export type Destination = {
  */
 const ADMIN_RAIL: Destination[] = [
   { id: "today", href: "/today", icon: "today" },
-  { id: "work", href: "/work", icon: "work", requires: "work.view", expandable: true },
+  {
+    id: "work",
+    href: "/work",
+    icon: "work",
+    requires: "work.view",
+    expandable: true,
+  },
   { id: "people", href: "/people", icon: "people", requires: "people.view" },
-  { id: "insights", href: "/insights", icon: "insights", requires: "insights.view" },
+  {
+    id: "insights",
+    href: "/insights",
+    icon: "insights",
+    requires: "insights.view",
+  },
   { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" },
 ];
 
 const MEMBER_RAIL: Destination[] = [
   { id: "today", href: "/today", icon: "today" },
-  { id: "myWork", href: "/work", icon: "myWork", requires: "work.view", expandable: true },
-  { id: "calendar", href: "/calendar", icon: "calendar", requires: "calendar.view" },
+  {
+    id: "myWork",
+    href: "/work",
+    icon: "myWork",
+    requires: "work.view",
+    expandable: true,
+  },
+  {
+    id: "calendar",
+    href: "/calendar",
+    icon: "calendar",
+    requires: "calendar.view",
+  },
   { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" },
   { id: "team", href: "/people", icon: "people", requires: "people.view" },
 ];
@@ -84,6 +119,48 @@ export function railFor(actor: Actor): Destination[] {
   }
 
   return visible;
+}
+
+/**
+ * Hang someone's channels under Work.
+ *
+ * Children, not a sixth destination: the cap of five is what keeps the rail
+ * scannable, and a list that grows every time somebody starts a conversation
+ * is exactly what the cap exists to keep off it. Nesting also says something
+ * true -- a project's channel is part of that work, not a separate place.
+ *
+ * The last entry is always the way to the full list, because a rail that shows
+ * only the channels you are already in offers no way to find the others.
+ */
+export function withChannels(
+  rail: Destination[],
+  channels: Array<{ id: string; slug: string; name: string }>,
+  allChannelsLabel: string,
+): Destination[] {
+  return rail.map((destination) => {
+    if (!destination.expandable) return destination;
+
+    return {
+      ...destination,
+      children: [
+        ...channels.map((channel) => ({
+          id: channel.id,
+          href: `/channels/${channel.slug}`,
+          icon: "channel" as const,
+          label: channel.name,
+          requires: "channel.view" as const,
+        })),
+        {
+          id: "channels",
+          href: "/channels",
+          exact: true,
+          icon: "channels" as const,
+          label: allChannelsLabel,
+          requires: "channel.view" as const,
+        },
+      ],
+    };
+  });
 }
 
 /**

@@ -12,6 +12,7 @@ import { withOrg } from "@/db/tenancy";
 import { db } from "@/db/client";
 import { requirePermissionForAction } from "@/lib/auth/guards";
 import { recordActivity } from "@/lib/data/activity";
+import { ensureProjectChannel } from "@/lib/data/channels";
 
 /**
  * Creating a project.
@@ -23,8 +24,7 @@ import { recordActivity } from "@/lib/data/activity";
  */
 
 export type CreateProjectResult =
-  | { ok: true; key: string }
-  | { ok: false; error: string; fieldErrors?: Record<string, string> };
+  { ok: true; key: string } | { ok: false; error: string; fieldErrors?: Record<string, string> };
 
 const createProjectSchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -116,6 +116,10 @@ export async function createProject(input: CreateProjectInput): Promise<CreatePr
         })),
       );
     }
+
+    // In the same transaction as the team it is built from, so a project can
+    // never exist with members and no place for them to talk.
+    await ensureProjectChannel(session.actor, project!, tx);
 
     return project!;
   });

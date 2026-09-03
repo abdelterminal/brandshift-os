@@ -58,9 +58,11 @@ export type Action =
   | "insights.view"
   | "inbox.view"
   | "calendar.view"
+  | "channel.view"
   // Doing
   | "project.create"
   | "task.create"
+  | "channel.post"
   | "member.invite"
   | "member.editRole"
   | "organization.switch"
@@ -72,6 +74,12 @@ const RULES: Record<Action, (actor: Actor) => boolean> = {
   "work.view": () => true,
   "inbox.view": () => true,
   "calendar.view": () => true,
+
+  // Channels are how the org talks to itself. Reading and posting are open to
+  // every member: a conversation half the company cannot join is a meeting
+  // held in a corridor, which is the thing this replaces.
+  "channel.view": () => true,
+  "channel.post": () => true,
 
   // The People directory is the org chart, which every member can read. The
   // `people` module flag is what gates the sensitive parts of it -- salaries,

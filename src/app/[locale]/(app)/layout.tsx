@@ -8,7 +8,8 @@ import { AccountMenu, LocaleSwitcher, OrgSwitcher } from "@/components/shell/swi
 import { ThemeToggle } from "@/components/theme";
 import { ToastProvider, ToastViewport } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { bottomNavFor, overflowFor, railFor } from "@/lib/navigation";
+import { bottomNavFor, overflowFor, railFor, withChannels } from "@/lib/navigation";
+import { listJoinedChannels } from "@/lib/data/channels";
 import { unreadCount } from "@/lib/data/notifications";
 import { paletteIndex } from "@/lib/palette";
 import { requireUser } from "@/lib/auth/guards";
@@ -36,17 +37,26 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
 
   // Full session check on every render: digest, revocation, expiry and
   // password-change invalidation. The middleware only checked the signature.
-  const [session, t] = await Promise.all([requireUser(), getTranslations("Shell")]);
+  const [session, t, nav] = await Promise.all([
+    requireUser(),
+    getTranslations("Shell"),
+    getTranslations("Nav"),
+  ]);
   const { actor, user, membership, organization, organizations } = session;
 
-  const [entries, inboxUnread] = await Promise.all([
+  const [entries, inboxUnread, channels] = await Promise.all([
     paletteIndex(actor),
     unreadCount(actor),
+    listJoinedChannels(actor),
   ]);
 
-  // The only number on the rail, and it is a count of rows you can go and act
-  // on -- not a badge that means "something happened somewhere".
-  const counts = { inbox: inboxUnread };
+  // Every number on the rail is a count of rows you can go and act on -- never
+  // a badge meaning "something happened somewhere". Channels are keyed by their
+  // own id, so a nested row shows the messages waiting in that one room.
+  const counts: Record<string, number> = { inbox: inboxUnread };
+  for (const channel of channels) counts[channel.id] = channel.unread;
+
+  const rail = withChannels(railFor(actor), channels, nav("allChannels"));
 
   return (
     <TooltipProvider delay={400}>
@@ -59,11 +69,7 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
         </a>
 
         <div className="flex min-h-dvh">
-          <Sidebar
-            destinations={railFor(actor)}
-            organizationName={organization.name}
-            counts={counts}
-          />
+          <Sidebar destinations={rail} organizationName={organization.name} counts={counts} />
 
           <div className="flex min-w-0 flex-1 flex-col">
             <header className="border-border bg-surface-base/90 sticky top-0 z-30 border-b backdrop-blur">

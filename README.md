@@ -99,6 +99,10 @@ What is built:
 - **Inbox** -- what involves you: work you were given, a blocker on something you run, a change to
   what you may do. Never your own actions. The unread count on the rail is a real count of rows
   you can go and act on.
+- **Channels** -- where the work gets talked about. Every project has one, nested under Work in
+  the rail with its own unread badge. The feed interleaves what people said with what happened to
+  the project, in the order it happened, so the conversation and its context read as one column.
+  New messages arrive without a refresh, and the avatars at the top are whoever else has it open.
 
 Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a project, a person or a department.
 

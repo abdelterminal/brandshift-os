@@ -18,7 +18,9 @@ import { sql } from "drizzle-orm";
 import { closeDb, db } from "./client";
 import {
   BLOCKER_REASONS,
+  CHANNEL_MESSAGES,
   DEPARTMENTS,
+  GENERAL_CHANNEL,
   ORGANIZATION,
   PERSONAL_TASKS,
   PROJECTS,
@@ -28,7 +30,10 @@ import {
 } from "./seed-data";
 import {
   activityEvents,
+  channelMembers,
+  channels,
   departments,
+  messages,
   notifications,
   memberships,
   organizations,
@@ -42,6 +47,7 @@ import {
 } from "./schema";
 import { withOrg } from "./tenancy";
 import { hashPassword } from "@/lib/password";
+import { slugify } from "@/lib/slug";
 
 /** Every seeded account shares this password. Development only. */
 const DEMO_PASSWORD = "brandshift";
@@ -109,6 +115,7 @@ async function main() {
   // tenant-owned but is seeded here, so it is cleared here too.
   await db.execute(sql`
     truncate table
+      ${messages}, ${channelMembers}, ${channels},
       ${notifications}, ${activityEvents}, ${tasks}, ${projectMembers}, ${projects},
       ${sessions}, ${memberships}, ${departments}, ${users}, ${organizations}
     restart identity cascade
@@ -216,8 +223,7 @@ async function main() {
       createdByUserId: userId(project.ownerEmail),
       startDate: day(project.startsInDays),
       dueDate: project.dueInDays === null ? null : day(project.dueInDays),
-      completedAt:
-        project.status === "completed" ? moment((project.dueInDays ?? 0) - 1) : null,
+      completedAt: project.status === "completed" ? moment((project.dueInDays ?? 0) - 1) : null,
       createdAt: moment(project.startsInDays - 3),
     })),
   );
@@ -373,10 +379,7 @@ async function main() {
   // not, which is what puts a plausible number on the rail.
   const assigneeByTask = new Map(insertedTasks.map((task) => [task.id, task.assigneeUserId]));
   const ownerByProject = new Map(
-    PROJECTS.map((project) => [
-      projectByKey.get(project.key)!.id,
-      userId(project.ownerEmail),
-    ]),
+    PROJECTS.map((project) => [projectByKey.get(project.key)!.id, userId(project.ownerEmail)]),
   );
 
   const oneWeekAgo = Date.now() - 7 * 86_400_000;
@@ -412,6 +415,85 @@ async function main() {
   }
   const unread = notificationRows.filter((row) => row.readAt === null).length;
   console.log(`Created ${notificationRows.length} notifications (${unread} unread)`);
+
+  // --- Channels ----------------------------------------------------------
+  // One channel per project, plus the general room. Project members are put in
+  // theirs the way the app does it, so the rail on a fresh database looks like
+  // the rail after a week of use rather than like an empty product tour.
+  const channelRows = await scope.insert(channels, [
+    ...PROJECTS.map((project) => ({
+      kind: "project" as const,
+      projectId: projectByKey.get(project.key)!.id,
+      name: project.name,
+      slug: slugify(project.name, project.key),
+      createdByUserId: userId(project.ownerEmail),
+    })),
+    {
+      kind: "general" as const,
+      projectId: null,
+      name: GENERAL_CHANNEL.name,
+      slug: GENERAL_CHANNEL.slug,
+      description: GENERAL_CHANNEL.description,
+      createdByUserId: userId("amina.benali@brandshift.test"),
+    },
+  ]);
+
+  const channelByProjectKey = new Map(
+    PROJECTS.map((project) => [
+      project.key,
+      channelRows.find((row) => row.projectId === projectByKey.get(project.key)!.id)!,
+    ]),
+  );
+  const generalChannel = channelRows.find((row) => row.kind === "general")!;
+
+  // Everyone is in General; a project channel holds that project's team. Read
+  // marks sit six hours back, which leaves the last message or two of the busy
+  // channels genuinely unread and the quiet ones clear -- the mix a real rail
+  // shows, rather than every badge lit or none.
+  const readMark = new Date(Date.now() - 6 * 3_600_000);
+
+  const memberRows = [
+    ...USERS.map((person) => ({
+      channelId: generalChannel.id,
+      userId: userId(person.email),
+      lastReadAt: readMark,
+    })),
+    ...PROJECTS.flatMap((project) => {
+      const channel = channelByProjectKey.get(project.key)!;
+      const team = [...new Set([project.ownerEmail, ...project.memberEmails])];
+      return team.map((email) => ({
+        channelId: channel.id,
+        userId: userId(email),
+        lastReadAt: readMark,
+      }));
+    }),
+  ];
+
+  await scope.insert(channelMembers, memberRows);
+
+  const messageRows = [
+    ...Object.entries(CHANNEL_MESSAGES).flatMap(([key, said]) => {
+      const channel = channelByProjectKey.get(key);
+      if (!channel) throw new Error(`Seeded messages for unknown project: ${key}`);
+      return said.map((message) => ({
+        channelId: channel.id,
+        authorUserId: userId(message.authorEmail),
+        body: message.body,
+        createdAt: new Date(Date.now() - message.minutesAgo * 60_000),
+      }));
+    }),
+    ...GENERAL_CHANNEL.messages.map((message) => ({
+      channelId: generalChannel.id,
+      authorUserId: userId(message.authorEmail),
+      body: message.body,
+      createdAt: new Date(Date.now() - message.minutesAgo * 60_000),
+    })),
+  ];
+
+  await scope.insert(messages, messageRows);
+  console.log(
+    `Created ${channelRows.length} channels, ${memberRows.length} memberships, ${messageRows.length} messages`,
+  );
 
   await report(scope, insertedTasks);
 }

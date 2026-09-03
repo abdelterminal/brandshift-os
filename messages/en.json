@@ -13,7 +13,9 @@
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar",
     "openMenu": "Open menu",
-    "closeMenu": "Close menu"
+    "closeMenu": "Close menu",
+    "channels": "Channels",
+    "allChannels": "All channels"
   },
   "Shell": {
     "skipToContent": "Skip to content",
@@ -393,5 +395,36 @@
     "aTask": "a task",
     "aProject": "a project",
     "system": "System"
+  },
+  "Channels": {
+    "title": "Channels",
+    "subtitle": "Where the work gets talked about. Every project has one.",
+    "yours": "Your channels",
+    "browse": "Elsewhere in the organization",
+    "noneJoined": "You have not joined a channel yet.",
+    "noneTitle": "No channels yet",
+    "noneBody": "A channel appears here as soon as a project has one. Open a project and choose Channel to start its conversation.",
+    "empty": "Nothing said yet",
+    "emptyBody": "Everything that happens on this work will show up here. Start the conversation.",
+    "openChannel": "Channel",
+    "join": "Join",
+    "leave": "Leave",
+    "send": "Send",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "edited": "(edited)",
+    "editLabel": "Edit message",
+    "delete": "Delete",
+    "deleted": "This message was deleted.",
+    "deleteTitle": "Delete this message?",
+    "deleteBody": "It stops being readable, and the space it held stays in the conversation so the thread still makes sense.",
+    "messageActions": "Message actions",
+    "composerLabel": "Message",
+    "composerPlaceholder": "Write a message",
+    "viewingNow": "{count, plural, one {# other person here now} other {# other people here now}}",
+    "unread": "{count, plural, one {# unread message} other {# unread messages}}",
+    "openProject": "Go to the {key} project",
+    "collapsedUpdates": "{count, plural, one {# update on this work} other {# updates on this work}}"
   }
 }

@@ -7,6 +7,7 @@ import {
   bottomNavFor,
   overflowFor,
   railFor,
+  withChannels,
 } from "./navigation";
 
 /**
@@ -119,7 +120,11 @@ describe("the mobile bottom nav", () => {
         ...overflowFor(person).map((item) => item.id),
       ].sort();
 
-      expect(reachable).toEqual(railFor(person).map((item) => item.id).sort());
+      expect(reachable).toEqual(
+        railFor(person)
+          .map((item) => item.id)
+          .sort(),
+      );
     }
   });
 
@@ -136,5 +141,55 @@ describe("the mobile bottom nav", () => {
     for (const person of EVERYONE) {
       expect(bottomNavFor(person)[0]?.id).toBe("today");
     }
+  });
+});
+
+describe("channels under Work", () => {
+  const CHANNELS = [
+    { id: "c1", slug: "meridian-rebrand", name: "Meridian rebrand" },
+    { id: "c2", slug: "general", name: "General" },
+  ];
+
+  const railWith = (person: Actor) => withChannels(railFor(person), CHANNELS, "All channels");
+
+  it("still never exceeds five primary destinations", () => {
+    // The cap counts destinations, not rows. Nesting is what lets channels
+    // exist on the rail at all without pushing it past what anyone can scan.
+    for (const person of EVERYONE) {
+      expect(railWith(person).length).toBeLessThanOrEqual(MAX_PRIMARY_DESTINATIONS);
+    }
+  });
+
+  it("hangs them under Work, and nowhere else", () => {
+    for (const person of EVERYONE) {
+      const withChildren = railWith(person).filter((item) => item.children?.length);
+      expect(withChildren).toHaveLength(1);
+      expect(withChildren[0]!.href).toBe("/work");
+    }
+  });
+
+  it("names each channel from its own data, not from the catalogue", () => {
+    const work = railWith(MEMBER).find((item) => item.children)!;
+    expect(work.children!.map((child) => child.label)).toEqual([
+      "Meridian rebrand",
+      "General",
+      "All channels",
+    ]);
+  });
+
+  it("always ends with the way to the full list", () => {
+    // A rail showing only the channels you are already in offers no route to
+    // the others, which is how a channel nobody joined stays invisible.
+    for (const person of EVERYONE) {
+      const work = railWith(person).find((item) => item.children)!;
+      expect(work.children!.at(-1)!.href).toBe("/channels");
+    }
+  });
+
+  it("leaves a rail with no channels unchanged in shape", () => {
+    const bare = withChannels(railFor(MEMBER), [], "All channels");
+    const work = bare.find((item) => item.children)!;
+    expect(work.children).toHaveLength(1);
+    expect(work.children![0]!.href).toBe("/channels");
   });
 });
