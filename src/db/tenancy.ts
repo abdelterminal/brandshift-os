@@ -5,6 +5,7 @@ import type { PgColumn, PgInsertValue, PgTable, PgUpdateSetSource } from "drizzl
 
 import { activityEvents } from "./schema/activity";
 import { channelMembers, channels, messages } from "./schema/channels";
+import { leaveRequests } from "./schema/leave";
 import { meetingAttendees, meetings } from "./schema/meetings";
 import { notifications } from "./schema/notifications";
 import { organizations } from "./schema/organizations";
@@ -52,6 +53,7 @@ export const TENANT_TABLES = {
   messages,
   meetings,
   meetingAttendees,
+  leaveRequests,
 } as const;
 
 export type TenantTable = (typeof TENANT_TABLES)[keyof typeof TENANT_TABLES];

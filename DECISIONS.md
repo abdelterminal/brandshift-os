@@ -130,6 +130,30 @@ permission rules live, which is the thing `authz.ts` exists to prevent.
 **Rescheduling withdraws every answer.** A yes was a yes to a time. Carrying it across to a
 different one puts people in a meeting they never agreed to, and the organizer would not know.
 
+## Added during Attendance and leave
+
+**Attendance is who is in, not a timeclock.** The roadmap line said "attendance and leave"; a
+studio of twelve salaried people does not clock in and out, and building that would have produced a
+feature nobody would use next to a number nobody would trust. What people actually need is to know
+who is away, which falls out of leave for nothing. Billable-hours timesheets are a real want, but
+they belong beside ERP invoicing rather than here.
+
+**A balance is computed, never stored.** Allowance minus approved annual days in the year, worked
+out when somebody looks. A stored balance has to be kept in step with the requests behind it, and
+the first time an approval is withdrawn it is wrong with nothing to say so. The same reason the
+calendar owns no rows of its own.
+
+**Only annual leave spends the allowance.** Sick leave is not a budget people are given to spend,
+and presenting it as one is how a company teaches its staff to come in ill.
+
+**Nobody signs off their own request.** Written twice on purpose -- `can("leave.approve", request)`
+keeps the buttons off the screen, and the update statement filters on it as well, so a crafted
+request changes nothing rather than being caught by the UI alone.
+
+**Time off shows on the calendar, not on a calendar of its own.** The time-off screen is for asking
+and deciding. Where somebody is on a given day is a calendar question, and the calendar already
+exists.
+
 ## Deliberately not chosen
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the

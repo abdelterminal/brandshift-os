@@ -6,6 +6,7 @@ import {
   LayoutGrid,
   ListTodo,
   MessagesSquare,
+  Palmtree,
   Sun,
   Users,
   type LucideIcon,
@@ -31,4 +32,5 @@ export const NAV_ICONS: Record<NavIconName, LucideIcon> = {
   calendar: CalendarDays,
   channel: Hash,
   channels: MessagesSquare,
+  leave: Palmtree,
 };

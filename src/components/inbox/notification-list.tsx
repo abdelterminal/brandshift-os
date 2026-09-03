@@ -83,6 +83,9 @@ export function NotificationList({ items }: { items: InboxItem[] }) {
   /** Where it takes you. A notification you cannot act on is just noise. */
   function href(item: InboxItem): string {
     if (item.subjectType === "meeting") return `/calendar/${item.subjectId}`;
+    // A leave request has no page of its own: it is a row on the time-off
+    // screen, which is where both halves of the conversation happen.
+    if (item.subjectType === "leave") return "/leave";
     if (item.projectKey && item.taskId) return `/work/${item.projectKey}?task=${item.taskId}`;
     if (item.projectKey) return `/work/${item.projectKey}`;
     return "/today";

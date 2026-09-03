@@ -11,7 +11,7 @@ written down nowhere is a gap nobody ever fixes.
 delete the row when it is closed — do not leave a struck-through list of things that are actually
 finished. `CLAUDE.md` points here for the same reason.
 
-Last reviewed: after Calendar and Meetings landed.
+Last reviewed: after Attendance and leave landed.
 
 ---
 
@@ -40,6 +40,11 @@ files them as bugs.
 | The e2e suite runs serially, on one database | It completes tasks and publishes projects, so parallel workers would race each other through shared rows. One worker takes about a minute, which is not worth engineering around yet. |
 | axe covers WCAG 2.1 A and AA, not its best-practice rules | Those are opinions worth reading and not worth failing a build over. A suite that cries wolf gets muted, and then it catches nothing. |
 | Notifications have read state but no archive | Read and unread cover the core of an inbox. A third state is worth adding when somebody actually wants to keep a read item out of the way, not before. |
+| Public holidays are not modelled | A week off over Christmas costs five days here and four in reality, and the same is true of every national holiday. Doing it properly means a holiday calendar per organization -- and probably per country, once anybody is hired abroad. A hardcoded list of one country's holidays would be worse than the gap, because it would be wrong silently. |
+| Leave allowances do not accrue, carry over or pro-rate | Everybody gets their full annual allowance on 1 January, whatever month they joined and whatever they did not use last year. Real HR policies do all three, and each is a rule an organization would want to set for itself. The allowance is a single number on the membership until somebody needs more. |
+| There is no timeclock and no timesheet | Attendance here means who is away, derived from approved leave. Nobody clocks in, and no hours are recorded against a project. Billable hours are a real want and belong next to ERP invoicing, where the invoice that consumes them lives. |
+| Anybody who can approve can approve anybody | There is no approval chain and no "your manager decides". Every manager, admin and owner -- plus anybody holding the `people` module -- sees the whole queue. Right for one studio; wrong the day there are two departments that do not overlap. |
+| A leave request has no page of its own | It is a row on the time-off screen, which is where both halves of the conversation happen, so a notification about one lands on the list rather than on the request. Fine while the list is short. |
 | Meetings do not repeat | No recurrence, and so no "every Monday". It is the single largest thing missing here, and it is a feature in its own right: a recurrence rule, an exception model for the week somebody moves, and a decision about how far ahead instances exist. Worth building deliberately rather than bolting a `repeat` column onto this. |
 | No external calendar, and no invitations by email | Nothing exports `.ics` and nothing syncs with Google or Outlook, so a meeting booked here is invisible to anybody's phone. The invitation reaches people through the inbox, in the app. Both halves need a mail transport, which this deployment still does not have. |
 | No reminders | Nothing tells you fifteen minutes beforehand. Today shows what is next when you look at it, which is not the same thing. Needs either a scheduler or push, neither of which exists yet. |

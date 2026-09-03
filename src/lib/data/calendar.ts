@@ -2,6 +2,8 @@ import "server-only";
 
 import type { Actor } from "../authz";
 import { dayKey, startOfDay } from "../calendar-dates";
+import { eachDay, isWeekend } from "../leave-days";
+import { listApprovedLeaveBetween, type LeaveType } from "./leave";
 import { listMeetings, type MeetingWithAttendees } from "./meetings";
 import { listOpenTasks } from "./tasks";
 import { listProjects } from "./projects";
@@ -40,6 +42,17 @@ export type AgendaEntry =
       key: string;
       name: string;
       mine: boolean;
+    }
+  | {
+      kind: "leave";
+      id: string;
+      day: string;
+      sortAt: number;
+      userId: string;
+      userName: string | null;
+      avatarUrl: string | null;
+      leaveType: LeaveType;
+      mine: boolean;
     };
 
 export type AgendaDay = { day: string; entries: AgendaEntry[] };
@@ -64,10 +77,13 @@ export async function readAgenda(actor: Actor, filter: AgendaFilter): Promise<Ag
   const from = startOfDay(filter.from, filter.timeZone);
   const to = startOfDay(filter.to, filter.timeZone);
 
-  const [meetings, tasks, projects] = await Promise.all([
+  const [meetings, tasks, projects, away] = await Promise.all([
     listMeetings(actor, { from, to, mineOnly: filter.mineOnly }),
     listOpenTasks(actor),
     listProjects(actor),
+    // Approved only. A pending request is a plan, and planning around time off
+    // nobody has agreed to yet is how people end up double-booked twice.
+    listApprovedLeaveBetween(actor, filter.from, filter.to),
   ]);
 
   const entries: AgendaEntry[] = [];
@@ -116,6 +132,32 @@ export async function readAgenda(actor: Actor, filter: AgendaFilter): Promise<Ag
       name: project.name,
       mine,
     });
+  }
+
+  for (const request of away) {
+    const mine = request.userId === actor.userId;
+    if (filter.mineOnly && !mine) continue;
+
+    // One entry per working day the request covers. A fortnight off is a fact
+    // about each of those days, not an event on the Monday it began -- and
+    // marking somebody away on a Saturday says nothing anybody needs.
+    for (const day of eachDay(request.startDate, request.endDate)) {
+      if (day < filter.from || day >= filter.to || isWeekend(day)) continue;
+
+      entries.push({
+        kind: "leave",
+        id: `${request.id}:${day}`,
+        day,
+        // Above the deadlines. Who is not here frames a day more than what is
+        // due on it.
+        sortAt: -3,
+        userId: request.userId,
+        userName: request.userName,
+        avatarUrl: request.avatarUrl,
+        leaveType: request.type,
+        mine,
+      });
+    }
   }
 
   const byDay = new Map<string, AgendaEntry[]>();

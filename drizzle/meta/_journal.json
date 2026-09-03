@@ -36,6 +36,13 @@
       "when": 1788423752666,
       "tag": "0004_quick_morlocks",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788428342067,
+      "tag": "0005_happy_zaladane",
+      "breakpoints": true
     }
   ]
 }

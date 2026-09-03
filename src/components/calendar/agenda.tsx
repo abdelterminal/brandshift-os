@@ -1,7 +1,7 @@
-import { FolderKanban, ListTodo, MapPin } from "lucide-react";
+import { FolderKanban, ListTodo, MapPin, Palmtree } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 
-import { AvatarGroup } from "@/components/ui/avatar";
+import { AvatarGroup, PersonAvatar } from "@/components/ui/avatar";
 import { Badge, StatusPill } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/feedback";
 import { focusRingInset, transition } from "@/components/ui/styles";
@@ -191,6 +191,26 @@ async function AgendaRow({ entry, timeZone }: { entry: AgendaEntry; timeZone: st
           <ListTodo aria-hidden className="text-fg-subtle size-4 shrink-0" />
         )}
       </Link>
+    );
+  }
+
+  if (entry.kind === "leave") {
+    // Not a link to the request: on a shared calendar this is a fact about the
+    // day, and whose it is and why is the requester's business. Their own
+    // requests are on the time-off screen.
+    return (
+      <div className="flex w-full items-center gap-3 px-4 py-3">
+        <span className="text-caption text-fg-subtle w-24 shrink-0 sm:w-28">{t("away")}</span>
+
+        <span className="flex min-w-0 flex-1 items-center gap-2">
+          <PersonAvatar name={entry.userName ?? "?"} src={entry.avatarUrl} size="sm" />
+          <span className="text-body text-fg-default truncate">
+            {entry.mine ? t("youAreAway") : entry.userName}
+          </span>
+        </span>
+
+        <Palmtree aria-hidden className="text-fg-subtle size-4 shrink-0" />
+      </div>
     );
   }
 

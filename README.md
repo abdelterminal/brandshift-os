@@ -112,6 +112,12 @@ What is built:
   after the invitation has gone out. Answer yes, no or maybe; write up what was decided. Moving a
   meeting withdraws everyone's answer, and cancelling one leaves it on the calendar saying so.
 
+- **Time off** -- ask for leave and watch the working-day cost as you pick the dates; weekends
+  cost nothing. Approvers get a queue, and nobody can sign off their own request. Balances are
+  computed from what was actually approved rather than stored and hoped over. Approved time off
+  appears on the calendar, and scheduling a meeting tells you somebody is *away* rather than merely
+  *busy*.
+
 Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a screen, a project, a person or a department.
 
 ## Design system

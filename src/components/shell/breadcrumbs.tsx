@@ -29,6 +29,7 @@ const NAV_SEGMENTS = new Set([
   "inbox",
   "calendar",
   "channels",
+  "leave",
   "team",
   "myWork",
 ]);

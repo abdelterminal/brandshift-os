@@ -21,7 +21,7 @@ import { fanOut } from "./notifications";
 export type ActivityRow = {
   id: string;
   verb: string;
-  subjectType: "organization" | "user" | "department" | "project" | "task" | "meeting";
+  subjectType: "organization" | "user" | "department" | "project" | "task" | "meeting" | "leave";
   subjectId: string;
   projectId: string | null;
   taskId: string | null;
@@ -61,9 +61,7 @@ async function readActivity(
     ...where,
   )) as ActivityRow[];
 
-  return rows
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .slice(0, limit);
+  return rows.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit);
 }
 
 /** A project's Activity tab. */
@@ -126,9 +124,10 @@ export async function recordActivity(
       projectId: created.projectId,
       taskId: created.taskId,
       metadataAssignee:
-        typeof event.metadata?.assigneeUserId === "string"
-          ? event.metadata.assigneeUserId
-          : null,
+        typeof event.metadata?.assigneeUserId === "string" ? event.metadata.assigneeUserId : null,
+      // Passed whole for the verbs whose recipient is named in the payload
+      // rather than derivable from a project or a task.
+      metadata: event.metadata ?? {},
     },
     executor,
   );

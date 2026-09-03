@@ -277,9 +277,18 @@ export function ScheduleForm({
                     come, while you are still deciding whether to ask.
                   */}
                   {selected && busy.length > 0 ? (
-                    <Badge tone="attention" size="sm" className="max-w-56 shrink-0">
-                      <span className="truncate">{t("busy", { title: busy[0]!.title })}</span>
-                    </Badge>
+                    // Away outranks busy. Somebody in another meeting can
+                    // usually be moved; somebody on holiday cannot, and that
+                    // is a different decision for whoever is scheduling.
+                    busy.some((clash) => clash.kind === "leave") ? (
+                      <Badge tone="blocked" size="sm" className="shrink-0">
+                        {t("onLeave")}
+                      </Badge>
+                    ) : (
+                      <Badge tone="attention" size="sm" className="max-w-56 shrink-0">
+                        <span className="truncate">{t("busy", { title: busy[0]!.title })}</span>
+                      </Badge>
+                    )
                   ) : null}
                 </label>
               </li>

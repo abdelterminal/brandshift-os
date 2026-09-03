@@ -1,6 +1,7 @@
 import {
   boolean,
   index,
+  integer,
   jsonb,
   pgTable,
   text,
@@ -106,6 +107,12 @@ export const memberships = pgTable(
       .notNull()
       .default(NO_MODULE_PERMISSIONS),
     jobTitle: text("job_title"),
+    /**
+     * Days of annual leave a year. On the membership rather than the user,
+     * because it is a term of employment with one organization -- the same
+     * person can hold a different allowance somewhere else.
+     */
+    annualLeaveDays: integer("annual_leave_days").notNull().default(25),
     status: membershipStatusEnum("status").notNull().default("invited"),
     /** True for the person who created the org. Guards "last owner" checks. */
     isFounder: boolean("is_founder").notNull().default(false),

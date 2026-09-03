@@ -35,7 +35,7 @@ export type NotificationRow = {
    * thing itself: without it, anything that is not a task or a project has
    * nowhere to point and lands on Today -- which is a dead end wearing a link.
    */
-  subjectType: "organization" | "user" | "department" | "project" | "task" | "meeting";
+  subjectType: "organization" | "user" | "department" | "project" | "task" | "meeting" | "leave";
   subjectId: string;
   actorName: string | null;
   taskId: string | null;
@@ -86,9 +86,7 @@ export async function listNotifications(actor: Actor, limit = 50): Promise<Notif
     eq(notifications.userId, actor.userId),
   )) as NotificationRow[];
 
-  return rows
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .slice(0, limit);
+  return rows.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit);
 }
 
 /**
@@ -144,6 +142,12 @@ type EventWithAssignee = {
   projectId: string | null;
   taskId: string | null;
   metadataAssignee?: string | null;
+  /**
+   * The whole payload, for the verbs whose recipient is named in it rather
+   * than derivable from a project or a task -- a leave decision goes to the
+   * person who asked, and only the event knows who that was.
+   */
+  metadata?: Record<string, unknown>;
 };
 
 /**
@@ -217,6 +221,33 @@ async function recipientsFor(
         eq(projectMembers.projectId, event.projectId),
       );
       for (const member of members) recipients.add(member.userId);
+      break;
+    }
+
+    // A request nobody is told about is one that sits pending until the
+    // person chases it in the corridor.
+    case "leave.requested": {
+      const { approverIdsFor } = await import("./leave");
+      for (const approver of await approverIdsFor(actor, actor.userId)) {
+        recipients.add(approver);
+      }
+      break;
+    }
+
+    // The answer goes to whoever asked, and to nobody else: an approval is
+    // between two people.
+    case "leave.approved":
+    case "leave.declined": {
+      const requester = event.metadata?.requesterUserId;
+      if (typeof requester === "string") recipients.add(requester);
+      break;
+    }
+
+    // Whoever agreed to it should know it is not happening, so the team
+    // calendar and their memory of it do not disagree.
+    case "leave.cancelled": {
+      const approver = event.metadata?.approverUserId;
+      if (typeof approver === "string") recipients.add(approver);
       break;
     }
 

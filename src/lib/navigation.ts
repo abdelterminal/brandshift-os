@@ -29,7 +29,8 @@ export type NavIconName =
   | "inbox"
   | "calendar"
   | "channel"
-  | "channels";
+  | "channels"
+  | "leave";
 
 export type Destination = {
   /** Key into the `Nav` message catalogue, unless `label` overrides it. */
@@ -123,6 +124,7 @@ export const ALL_DESTINATIONS: Destination[] = [
   { id: "channels", href: "/channels", icon: "channels", requires: "channel.view" },
   { id: "calendar", href: "/calendar", icon: "calendar", requires: "calendar.view" },
   { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" },
+  { id: "leave", href: "/leave", icon: "leave", requires: "leave.view" },
   { id: "people", href: "/people", icon: "people", requires: "people.view" },
   { id: "insights", href: "/insights", icon: "insights", requires: "insights.view" },
 ];

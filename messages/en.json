@@ -16,7 +16,8 @@
     "closeMenu": "Close menu",
     "channels": "Channels",
     "allChannels": "All channels",
-    "meetings": "Meetings"
+    "meetings": "Meetings",
+    "leave": "Time off"
   },
   "Shell": {
     "skipToContent": "Skip to content",
@@ -360,7 +361,11 @@
     "system": "System",
     "meetingScheduled": "scheduled {title}",
     "meetingRescheduled": "moved {title}",
-    "meetingCancelled": "called off {title}"
+    "meetingCancelled": "called off {title}",
+    "leaveRequested": "asked for {days} days off",
+    "leaveApproved": "approved time off",
+    "leaveDeclined": "declined time off",
+    "leaveCancelled": "cancelled their time off"
   },
   "ProjectStatus": {
     "planning": "Planning",
@@ -403,7 +408,11 @@
     "system": "System",
     "meetingScheduled": "invited you to {title}",
     "meetingRescheduled": "moved {title}",
-    "meetingCancelled": "called off {title}"
+    "meetingCancelled": "called off {title}",
+    "leaveRequested": "asked for time off",
+    "leaveApproved": "approved your time off",
+    "leaveDeclined": "declined your time off",
+    "leaveCancelled": "cancelled time off you had approved"
   },
   "Channels": {
     "title": "Channels",
@@ -461,7 +470,9 @@
     "moreEntries": "{count, plural, one {# more} other {# more}}",
     "allDay": "All day",
     "weekdayShort": "Mon Tue Wed Thu Fri Sat Sun",
-    "cancelled": "Called off"
+    "cancelled": "Called off",
+    "away": "Away",
+    "youAreAway": "You are away"
   },
   "Meeting": {
     "backToCalendar": "Calendar",
@@ -519,6 +530,70 @@
     "onCalendar": "On the calendar",
     "nextUp": "Next up",
     "noneUpcoming": "Nothing in your diary this week.",
-    "viewAll": "Open the calendar"
+    "viewAll": "Open the calendar",
+    "onLeave": "Away"
+  },
+  "LeaveType": {
+    "annual": "Annual leave",
+    "sick": "Sick leave",
+    "unpaid": "Unpaid",
+    "parental": "Parental",
+    "other": "Other"
+  },
+  "LeaveStatus": {
+    "pending": "Waiting",
+    "approved": "Approved",
+    "declined": "Declined",
+    "cancelled": "Withdrawn"
+  },
+  "Leave": {
+    "title": "Time off",
+    "subtitle": "What you have asked for, and what is left.",
+    "request": "Ask for time off",
+    "requestTitle": "Ask for time off",
+    "requestBody": "Weekends do not count. Public holidays are not tracked yet.",
+    "typeLabel": "What kind",
+    "fromLabel": "From",
+    "toLabel": "To",
+    "halfDayLabel": "Half a day only",
+    "halfDayHint": "Available when you ask for a single day.",
+    "reasonLabel": "Anything to add",
+    "reasonPlaceholder": "Optional. Helpful for anything unusual.",
+    "costs": "{days, plural, one {# working day} other {# working days}}",
+    "costsNothing": "That range is all weekend, so it costs nothing and asks for nothing.",
+    "submit": "Send the request",
+    "submitting": "Sending",
+    "cancelRequest": "Withdraw",
+    "cancelTitle": "Withdraw this request?",
+    "cancelBody": "It comes off the team calendar and the days go back into your balance. The record of having asked stays.",
+    "allowance": "Allowance",
+    "taken": "Taken",
+    "booked": "Booked",
+    "remaining": "Left",
+    "balanceCaption": "{year} · annual leave only",
+    "mine": "Your requests",
+    "noneMine": "You have not asked for any time off.",
+    "noneMineBody": "When you do, it shows here and on the calendar once it is approved.",
+    "waiting": "Waiting for you",
+    "waitingBody": "Nobody has asked for time off.",
+    "approve": "Approve",
+    "decline": "Decline",
+    "declineTitle": "Decline this request?",
+    "declineBody": "Say why. A no with no reason is one people ask about twice.",
+    "declineNote": "Why",
+    "declineNotePlaceholder": "We need cover that week.",
+    "decidedBy": "{name} · {status}",
+    "overlap": "You already have time off across those days.",
+    "noWorkingDays": "That range is all weekend. Pick days you would otherwise be working.",
+    "range": "The end has to be on or after the start.",
+    "invalid": "Check the highlighted fields.",
+    "alreadyDecided": "Somebody has already answered that one.",
+    "halfDayShort": "½ day",
+    "days": "{days, plural, one {# day} other {# days}}",
+    "dayRange": "{from} – {to}",
+    "teamAway": "Away this week",
+    "teamAwayBody": "Nobody is off this week.",
+    "viewCalendar": "See it on the calendar",
+    "dismiss": "Cancel"
   }
 }

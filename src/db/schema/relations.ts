@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 
 import { activityEvents } from "./activity";
 import { channelMembers, channels, messages } from "./channels";
+import { leaveRequests } from "./leave";
 import { meetingAttendees, meetings } from "./meetings";
 import { notifications } from "./notifications";
 import { organizations } from "./organizations";
@@ -129,6 +130,18 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   }),
   channel: one(channels, { fields: [messages.channelId], references: [channels.id] }),
   author: one(users, { fields: [messages.authorUserId], references: [users.id] }),
+}));
+
+export const leaveRequestsRelations = relations(leaveRequests, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [leaveRequests.organizationId],
+    references: [organizations.id],
+  }),
+  user: one(users, { fields: [leaveRequests.userId], references: [users.id] }),
+  decidedBy: one(users, {
+    fields: [leaveRequests.decidedByUserId],
+    references: [users.id],
+  }),
 }));
 
 export const meetingsRelations = relations(meetings, ({ one, many }) => ({

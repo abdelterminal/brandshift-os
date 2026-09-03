@@ -59,12 +59,15 @@ export type Action =
   | "inbox.view"
   | "calendar.view"
   | "channel.view"
+  | "leave.view"
   // Doing
   | "project.create"
   | "task.create"
   | "channel.post"
   | "meeting.schedule"
   | "meeting.manage"
+  | "leave.request"
+  | "leave.approve"
   | "member.invite"
   | "member.editRole"
   | "organization.switch"
@@ -77,7 +80,12 @@ export type Action =
  * whole row: a rule that receives an entire meeting is a rule that can start
  * depending on its title.
  */
-export type Resource = { organizerUserId?: string | null; ownerUserId?: string | null };
+export type Resource = {
+  organizerUserId?: string | null;
+  ownerUserId?: string | null;
+  /** The person a record is about -- whose leave, whose profile. */
+  userId?: string | null;
+};
 
 const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   // Everyone with a membership can see their own day and their own work.
@@ -91,6 +99,11 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   // held in a corridor, which is the thing this replaces.
   "channel.view": () => true,
   "channel.post": () => true,
+
+  // Everyone can see the time-off screen and ask for time off. What you see on
+  // it differs: your own requests always, the approval queue only if you are
+  // one of the people who decides.
+  "leave.view": () => true,
 
   // The People directory is the org chart, which every member can read. The
   // `people` module flag is what gates the sensitive parts of it -- salaries,
@@ -113,6 +126,20 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   // the calendar of a person who has left.
   "meeting.manage": (actor, resource) =>
     resource?.organizerUserId === actor.userId || atLeast(actor, "admin"),
+
+  "leave.request": () => true,
+
+  /**
+   * Deciding on somebody's time off.
+   *
+   * A manager, or anybody holding the `people` module -- the same flag that
+   * gates the sensitive half of the directory, because an approval queue is
+   * exactly that. And never your own request, whatever your role: the data
+   * layer refuses it too, so this is the visible half of one rule rather than
+   * the only half.
+   */
+  "leave.approve": (actor, resource) =>
+    (atLeast(actor, "manager") || hasModule(actor, "people")) && resource?.userId !== actor.userId,
 
   "member.invite": (actor) => atLeast(actor, "admin") || hasModule(actor, "people"),
   "member.editRole": (actor) => atLeast(actor, "admin"),

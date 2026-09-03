@@ -678,3 +678,122 @@ export const MEETINGS: SeedMeeting[] = [
       "Taking the Verdant packaging brief and the Kestrel report. Passing on the third: no design capacity before December without pushing Meridian, which we are not doing.",
   },
 ];
+
+/**
+ * Time off.
+ *
+ * Every status is represented, because a screen where each request looks the
+ * same never exercises the states that are easiest to get wrong: a decision
+ * with a reason attached, a withdrawal, a half day, and a request still
+ * waiting for somebody. Two sit in the near future so the calendar has people
+ * away on it, and one is in progress right now.
+ */
+export type SeedLeave = {
+  email: string;
+  type: "annual" | "sick" | "unpaid" | "parental" | "other";
+  /** Days from today. Negative is in the past. */
+  startsInDays: number;
+  endsInDays: number;
+  halfDay?: boolean;
+  reason?: string;
+  status: "pending" | "approved" | "declined" | "cancelled";
+  /** Who answered. Required for approved and declined. */
+  decidedByEmail?: string;
+  decisionNote?: string;
+};
+
+export const LEAVE: SeedLeave[] = [
+  // Waiting on somebody, which is what the approval queue is for.
+  {
+    email: "lukas.weber@brandshift.test",
+    type: "annual",
+    startsInDays: 24,
+    endsInDays: 33,
+    reason: "Two weeks in Portugal, booked before the Northwind dates moved.",
+    status: "pending",
+  },
+  {
+    email: "priya.raman@brandshift.test",
+    type: "annual",
+    startsInDays: 11,
+    endsInDays: 11,
+    halfDay: true,
+    reason: "Dentist, afternoon only.",
+    status: "pending",
+  },
+
+  // Agreed, and therefore on the calendar.
+  {
+    email: "marc.dubois@brandshift.test",
+    type: "annual",
+    startsInDays: 3,
+    endsInDays: 7,
+    status: "approved",
+    decidedByEmail: "sofia.laurent@brandshift.test",
+  },
+  {
+    email: "nadia.haddad@brandshift.test",
+    type: "annual",
+    startsInDays: -1,
+    endsInDays: 1,
+    reason: "Long weekend.",
+    status: "approved",
+    decidedByEmail: "claire.moreau@brandshift.test",
+  },
+  {
+    email: "ines.ferreira@brandshift.test",
+    type: "sick",
+    startsInDays: -6,
+    endsInDays: -5,
+    status: "approved",
+    decidedByEmail: "elena.rossi@brandshift.test",
+  },
+  {
+    email: "oscar.lindqvist@brandshift.test",
+    type: "parental",
+    startsInDays: 17,
+    endsInDays: 31,
+    status: "approved",
+    decidedByEmail: "tom.decker@brandshift.test",
+  },
+
+  // Refused, with a reason. A no with no reason is one people ask about twice.
+  {
+    email: "yusuf.karim@brandshift.test",
+    type: "annual",
+    startsInDays: 8,
+    endsInDays: 12,
+    reason: "Skiing.",
+    status: "declined",
+    decidedByEmail: "amina.benali@brandshift.test",
+    decisionNote: "That is the Meridian board week. Any other week in the month works.",
+  },
+
+  // Withdrawn by the person who asked.
+  {
+    email: "sofia.laurent@brandshift.test",
+    type: "annual",
+    startsInDays: -20,
+    endsInDays: -18,
+    status: "cancelled",
+  },
+
+  // Taken earlier in the year, so a balance is not a round number.
+  {
+    email: "elena.rossi@brandshift.test",
+    type: "annual",
+    startsInDays: -60,
+    endsInDays: -54,
+    status: "approved",
+    decidedByEmail: "amina.benali@brandshift.test",
+  },
+  {
+    email: "elena.rossi@brandshift.test",
+    type: "annual",
+    startsInDays: -25,
+    endsInDays: -25,
+    halfDay: true,
+    status: "approved",
+    decidedByEmail: "amina.benali@brandshift.test",
+  },
+];

@@ -318,9 +318,45 @@ Decisions worth knowing:
 - No recurrence, no external calendar sync, no reminders. Each is its own feature rather than a
   corner of this one -- see `KNOWN-GAPS.md`.
 
+### Attendance and leave  [DONE]
+
+Scope taken deliberately, because the roadmap line was two words: **leave requests, approval and
+balances, and attendance as _who is in and who is not_ -- not a timeclock.** Twelve salaried people
+in a studio do not punch a clock; what anybody actually needs is to know who is away. Billable-hours
+timesheets are a separate feature and belong beside ERP invoicing.
+
+- [x] `leave_requests`, tenant-owned. A declined or withdrawn request keeps its row: "I asked and
+      was told no" is a fact people need to be able to point at
+- [x] **A balance is computed, never stored** -- the allowance on the membership minus approved
+      annual days in the year. A stored balance is a number that goes silently wrong the first time
+      an approval is withdrawn. Same discipline as the calendar owning no rows
+- [x] Split into taken, booked and left, because "eighteen days left" answers a different question
+      from "eighteen left, six already promised to a holiday in November"
+- [x] Only annual leave spends the allowance. Sick leave is not a budget, and treating it as one is
+      how a company teaches its staff to come in ill
+- [x] Weekends cost nothing, and the working-day count on the form is the same function the server
+      stores -- so the number you were shown and the number that leaves your balance cannot differ
+- [x] Half days, for a single-day request only. Half of a fortnight is not something this form can
+      express, so it does not pretend to
+- [x] **Nobody signs off their own request**, whatever their role -- enforced in the data layer and
+      in `can()`, so the hidden button and the refused write agree
+- [x] A refusal carries a reason. A no with no reason is one people ask about again in person
+- [x] Approved leave appears on the calendar, per working day. No second calendar was built
+- [x] Scheduling a meeting now says **Away** rather than **Busy** when somebody is on approved
+      leave: one can be moved and the other cannot
+- [x] Requests reach the people who can decide, and decisions reach the person who asked
+- [x] Seeded across every status, including a refusal with a reason and a withdrawal
+
+Decisions worth knowing:
+- Attendance is derived from leave rather than recorded separately. There is no "present" row for a
+  normal day, because a normal day is not an event.
+- Public holidays are not modelled, so a week off over Christmas costs five days here and four in
+  reality. A hardcoded list of somebody else's national holidays would be worse than the gap.
+- The allowance lives on the membership, not the user: it is a term of employment with one
+  organization.
+
 ### Next
 
-- Attendance and leave
 - Insights and reporting
 - **CRM**: contacts, companies, leads, pipeline/deals, activities
 - **ERP**: quotes, orders, invoices, expenses

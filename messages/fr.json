@@ -16,7 +16,8 @@
     "closeMenu": "Fermer le menu",
     "channels": "Canaux",
     "allChannels": "Tous les canaux",
-    "meetings": "Réunions"
+    "meetings": "Réunions",
+    "leave": "Congés"
   },
   "Shell": {
     "skipToContent": "Aller au contenu",
@@ -360,7 +361,11 @@
     "system": "Système",
     "meetingScheduled": "a programmé {title}",
     "meetingRescheduled": "a déplacé {title}",
-    "meetingCancelled": "a annulé {title}"
+    "meetingCancelled": "a annulé {title}",
+    "leaveRequested": "a demandé {days} jours de congé",
+    "leaveApproved": "a approuvé des congés",
+    "leaveDeclined": "a refusé des congés",
+    "leaveCancelled": "a annulé ses congés"
   },
   "ProjectStatus": {
     "planning": "En préparation",
@@ -403,7 +408,11 @@
     "system": "Système",
     "meetingScheduled": "vous a invité à {title}",
     "meetingRescheduled": "a déplacé {title}",
-    "meetingCancelled": "a annulé {title}"
+    "meetingCancelled": "a annulé {title}",
+    "leaveRequested": "a demandé des congés",
+    "leaveApproved": "a approuvé vos congés",
+    "leaveDeclined": "a refusé vos congés",
+    "leaveCancelled": "a annulé des congés que vous aviez approuvés"
   },
   "Channels": {
     "title": "Canaux",
@@ -461,7 +470,9 @@
     "moreEntries": "{count, plural, one {# de plus} other {# de plus}}",
     "allDay": "Toute la journée",
     "weekdayShort": "lun mar mer jeu ven sam dim",
-    "cancelled": "Annulée"
+    "cancelled": "Annulée",
+    "away": "Absent",
+    "youAreAway": "Vous êtes absent"
   },
   "Meeting": {
     "backToCalendar": "Calendrier",
@@ -519,6 +530,70 @@
     "onCalendar": "Au calendrier",
     "nextUp": "À venir",
     "noneUpcoming": "Rien dans votre agenda cette semaine.",
-    "viewAll": "Ouvrir le calendrier"
+    "viewAll": "Ouvrir le calendrier",
+    "onLeave": "Absent"
+  },
+  "LeaveType": {
+    "annual": "Congés annuels",
+    "sick": "Arrêt maladie",
+    "unpaid": "Sans solde",
+    "parental": "Congé parental",
+    "other": "Autre"
+  },
+  "LeaveStatus": {
+    "pending": "En attente",
+    "approved": "Approuvé",
+    "declined": "Refusé",
+    "cancelled": "Retiré"
+  },
+  "Leave": {
+    "title": "Congés",
+    "subtitle": "Ce que vous avez demandé, et ce qu'il vous reste.",
+    "request": "Demander des congés",
+    "requestTitle": "Demander des congés",
+    "requestBody": "Les week-ends ne comptent pas. Les jours fériés ne sont pas encore pris en compte.",
+    "typeLabel": "Quel type",
+    "fromLabel": "Du",
+    "toLabel": "Au",
+    "halfDayLabel": "Une demi-journée seulement",
+    "halfDayHint": "Disponible lorsque vous demandez une seule journée.",
+    "reasonLabel": "À préciser",
+    "reasonPlaceholder": "Facultatif. Utile pour tout ce qui sort de l'ordinaire.",
+    "costs": "{days, plural, one {# jour ouvré} other {# jours ouvrés}}",
+    "costsNothing": "Cette période ne tombe que sur le week-end : elle ne coûte rien et ne demande rien.",
+    "submit": "Envoyer la demande",
+    "submitting": "Envoi",
+    "cancelRequest": "Retirer",
+    "cancelTitle": "Retirer cette demande ?",
+    "cancelBody": "Elle disparaît du calendrier de l'équipe et les jours reviennent dans votre solde. La trace de la demande reste.",
+    "allowance": "Droits",
+    "taken": "Pris",
+    "booked": "Réservés",
+    "remaining": "Restants",
+    "balanceCaption": "{year} · congés annuels uniquement",
+    "mine": "Vos demandes",
+    "noneMine": "Vous n'avez demandé aucun congé.",
+    "noneMineBody": "Dès que ce sera le cas, cela apparaîtra ici et au calendrier une fois approuvé.",
+    "waiting": "En attente de votre réponse",
+    "waitingBody": "Personne n'a demandé de congés.",
+    "approve": "Approuver",
+    "decline": "Refuser",
+    "declineTitle": "Refuser cette demande ?",
+    "declineBody": "Dites pourquoi. Un refus sans motif est un refus qu'on vous redemandera.",
+    "declineNote": "Motif",
+    "declineNotePlaceholder": "Nous avons besoin de renfort cette semaine-là.",
+    "decidedBy": "{name} · {status}",
+    "overlap": "Vous avez déjà des congés sur ces jours.",
+    "noWorkingDays": "Cette période ne tombe que sur le week-end. Choisissez des jours normalement travaillés.",
+    "range": "La fin doit être postérieure ou égale au début.",
+    "invalid": "Vérifiez les champs signalés.",
+    "alreadyDecided": "Quelqu'un a déjà répondu à celle-ci.",
+    "halfDayShort": "½ journée",
+    "days": "{days, plural, one {# jour} other {# jours}}",
+    "dayRange": "{from} – {to}",
+    "teamAway": "Absents cette semaine",
+    "teamAwayBody": "Personne n'est absent cette semaine.",
+    "viewCalendar": "Voir au calendrier",
+    "dismiss": "Annuler"
   }
 }

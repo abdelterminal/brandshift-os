@@ -21,6 +21,7 @@ import {
   CHANNEL_MESSAGES,
   DEPARTMENTS,
   GENERAL_CHANNEL,
+  LEAVE,
   MEETINGS,
   ORGANIZATION,
   PERSONAL_TASKS,
@@ -34,6 +35,7 @@ import {
   channelMembers,
   channels,
   departments,
+  leaveRequests,
   meetingAttendees,
   meetings,
   messages,
@@ -50,7 +52,8 @@ import {
 } from "./schema";
 import { withOrg } from "./tenancy";
 import { hashPassword } from "@/lib/password";
-import { instantFromLocal } from "@/lib/calendar-dates";
+import { addDays, instantFromLocal } from "@/lib/calendar-dates";
+import { workingDays } from "@/lib/leave-days";
 import { slugify } from "@/lib/slug";
 
 /** Every seeded account shares this password. Development only. */
@@ -119,6 +122,7 @@ async function main() {
   // tenant-owned but is seeded here, so it is cleared here too.
   await db.execute(sql`
     truncate table
+      ${leaveRequests},
       ${meetingAttendees}, ${meetings},
       ${messages}, ${channelMembers}, ${channels},
       ${notifications}, ${activityEvents}, ${tasks}, ${projectMembers}, ${projects},
@@ -573,6 +577,55 @@ async function main() {
 
   await scope.insert(meetingAttendees, attendeeRows);
   console.log(`Created ${meetingRows.length} meetings, ${attendeeRows.length} invitations`);
+
+  // --- Time off ----------------------------------------------------------
+  // Every status, so the screen exercises the states that are easiest to get
+  // wrong: a refusal with a reason, a withdrawal, a half day, and something
+  // still waiting for an answer.
+  /**
+   * Nudge a start onto a weekday.
+   *
+   * Offsets are counted in calendar days, so a request written as "eleven days
+   * out" lands on a Saturday roughly two times in seven -- and a single-day
+   * request on a Saturday costs nothing, which is exactly what `requestLeave`
+   * refuses. Seeding rows the app itself would reject makes a screen that
+   * cannot be reproduced by using it.
+   */
+  function onAWeekday(day: string): string {
+    let at = day;
+    while ([0, 6].includes(new Date(`${at}T00:00:00Z`).getUTCDay())) at = addDays(at, 1);
+    return at;
+  }
+
+  const leaveRows = await scope.insert(
+    leaveRequests,
+    LEAVE.map((request) => {
+      const startDate = onAWeekday(addDays(todayInOrg, request.startsInDays));
+      // The span is kept, measured from the nudged start, so a fortnight stays
+      // a fortnight rather than being clipped by the shift.
+      const endDate = addDays(startDate, request.endsInDays - request.startsInDays);
+      const halfDay = request.halfDay === true && startDate === endDate;
+      const decided = request.status === "approved" || request.status === "declined";
+
+      return {
+        userId: userId(request.email),
+        type: request.type,
+        startDate,
+        endDate,
+        halfDay,
+        // Counted by the same function the app uses, so a seeded balance and a
+        // balance somebody produces by asking are the same arithmetic.
+        workingDays: String(workingDays(startDate, endDate, halfDay)),
+        reason: request.reason ?? null,
+        status: request.status,
+        decidedByUserId: decided ? userId(request.decidedByEmail!) : null,
+        decidedAt: decided ? new Date() : null,
+        decisionNote: request.decisionNote ?? null,
+      };
+    }),
+  );
+
+  console.log(`Created ${leaveRows.length} leave requests`);
 
   await report(scope, insertedTasks);
 }

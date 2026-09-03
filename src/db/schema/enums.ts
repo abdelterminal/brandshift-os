@@ -9,11 +9,7 @@ import { pgEnum } from "drizzle-orm/pg-core";
 export const roleEnum = pgEnum("role", ["owner", "admin", "manager", "member"]);
 
 /** Membership lifecycle. `invited` rows exist before the user accepts. */
-export const membershipStatusEnum = pgEnum("membership_status", [
-  "invited",
-  "active",
-  "suspended",
-]);
+export const membershipStatusEnum = pgEnum("membership_status", ["invited", "active", "suspended"]);
 
 export const projectStatusEnum = pgEnum("project_status", [
   "planning",
@@ -41,6 +37,33 @@ export const priorityEnum = pgEnum("priority", ["low", "medium", "high", "urgent
 /** Role a person holds inside a single project. */
 export const projectRoleEnum = pgEnum("project_role", ["lead", "contributor", "viewer"]);
 
+/**
+ * Kinds of time off.
+ *
+ * Only `annual` comes out of somebody's allowance. Sick leave is not a budget
+ * people spend, and treating it as one is how a company teaches its staff to
+ * come in ill.
+ */
+export const leaveTypeEnum = pgEnum("leave_type", [
+  "annual",
+  "sick",
+  "unpaid",
+  "parental",
+  "other",
+]);
+
+/**
+ * A request's life. `cancelled` is the requester withdrawing it; `declined` is
+ * somebody else saying no. Both keep the row -- "I asked and was told no" is a
+ * fact people need to be able to point at.
+ */
+export const leaveStatusEnum = pgEnum("leave_status", [
+  "pending",
+  "approved",
+  "declined",
+  "cancelled",
+]);
+
 /** Supported locales. Both ship complete; there is no partial-translation state. */
 export const localeEnum = pgEnum("locale", ["en", "fr"]);
 
@@ -55,4 +78,5 @@ export const activitySubjectEnum = pgEnum("activity_subject", [
   "project",
   "task",
   "meeting",
+  "leave",
 ]);

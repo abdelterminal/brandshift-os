@@ -167,6 +167,19 @@ async function MonthEntry({ entry, timeZone }: { entry: AgendaEntry; timeZone: s
     );
   }
 
+  if (entry.kind === "leave") {
+    return (
+      <span
+        className={cn(
+          chip,
+          "bg-complete-bg text-complete-text border-complete-border cursor-default",
+        )}
+      >
+        {entry.mine ? t("youAreAway") : entry.userName}
+      </span>
+    );
+  }
+
   if (entry.kind === "task") {
     return (
       <Link

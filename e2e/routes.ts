@@ -15,6 +15,7 @@ export const MEMBER_ROUTES = [
   "/en/work",
   "/en/people",
   "/en/inbox",
+  "/en/leave",
   "/en/calendar",
   "/en/calendar?view=month&range=month",
   "/en/calendar/new",
