@@ -1,6 +1,6 @@
 import { expect, test as setup } from "@playwright/test";
 
-import { MANAGER, MEMBER, SEED_PASSWORD } from "./people";
+import { MANAGER, MEMBER, SALES, SEED_PASSWORD } from "./people";
 
 /**
  * Signs in once per role and saves the session.
@@ -31,4 +31,8 @@ setup("sign in as a manager", async ({ page }) => {
 
 setup("sign in as a member", async ({ page }) => {
   await signIn(page, MEMBER.email, "e2e/.auth/member.json");
+});
+
+setup("sign in as client services", async ({ page }) => {
+  await signIn(page, SALES.email, "e2e/.auth/sales.json");
 });

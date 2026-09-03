@@ -45,6 +45,49 @@ export type ChannelRow = {
   projectName: string | null;
 };
 
+/**
+ * Give a deal its channel.
+ *
+ * The same arrangement as a project's, on the same spine -- `channel_kind` has
+ * named `deal` since channels shipped, waiting for CRM to exist. A deal has no
+ * member list of its own, so whoever opens it is who is in it: the people
+ * working a deal are the people who go looking for its conversation.
+ */
+export async function ensureDealChannel(
+  actor: Actor,
+  deal: { id: string; title: string; companyName: string | null },
+  executor?: Executor,
+): Promise<{ id: string; slug: string }> {
+  const scope = withOrg(actor.organizationId, executor);
+
+  const existing = await scope.selectFields(
+    channels,
+    { id: channels.id, slug: channels.slug },
+    eq(channels.dealId, deal.id),
+  );
+  if (existing[0]) return existing[0];
+
+  const taken = new Set(
+    (await scope.selectFields(channels, { slug: channels.slug })).map((row) => row.slug),
+  );
+  const name = deal.companyName ? `${deal.companyName} — ${deal.title}` : deal.title;
+  let slug = slugify(name, "deal");
+  if (taken.has(slug)) slug = `${slug}-${deal.id.slice(0, 6)}`;
+
+  const [created] = await scope.insert(channels, {
+    kind: "deal",
+    dealId: deal.id,
+    name,
+    slug,
+    createdByUserId: actor.userId,
+  });
+  if (!created) throw new Error("Could not create the deal channel.");
+
+  await scope.insert(channelMembers, { channelId: created.id, userId: actor.userId });
+
+  return { id: created.id, slug: created.slug };
+}
+
 export type ChannelListRow = ChannelRow & {
   /** Unread messages from other people. Your own are never unread. */
   unread: number;

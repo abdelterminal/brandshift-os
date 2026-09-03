@@ -5,6 +5,7 @@ import type { Actor } from "./authz";
 import {
   MAX_PRIMARY_DESTINATIONS,
   bottomNavFor,
+  destinationsFor,
   overflowFor,
   railFor,
   withChannels,
@@ -191,5 +192,42 @@ describe("channels under Work", () => {
     const work = bare.find((item) => item.children)!;
     expect(work.children).toHaveLength(1);
     expect(work.children![0]!.href).toBe("/channels");
+  });
+});
+
+describe("the client-services rail", () => {
+  const SALES = actor({ role: "manager", permissions: { crm: true, insights: true } });
+  const JUNIOR_SALES = actor({ role: "member", permissions: { crm: true } });
+
+  it("still fits inside the cap", () => {
+    for (const person of [SALES, JUNIOR_SALES]) {
+      expect(railFor(person).length).toBeLessThanOrEqual(MAX_PRIMARY_DESTINATIONS);
+    }
+  });
+
+  it("gives the pipeline to whoever holds the module, whatever their role", () => {
+    // The module says this person's day is the pipeline; seniority does not.
+    for (const person of [SALES, JUNIOR_SALES]) {
+      expect(railFor(person).map((item) => item.href)).toContain("/crm");
+    }
+  });
+
+  it("does not give it to anybody else", () => {
+    for (const person of [OWNER, ADMIN, MANAGER, MEMBER, MEMBER_WITH_INSIGHTS]) {
+      expect(railFor(person).map((item) => item.href)).not.toContain("/crm");
+    }
+  });
+
+  it("spends the slot Insights had, rather than adding a sixth", () => {
+    // Sofia holds `insights` too. Something has to give for the cap to mean
+    // anything, and reporting is a weekly errand where a pipeline is a daily
+    // one -- Insights stays reachable from the command palette.
+    const hrefs = railFor(SALES).map((item) => item.href);
+    expect(hrefs).toContain("/crm");
+    expect(hrefs).not.toContain("/insights");
+  });
+
+  it("is still reachable by name for them", () => {
+    expect(destinationsFor(SALES).map((item) => item.href)).toContain("/insights");
   });
 });

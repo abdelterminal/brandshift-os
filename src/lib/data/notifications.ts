@@ -35,7 +35,16 @@ export type NotificationRow = {
    * thing itself: without it, anything that is not a task or a project has
    * nowhere to point and lands on Today -- which is a dead end wearing a link.
    */
-  subjectType: "organization" | "user" | "department" | "project" | "task" | "meeting" | "leave";
+  subjectType:
+    | "organization"
+    | "user"
+    | "department"
+    | "project"
+    | "task"
+    | "meeting"
+    | "leave"
+    | "company"
+    | "deal";
   subjectId: string;
   actorName: string | null;
   taskId: string | null;
@@ -221,6 +230,18 @@ async function recipientsFor(
         eq(projectMembers.projectId, event.projectId),
       );
       for (const member of members) recipients.add(member.userId);
+      break;
+    }
+
+    // The person who owns a deal hears when somebody else moves it. Winning
+    // and losing are the two everybody in the room wants to know about, but
+    // they still go to one person: a company-wide "we won" belongs in a
+    // channel, where people can react to it, not in an inbox queue.
+    case "deal.won":
+    case "deal.lost":
+    case "deal.stageChanged": {
+      const owner = event.metadata?.ownerUserId;
+      if (typeof owner === "string") recipients.add(owner);
       break;
     }
 

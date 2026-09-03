@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 
 import { activityEvents } from "./activity";
 import { channelMembers, channels, messages } from "./channels";
+import { companies, contacts, deals } from "./crm";
 import { leaveRequests } from "./leave";
 import { meetingAttendees, meetings } from "./meetings";
 import { notifications } from "./notifications";
@@ -130,6 +131,37 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   }),
   channel: one(channels, { fields: [messages.channelId], references: [channels.id] }),
   author: one(users, { fields: [messages.authorUserId], references: [users.id] }),
+}));
+
+export const companiesRelations = relations(companies, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [companies.organizationId],
+    references: [organizations.id],
+  }),
+  owner: one(users, { fields: [companies.ownerUserId], references: [users.id] }),
+  contacts: many(contacts),
+  deals: many(deals),
+}));
+
+export const contactsRelations = relations(contacts, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [contacts.organizationId],
+    references: [organizations.id],
+  }),
+  company: one(companies, { fields: [contacts.companyId], references: [companies.id] }),
+}));
+
+export const dealsRelations = relations(deals, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [deals.organizationId],
+    references: [organizations.id],
+  }),
+  company: one(companies, { fields: [deals.companyId], references: [companies.id] }),
+  primaryContact: one(contacts, {
+    fields: [deals.primaryContactId],
+    references: [contacts.id],
+  }),
+  owner: one(users, { fields: [deals.ownerUserId], references: [users.id] }),
 }));
 
 export const leaveRequestsRelations = relations(leaveRequests, ({ one }) => ({

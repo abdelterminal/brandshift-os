@@ -35,6 +35,17 @@ export const MANAGER_ROUTES = [
   "/en/work/NOR",
 ] as const;
 
+/**
+ * Behind the `crm` module flag, so only the client-services fixture reaches
+ * them. Swept by `e2e/sales/`.
+ */
+export const SALES_ROUTES = [
+  "/en/crm",
+  "/en/crm?view=board&closed=all",
+  "/en/crm/companies",
+  "/en/crm/contacts",
+] as const;
+
 /** The widths the definition of done names. */
 export const VIEWPORTS = [
   { name: "320", width: 320, height: 640 },

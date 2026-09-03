@@ -11,7 +11,7 @@ written down nowhere is a gap nobody ever fixes.
 delete the row when it is closed — do not leave a struck-through list of things that are actually
 finished. `CLAUDE.md` points here for the same reason.
 
-Last reviewed: after Insights and reporting landed.
+Last reviewed: after CRM landed.
 
 ---
 
@@ -40,6 +40,12 @@ files them as bugs.
 | The e2e suite runs serially, on one database | It completes tasks and publishes projects, so parallel workers would race each other through shared rows. One worker takes about a minute, which is not worth engineering around yet. |
 | axe covers WCAG 2.1 A and AA, not its best-practice rules | Those are opinions worth reading and not worth failing a build over. A suite that cries wolf gets muted, and then it catches nothing. |
 | Notifications have read state but no archive | Read and unread cover the core of an inbox. A third state is worth adding when somebody actually wants to keep a read item out of the way, not before. |
+| A won deal does not become a project | Nothing converts one into the other, so the handover from selling the work to doing it is retyping. It is the obvious next thing and it is a decision about what carries across -- the team, the deliverables, the dates -- rather than a button. |
+| No email, no calls, no attachments on a deal | A deal has notes and a channel. There is no logged call, no email thread and nowhere to put a signed proposal. Email needs the mail transport this deployment still lacks; files need somewhere to put them. |
+| The pipeline has no forecast, weighted or otherwise | Deliberate -- see `DECISIONS.md`. Recorded here so it is not filed as missing. What is genuinely absent is any view of the pipeline over time: won-per-quarter, average time to close, win rate by source. All three are real questions the data can already answer. |
+| Contacts have no page of their own | A contact is a name, a job title and two ways to reach them; everything else about the relationship lives on the company or the deal. It becomes a page the day a contact needs its own history. |
+| Deals cannot be edited after they are created | `editDeal` exists in the actions and nothing calls it. Title, value and close date are set once from the dialog. Worth wiring to an inline edit on the deal page. |
+| One currency per organization | ISO 4217 on the organization, and every figure is in it. Multi-currency is a decision about exchange rates and the date they were taken on, not a column, and it belongs with ERP invoicing. |
 | Insights counts in memory, not in SQL | Each figure is worked out from a few hundred rows pulled back whole, rather than a `date_trunc` and a `group by`. At one agency's volume the difference is not measurable, and the shape of each function is already the shape the SQL version would have. |
 | Insights has no date range and no export | Twelve weeks, always, and no way to send it to anybody. A range picker is easy; an export means deciding what "export" means -- CSV of which table, or a document. Worth doing when somebody asks for a specific one. |
 | Nothing on Insights is per-department or per-client | Everything is the whole organization. Departments exist and would be the obvious first cut, but a filter that only ever has one useful setting is a control nobody touches. Worth adding when there is a second thing to compare. |

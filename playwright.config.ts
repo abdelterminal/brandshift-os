@@ -67,6 +67,14 @@ export default defineConfig({
       dependencies: ["setup"],
       use: { ...devices["Desktop Chrome"], storageState: "e2e/.auth/member.json" },
     },
+    {
+      // Client services: the only fixture holding the `crm` module flag, so
+      // the only one that can see the pipeline at all.
+      name: "sales",
+      testMatch: /sales\/.*\.spec\.ts/,
+      dependencies: ["setup"],
+      use: { ...devices["Desktop Chrome"], storageState: "e2e/.auth/sales.json" },
+    },
   ],
 
   webServer: {

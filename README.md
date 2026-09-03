@@ -80,6 +80,7 @@ Sign in as any seeded person -- the password is `brandshift` for all of them:
 | admin | `tom.decker@brandshift.test` | Today / Work / People / Insights / Inbox |
 | manager | `elena.rossi@brandshift.test` | Today / Work / People / Insights / Inbox |
 | member | `lukas.weber@brandshift.test` | Today / My Work / Calendar / Inbox / Team |
+| client services | `sofia.laurent@brandshift.test` | Today / Pipeline / Work / People / Inbox |
 
 Signing in as a member and opening `/en/insights` directly shows the 403 page -- refused, but
 still signed in. Signed-in devices and password change live under Settings.
@@ -123,6 +124,11 @@ What is built:
   tasks created against tasks completed, by week -- and what each person is carrying, meetings and
   time off included. Every number comes from a row somebody made by using the app. There is no
   productivity score, and there never will be.
+
+- **Pipeline** -- companies, the people at them, and the work being sold. A list by default and a
+  board behind a toggle, both addressable by URL. Losing a deal asks why, and the reason stays on
+  the deal. Every deal gets a channel on the same spine a project does. The one figure on the
+  screen is a sum of real values, never a weighted forecast.
 
 Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a screen, a project, a person or a department.
 

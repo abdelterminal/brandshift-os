@@ -38,6 +38,28 @@ export const priorityEnum = pgEnum("priority", ["low", "medium", "high", "urgent
 export const projectRoleEnum = pgEnum("project_role", ["lead", "contributor", "viewer"]);
 
 /**
+ * Where a deal has got to.
+ *
+ * One vocabulary, and a short one. Every pipeline that grows a tenth stage
+ * grows it because somebody wanted a report, and then nobody can remember
+ * what the difference between two of them is.
+ *
+ * `won` and `lost` are stages rather than a separate flag: a deal is always
+ * somewhere, and "closed" is somewhere.
+ */
+export const dealStageEnum = pgEnum("deal_stage", [
+  "lead",
+  "qualified",
+  "proposal",
+  "negotiation",
+  "won",
+  "lost",
+]);
+
+/** What a company is to us now. Stored, not derived -- see `crm.ts`. */
+export const companyStatusEnum = pgEnum("company_status", ["prospect", "client", "former"]);
+
+/**
  * Kinds of time off.
  *
  * Only `annual` comes out of somebody's allowance. Sick leave is not a budget
@@ -79,4 +101,6 @@ export const activitySubjectEnum = pgEnum("activity_subject", [
   "task",
   "meeting",
   "leave",
+  "company",
+  "deal",
 ]);

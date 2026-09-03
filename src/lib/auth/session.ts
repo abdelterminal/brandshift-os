@@ -55,7 +55,13 @@ export type CurrentUser = {
   };
   // The timezone comes with it, because every date this app shows is a date
   // in the organization's zone -- not the server's, and not the browser's.
-  organization: { id: string; name: string; slug: string; timezone: string };
+  organization: {
+    id: string;
+    name: string;
+    slug: string;
+    timezone: string;
+    currency: string;
+  };
   organizations: Array<{ id: string; name: string; slug: string }>;
 };
 
@@ -218,6 +224,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       name: current.organizationName,
       slug: current.organizationSlug,
       timezone: current.organizationTimezone,
+      currency: current.organizationCurrency,
     },
     organizations: memberships.map((m) => ({
       id: m.organizationId,

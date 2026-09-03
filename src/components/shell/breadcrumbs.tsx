@@ -30,6 +30,11 @@ const NAV_SEGMENTS = new Set([
   "calendar",
   "channels",
   "leave",
+  "crm",
+  // CRM nests: /crm/companies/<slug> and /crm/deals/<id>.
+  "companies",
+  "contacts",
+  "deals",
   "team",
   "myWork",
 ]);

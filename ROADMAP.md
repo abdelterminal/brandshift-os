@@ -384,9 +384,40 @@ Decisions worth knowing:
 - Twelve weeks, because a month is too coarse to show a bad fortnight and a day too noisy to show
   a trend.
 
+### CRM  [DONE]
+
+- [x] `companies` / `contacts` / `deals`, all tenant-owned. A contact is deliberately **not** a
+      `users` row: somebody you talk to, not somebody who signs in
+- [x] Pipeline as a **list by default, board behind a toggle** -- the same call and the same reason
+      as tasks. Every choice in the URL, as on the calendar
+- [x] Six stages and no more. Every CRM that grows a tenth grows it because somebody wanted a
+      report, and then nobody can remember what two of them mean
+- [x] **Losing a deal asks why**, and the reason lives on the deal rather than only in the feed.
+      A pipeline with no reasons on the lost deals teaches nobody anything once the quarter is over
+- [x] Money is `numeric` end to end, parsed once at the edge. The form takes `12 500` and `12,000`
+      and refuses `about forty thousand` rather than storing a zero
+- [x] **Deal channels**, on the same spine as project channels -- `channel_kind` has named `deal`
+      since channels shipped, waiting for this
+- [x] A **third rail for client services**: Today / Pipeline / Work / People / Inbox. Five, so the
+      cap holds; Insights moves to the palette for them
+- [x] A fourth e2e role, because the manager fixture runs engineering and does not hold `crm` --
+      the suite now has somebody who can see the pipeline and somebody who cannot
+- [x] Seeded: seven companies, ten contacts, eight deals across every stage including two lost
+      with their reasons
+
+Decisions worth knowing:
+- **No weighted forecast.** The one figure on the screen is a sum of real numbers on real deals.
+  Multiplying each stage by a probability somebody invented looks more sophisticated and produces a
+  number nobody can check.
+- **No separate CRM activity log.** Everything already writes to `activity_events`, and a deal has a
+  channel. A second timeline for "calls and emails" would be a second place to look.
+- **The board does not drag.** A drag has no keyboard equivalent and no confirmation, and moving a
+  deal to Lost has to ask why -- which a drop cannot. Stages change on the deal.
+- Company status is stored, not derived from whether a deal was won: a client of ten years may have
+  no open deal, and a deal won in 2019 does not make a current client.
+
 ### Next
 
-- **CRM**: contacts, companies, leads, pipeline/deals, activities
 - **ERP**: quotes, orders, invoices, expenses
 - Data migration from the old MongoDB app, once the schema has settled
 

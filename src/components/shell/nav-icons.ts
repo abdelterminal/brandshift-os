@@ -7,6 +7,7 @@ import {
   ListTodo,
   MessagesSquare,
   Palmtree,
+  Target,
   Sun,
   Users,
   type LucideIcon,
@@ -33,4 +34,5 @@ export const NAV_ICONS: Record<NavIconName, LucideIcon> = {
   channel: Hash,
   channels: MessagesSquare,
   leave: Palmtree,
+  crm: Target,
 };

@@ -60,6 +60,7 @@ export type Action =
   | "calendar.view"
   | "channel.view"
   | "leave.view"
+  | "crm.view"
   // Doing
   | "project.create"
   | "task.create"
@@ -68,6 +69,7 @@ export type Action =
   | "meeting.manage"
   | "leave.request"
   | "leave.approve"
+  | "crm.manage"
   | "member.invite"
   | "member.editRole"
   | "organization.switch"
@@ -112,6 +114,14 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
 
   // Insights is reporting across the whole org, so it needs the module flag.
   "insights.view": (actor) => hasModule(actor, "insights"),
+
+  // Who a company is talking to, and what it is worth, is commercial
+  // information -- the `crm` module gates the whole area rather than parts of
+  // it. Anybody who can see the pipeline can move a deal along it: a CRM where
+  // reading and writing are separate permissions is one where the person on the
+  // call cannot record what was said.
+  "crm.view": (actor) => hasModule(actor, "crm"),
+  "crm.manage": (actor) => hasModule(actor, "crm"),
 
   "project.create": (actor) => atLeast(actor, "manager"),
   "task.create": () => true,

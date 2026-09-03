@@ -20,6 +20,9 @@ import {
   BLOCKER_REASONS,
   CHANNEL_MESSAGES,
   DEPARTMENTS,
+  COMPANIES,
+  CONTACTS,
+  DEALS,
   GENERAL_CHANNEL,
   LEAVE,
   MEETINGS,
@@ -34,6 +37,9 @@ import {
   activityEvents,
   channelMembers,
   channels,
+  companies,
+  contacts,
+  deals,
   departments,
   leaveRequests,
   meetingAttendees,
@@ -122,6 +128,7 @@ async function main() {
   // tenant-owned but is seeded here, so it is cleared here too.
   await db.execute(sql`
     truncate table
+      ${deals}, ${contacts}, ${companies},
       ${leaveRequests},
       ${meetingAttendees}, ${meetings},
       ${messages}, ${channelMembers}, ${channels},
@@ -626,6 +633,77 @@ async function main() {
   );
 
   console.log(`Created ${leaveRows.length} leave requests`);
+
+  // --- CRM ---------------------------------------------------------------
+  // Every stage represented, including two lost deals with their reasons: a
+  // pipeline where each row looks the same never exercises the states that
+  // matter, and the reasons are most of what a pipeline is for afterwards.
+  const companyRows = await scope.insert(
+    companies,
+    COMPANIES.map((company) => ({
+      name: company.name,
+      slug: slugify(company.name, "company"),
+      website: company.website,
+      industry: company.industry,
+      status: company.status,
+      ownerUserId: userId(company.ownerEmail),
+      notes: company.notes ?? null,
+      createdByUserId: userId(company.ownerEmail),
+    })),
+  );
+
+  const companyByName = new Map(
+    COMPANIES.map((company, index) => [company.name, companyRows[index]!]),
+  );
+
+  const contactRows = await scope.insert(
+    contacts,
+    CONTACTS.map((contact) => ({
+      name: contact.name,
+      companyId: contact.companyName ? companyByName.get(contact.companyName)!.id : null,
+      email: contact.email,
+      phone: contact.phone,
+      jobTitle: contact.jobTitle,
+      createdByUserId: userId("sofia.laurent@brandshift.test"),
+    })),
+  );
+
+  const contactByName = new Map(
+    CONTACTS.map((contact, index) => [contact.name, contactRows[index]!]),
+  );
+
+  const dealRows = await scope.insert(
+    deals,
+    DEALS.map((deal) => {
+      const closed = deal.stage === "won" || deal.stage === "lost";
+      const closedAt =
+        closed && deal.closesInDays !== null
+          ? new Date(`${addDays(todayInOrg, deal.closesInDays)}T12:00:00Z`)
+          : null;
+
+      return {
+        title: deal.title,
+        companyId: companyByName.get(deal.companyName)!.id,
+        primaryContactId: deal.contactName ? contactByName.get(deal.contactName)!.id : null,
+        stage: deal.stage,
+        // A string on the way in: `numeric` keeps its precision only if the
+        // value never becomes a float.
+        value: deal.value === null ? null : deal.value.toFixed(2),
+        expectedCloseDate:
+          deal.closesInDays === null ? null : addDays(todayInOrg, deal.closesInDays),
+        ownerUserId: userId(deal.ownerEmail),
+        source: deal.source,
+        wonAt: deal.stage === "won" ? closedAt : null,
+        lostAt: deal.stage === "lost" ? closedAt : null,
+        lostReason: deal.lostReason ?? null,
+        createdByUserId: userId(deal.ownerEmail),
+      };
+    }),
+  );
+
+  console.log(
+    `Created ${companyRows.length} companies, ${contactRows.length} contacts, ${dealRows.length} deals`,
+  );
 
   await report(scope, insertedTasks);
 }

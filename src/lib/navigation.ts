@@ -1,4 +1,4 @@
-import { can, atLeast, type Action, type Actor } from "./authz";
+import { can, atLeast, hasModule, type Action, type Actor } from "./authz";
 
 /**
  * The left rail.
@@ -30,7 +30,8 @@ export type NavIconName =
   | "calendar"
   | "channel"
   | "channels"
-  | "leave";
+  | "leave"
+  | "crm";
 
 export type Destination = {
   /** Key into the `Nav` message catalogue, unless `label` overrides it. */
@@ -86,6 +87,33 @@ const ADMIN_RAIL: Destination[] = [
   { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" },
 ];
 
+/**
+ * Client services.
+ *
+ * A third rail rather than a sixth destination on the second one. The cap of
+ * five is what keeps this thing scannable and it is not being bent: somebody
+ * whose job is selling gets the pipeline where somebody coordinating delivery
+ * gets Insights, and both fit in five.
+ *
+ * This is the same reasoning that already gives coordinators and members
+ * different rails -- "two different jobs, not one job with things hidden".
+ * Without it the person who lives in the pipeline was the one person who could
+ * only reach it by name in the command palette.
+ */
+const SALES_RAIL: Destination[] = [
+  { id: "today", href: "/today", icon: "today" },
+  { id: "crm", href: "/crm", icon: "crm", requires: "crm.view" },
+  {
+    id: "work",
+    href: "/work",
+    icon: "work",
+    requires: "work.view",
+    expandable: true,
+  },
+  { id: "people", href: "/people", icon: "people", requires: "people.view" },
+  { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" },
+];
+
 const MEMBER_RAIL: Destination[] = [
   { id: "today", href: "/today", icon: "today" },
   {
@@ -124,6 +152,7 @@ export const ALL_DESTINATIONS: Destination[] = [
   { id: "channels", href: "/channels", icon: "channels", requires: "channel.view" },
   { id: "calendar", href: "/calendar", icon: "calendar", requires: "calendar.view" },
   { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" },
+  { id: "crm", href: "/crm", icon: "crm", requires: "crm.view" },
   { id: "leave", href: "/leave", icon: "leave", requires: "leave.view" },
   { id: "people", href: "/people", icon: "people", requires: "people.view" },
   { id: "insights", href: "/insights", icon: "insights", requires: "insights.view" },
@@ -139,7 +168,13 @@ export function destinationsFor(actor: Actor): Destination[] {
  * the cap is enforced rather than trusted.
  */
 export function railFor(actor: Actor): Destination[] {
-  const rail = atLeast(actor, "manager") ? ADMIN_RAIL : MEMBER_RAIL;
+  // The module decides before the role does. Holding `crm` is what says this
+  // person's day is the pipeline, whatever their seniority.
+  const rail = hasModule(actor, "crm")
+    ? SALES_RAIL
+    : atLeast(actor, "manager")
+      ? ADMIN_RAIL
+      : MEMBER_RAIL;
   const visible = rail.filter((item) => !item.requires || can(actor, item.requires));
 
   if (visible.length > MAX_PRIMARY_DESTINATIONS) {

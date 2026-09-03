@@ -14,6 +14,21 @@ export const MANAGER = {
   role: "manager",
 } as const;
 
+/**
+ * Client services, and the only signed-in fixture holding the `crm` module.
+ *
+ * A third role rather than granting Elena the flag: she runs engineering, and
+ * a fixture whose permissions do not match the job it is named after stops
+ * being evidence of anything. It also gives the suite somebody who can see the
+ * pipeline and somebody who cannot.
+ */
+export const SALES = {
+  email: "sofia.laurent@brandshift.test",
+  name: "Sofia Laurent",
+  /** Manager with `crm`: the pipeline is hers, Insights is not the point. */
+  role: "manager",
+} as const;
+
 export const MEMBER = {
   email: "lukas.weber@brandshift.test",
   name: "Lukas Weber",

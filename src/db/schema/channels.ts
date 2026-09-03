@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { index, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
+import { deals } from "./crm";
 import { organizations } from "./organizations";
 import { users } from "./people";
 import { projects } from "./projects";
@@ -33,6 +34,8 @@ export const channels = pgTable(
     projectId: uuid("project_id").references(() => projects.id, {
       onDelete: "cascade",
     }),
+    /** Set for a deal channel. One channel per deal, enforced below. */
+    dealId: uuid("deal_id").references(() => deals.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     /** URL-safe, so a channel can be linked as `/work/MER/channel`. */
     slug: text("slug").notNull(),
@@ -51,6 +54,10 @@ export const channels = pgTable(
     uniqueIndex("channels_project_key")
       .on(t.projectId)
       .where(sql`${t.projectId} is not null`),
+    // And a deal has one, for the same reason.
+    uniqueIndex("channels_deal_key")
+      .on(t.dealId)
+      .where(sql`${t.dealId} is not null`),
     index("channels_org_idx").on(t.organizationId),
   ],
 );

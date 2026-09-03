@@ -5,6 +5,7 @@ import type { PgColumn, PgInsertValue, PgTable, PgUpdateSetSource } from "drizzl
 
 import { activityEvents } from "./schema/activity";
 import { channelMembers, channels, messages } from "./schema/channels";
+import { companies, contacts, deals } from "./schema/crm";
 import { leaveRequests } from "./schema/leave";
 import { meetingAttendees, meetings } from "./schema/meetings";
 import { notifications } from "./schema/notifications";
@@ -54,6 +55,9 @@ export const TENANT_TABLES = {
   meetings,
   meetingAttendees,
   leaveRequests,
+  companies,
+  contacts,
+  deals,
 } as const;
 
 export type TenantTable = (typeof TENANT_TABLES)[keyof typeof TENANT_TABLES];
@@ -100,6 +104,7 @@ export async function findMembershipsForUser(userId: string, executor: Executor 
       organizationName: organizations.name,
       organizationSlug: organizations.slug,
       organizationTimezone: organizations.timezone,
+      organizationCurrency: organizations.currency,
       role: memberships.role,
       permissions: memberships.permissions,
       departmentId: memberships.departmentId,

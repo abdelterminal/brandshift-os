@@ -175,6 +175,34 @@ screen people look at once a month.
 exactly; a screen reader gets a real table rather than an SVG it has to be told about; and a chart
 dependency is a decision that costs more than a handful of divs with a width class on them.
 
+## Added during CRM
+
+**A contact is not a user.** Somebody you talk to has no password, no membership and no session.
+Conflating the two is how a CRM ends up able to email its own staff by accident, and how a
+directory of colleagues fills up with people at other companies.
+
+**No weighted pipeline.** The only figure on the screen is a sum of real values on real deals.
+Multiplying each stage by a probability -- 20% for a lead, 60% for a proposal -- produces a number
+that looks more sophisticated and that nobody can check or argue with. It is the same rule as "no
+invented dashboard metrics", applied to money.
+
+**Six stages, and the list is closed.** Every CRM that grows a tenth stage grows it because
+somebody wanted a report, and then nobody can remember what the difference between two of them is.
+
+**The board is read-only.** A drag has no keyboard equivalent, no confirmation, and nowhere to put
+a question -- and moving a deal to Lost has to ask why. Stages change on the deal itself, which is
+also where the answer is recorded.
+
+**A third rail, rather than a sixth destination.** The cap of five is what keeps the rail
+scannable, and it was not bent: somebody holding the `crm` module gets Pipeline where a coordinator
+gets Insights. This is the same reasoning that already gives coordinators and members different
+rails -- two different jobs, not one job with things hidden. Without it, the person who lives in
+the pipeline was the only person who could reach it solely by name in the command palette.
+
+**Money is `numeric` from the column to the screen.** Parsed once at the edge, stored as an exact
+decimal, and never allowed to become a float. This is the column ERP will invoice against, and a
+float that has been through a sum is a rounding error waiting for a customer to find it.
+
 ## Deliberately not chosen
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the

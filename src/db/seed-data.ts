@@ -797,3 +797,262 @@ export const LEAVE: SeedLeave[] = [
     decidedByEmail: "amina.benali@brandshift.test",
   },
 ];
+
+/**
+ * The pipeline.
+ *
+ * Every stage represented, including two lost with reasons on them, because a
+ * pipeline where each deal looks the same never exercises the states that
+ * matter: a deal past its close date, one already won, and one lost for a
+ * reason somebody will want to read next quarter.
+ *
+ * Three of the companies are the clients behind seeded projects, so a won deal
+ * and the work it became are visibly the same client.
+ */
+export type SeedCompany = {
+  name: string;
+  website: string | null;
+  industry: string;
+  status: "prospect" | "client" | "former";
+  ownerEmail: string;
+  notes?: string;
+};
+
+export const COMPANIES: SeedCompany[] = [
+  {
+    name: "Meridian Bank",
+    website: "https://meridian.example",
+    industry: "Financial services",
+    status: "client",
+    ownerEmail: "claire.moreau@brandshift.test",
+    notes:
+      "Board presentation moved forward a week; everything in the rollout kit signs off on the 14th. They are slow on legal and fast on everything else.",
+  },
+  {
+    name: "Northwind Retail",
+    website: "https://northwind.example",
+    industry: "E-commerce",
+    status: "client",
+    ownerEmail: "elena.rossi@brandshift.test",
+    notes: "Hypercare starts the day after cutover. Their infra team is one person.",
+  },
+  {
+    name: "Lumen Energy",
+    website: "https://lumen.example",
+    industry: "Utilities",
+    status: "client",
+    ownerEmail: "sofia.laurent@brandshift.test",
+  },
+  {
+    name: "Harbour Group",
+    website: "https://harbour.example",
+    industry: "Logistics",
+    status: "client",
+    ownerEmail: "tom.decker@brandshift.test",
+  },
+  {
+    name: "Verdant Foods",
+    website: "https://verdant.example",
+    industry: "Food and drink",
+    status: "prospect",
+    ownerEmail: "sofia.laurent@brandshift.test",
+    notes: "Packaging refresh is the way in. Procurement is the bottleneck, not marketing.",
+  },
+  {
+    name: "Kestrel Partners",
+    website: null,
+    industry: "Professional services",
+    status: "prospect",
+    ownerEmail: "claire.moreau@brandshift.test",
+  },
+  {
+    name: "Orbit Media",
+    website: "https://orbit.example",
+    industry: "Publishing",
+    status: "former",
+    ownerEmail: "amina.benali@brandshift.test",
+    notes: "Retainer ended amicably in Q2. Worth a call when their new CMO settles in.",
+  },
+];
+
+export type SeedContact = {
+  name: string;
+  companyName: string | null;
+  email: string;
+  phone: string | null;
+  jobTitle: string;
+};
+
+export const CONTACTS: SeedContact[] = [
+  {
+    name: "Hélène Fabre",
+    companyName: "Meridian Bank",
+    email: "helene.fabre@meridian.example",
+    phone: "+33 1 44 55 66 77",
+    jobTitle: "Head of Brand",
+  },
+  {
+    name: "Peter Voss",
+    companyName: "Meridian Bank",
+    email: "p.voss@meridian.example",
+    phone: null,
+    jobTitle: "Legal Counsel",
+  },
+  {
+    name: "Aisha Rahman",
+    companyName: "Northwind Retail",
+    email: "aisha.rahman@northwind.example",
+    phone: "+44 20 7946 0102",
+    jobTitle: "Director of Digital",
+  },
+  {
+    name: "Tomás Silva",
+    companyName: "Northwind Retail",
+    email: "tomas.silva@northwind.example",
+    phone: null,
+    jobTitle: "Infrastructure Lead",
+  },
+  {
+    name: "Greta Lindholm",
+    companyName: "Lumen Energy",
+    email: "greta@lumen.example",
+    phone: "+46 8 123 456",
+    jobTitle: "Marketing Director",
+  },
+  {
+    name: "Daniel Okonkwo",
+    companyName: "Harbour Group",
+    email: "d.okonkwo@harbour.example",
+    phone: null,
+    jobTitle: "Chief Operating Officer",
+  },
+  {
+    name: "Juliette Renard",
+    companyName: "Verdant Foods",
+    email: "j.renard@verdant.example",
+    phone: "+33 4 78 90 12 34",
+    jobTitle: "Head of Packaging",
+  },
+  {
+    name: "Martin Häkkinen",
+    companyName: "Kestrel Partners",
+    email: "martin.h@kestrel.example",
+    phone: null,
+    jobTitle: "Managing Partner",
+  },
+  {
+    name: "Ruth Adeyemi",
+    companyName: "Orbit Media",
+    email: "ruth@orbit.example",
+    phone: null,
+    jobTitle: "Chief Marketing Officer",
+  },
+  {
+    name: "Callum Reid",
+    companyName: null,
+    email: "callum.reid@example.test",
+    phone: "+44 7700 900123",
+    jobTitle: "Freelance Producer",
+  },
+];
+
+export type SeedDeal = {
+  title: string;
+  companyName: string;
+  contactName: string | null;
+  stage: "lead" | "qualified" | "proposal" | "negotiation" | "won" | "lost";
+  /** In the organization's currency. Null means not priced yet. */
+  value: number | null;
+  /** Days from today. Negative is in the past. */
+  closesInDays: number | null;
+  ownerEmail: string;
+  source: string | null;
+  lostReason?: string;
+};
+
+export const DEALS: SeedDeal[] = [
+  {
+    title: "Packaging refresh, full range",
+    companyName: "Verdant Foods",
+    contactName: "Juliette Renard",
+    stage: "negotiation",
+    value: 78000,
+    closesInDays: 12,
+    ownerEmail: "sofia.laurent@brandshift.test",
+    source: "Inbound enquiry",
+  },
+  {
+    title: "Annual report and investor deck",
+    companyName: "Kestrel Partners",
+    contactName: "Martin Häkkinen",
+    stage: "proposal",
+    value: 42000,
+    closesInDays: 21,
+    ownerEmail: "claire.moreau@brandshift.test",
+    source: "Referral from Meridian",
+  },
+  {
+    title: "Meridian phase two: internal brand",
+    companyName: "Meridian Bank",
+    contactName: "Hélène Fabre",
+    stage: "qualified",
+    value: 95000,
+    closesInDays: 45,
+    ownerEmail: "claire.moreau@brandshift.test",
+    source: "Existing client",
+  },
+  {
+    title: "Loyalty programme identity",
+    companyName: "Northwind Retail",
+    contactName: "Aisha Rahman",
+    stage: "lead",
+    value: null,
+    closesInDays: null,
+    ownerEmail: "elena.rossi@brandshift.test",
+    source: "Existing client",
+  },
+  {
+    title: "Sustainability campaign, EU",
+    companyName: "Lumen Energy",
+    contactName: "Greta Lindholm",
+    stage: "proposal",
+    value: 120000,
+    // Past its date and still open: the list marks it late, which is most of
+    // the reason the list exists.
+    closesInDays: -6,
+    ownerEmail: "sofia.laurent@brandshift.test",
+    source: "Pitch",
+  },
+  {
+    title: "Onboarding revamp",
+    companyName: "Harbour Group",
+    contactName: "Daniel Okonkwo",
+    stage: "won",
+    value: 56000,
+    closesInDays: -30,
+    ownerEmail: "tom.decker@brandshift.test",
+    source: "Referral",
+  },
+  {
+    title: "Q4 retainer renewal",
+    companyName: "Orbit Media",
+    contactName: "Ruth Adeyemi",
+    stage: "lost",
+    value: 64000,
+    closesInDays: -75,
+    ownerEmail: "amina.benali@brandshift.test",
+    source: "Existing client",
+    lostReason: "Their new CMO brought an agency with her. Nothing to do with the work.",
+  },
+  {
+    title: "Rebrand, retail estate",
+    companyName: "Verdant Foods",
+    contactName: "Juliette Renard",
+    stage: "lost",
+    value: 150000,
+    closesInDays: -50,
+    ownerEmail: "sofia.laurent@brandshift.test",
+    source: "Pitch",
+    lostReason: "Priced above budget by about a third. Worth revisiting at a smaller scope.",
+  },
+];
