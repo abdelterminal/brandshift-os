@@ -29,6 +29,7 @@ export function ProjectTabs({
   allTasks,
   members,
   activity,
+  meetings,
 }: {
   /** Which tab opens first. `tasks` when the URL names a task. */
   defaultTab?: "overview" | "tasks" | "team" | "activity";
@@ -38,6 +39,12 @@ export function ProjectTabs({
   allTasks: TaskRow[];
   members: Array<{ userId: string; name: string; avatarUrl: string | null; role: string }>;
   activity: React.ReactNode;
+  /**
+   * The project's meetings, rendered on the server and handed in as a slot --
+   * the same arrangement as `activity`, because this is a Client Component and
+   * the data behind it is `server-only`.
+   */
+  meetings: React.ReactNode;
 }) {
   const t = useTranslations("Work");
 
@@ -61,6 +68,10 @@ export function ProjectTabs({
         <div className="mt-4 flex flex-wrap gap-2">
           <Badge>{priority}</Badge>
         </div>
+
+        {/* What is booked about this work, where somebody reading about the
+            project will actually see it. */}
+        <div className="mt-8">{meetings}</div>
       </TabsPanel>
 
       <TabsPanel value="tasks">
@@ -172,7 +183,11 @@ function TaskBoard({ tasks }: { tasks: TaskRow[] }) {
   }
 
   return (
-    <div className="overflow-x-auto pb-2">
+    // `relative` for the same reason the month grid needs it: `sr-only` is
+    // `position: absolute`, and an avatar group's hidden name list would
+    // otherwise be laid out against the viewport rather than this box, taking
+    // the board's width out with it.
+    <div className="relative overflow-x-auto pb-2">
       <div className="flex min-w-[48rem] gap-3">
         {columns.map((column) => (
           <div key={column.status} className="bg-surface-sunken min-w-0 flex-1 rounded-card p-2">
@@ -194,9 +209,7 @@ function TaskBoard({ tasks }: { tasks: TaskRow[] }) {
                     <StatusPill tone={STATUS_TONE[task.status]} size="sm">
                       {statuses(task.status)}
                     </StatusPill>
-                    {task.assigneeName ? (
-                      <PersonAvatar name={task.assigneeName} size="xs" />
-                    ) : null}
+                    {task.assigneeName ? <PersonAvatar name={task.assigneeName} size="xs" /> : null}
                   </div>
                 </li>
               ))}

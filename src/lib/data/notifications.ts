@@ -5,6 +5,7 @@ import { eq, isNull } from "drizzle-orm";
 import { activityEvents } from "@/db/schema/activity";
 import { notifications } from "@/db/schema/notifications";
 import { users } from "@/db/schema/people";
+import { meetingAttendees } from "@/db/schema/meetings";
 import { projectMembers, projects } from "@/db/schema/projects";
 import { tasks } from "@/db/schema/tasks";
 import { withOrg, type Executor } from "@/db/tenancy";
@@ -29,6 +30,13 @@ export type NotificationRow = {
   createdAt: Date;
   verb: string;
   metadata: Record<string, unknown>;
+  /**
+   * What the event was about. Needed so a notification can send you to the
+   * thing itself: without it, anything that is not a task or a project has
+   * nowhere to point and lands on Today -- which is a dead end wearing a link.
+   */
+  subjectType: "organization" | "user" | "department" | "project" | "task" | "meeting";
+  subjectId: string;
   actorName: string | null;
   taskId: string | null;
   taskTitle: string | null;
@@ -43,6 +51,8 @@ const NOTIFICATION_FIELDS = {
   createdAt: notifications.createdAt,
   verb: activityEvents.verb,
   metadata: activityEvents.metadata,
+  subjectType: activityEvents.subjectType,
+  subjectId: activityEvents.subjectId,
   actorName: users.name,
   taskId: activityEvents.taskId,
   taskTitle: tasks.title,
@@ -207,6 +217,21 @@ async function recipientsFor(
         eq(projectMembers.projectId, event.projectId),
       );
       for (const member of members) recipients.add(member.userId);
+      break;
+    }
+
+    // A meeting moves other people's day, so everyone expected at it hears
+    // when it is called, moved or called off. This is the one thing on the
+    // calendar that is not simply a deadline somebody can already see.
+    case "meeting.scheduled":
+    case "meeting.rescheduled":
+    case "meeting.cancelled": {
+      const invited = await scope.selectFields(
+        meetingAttendees,
+        { userId: meetingAttendees.userId },
+        eq(meetingAttendees.meetingId, event.subjectId),
+      );
+      for (const attendee of invited) recipients.add(attendee.userId);
       break;
     }
 

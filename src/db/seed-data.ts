@@ -534,3 +534,147 @@ export const GENERAL_CHANNEL = {
     },
   ] satisfies SeedMessage[],
 };
+
+/**
+ * Meetings.
+ *
+ * Spread either side of today so the calendar has a past to show notes for and
+ * a future to answer invitations to, and so "this week" is never empty on a
+ * fresh database. Times are the organization's clock; the seed converts.
+ *
+ * One is already cancelled and one already has notes, because a calendar where
+ * every meeting looks the same never exercises the two states that are easiest
+ * to get wrong.
+ */
+export type SeedMeeting = {
+  title: string;
+  agenda: string | null;
+  /** Days from today. Negative is in the past. */
+  inDays: number;
+  /** `HH:mm` in the organization's timezone. */
+  at: string;
+  minutes: number;
+  location: string | null;
+  projectKey: string | null;
+  organizerEmail: string;
+  attendeeEmails: string[];
+  notes?: string;
+  cancelled?: boolean;
+};
+
+export const MEETINGS: SeedMeeting[] = [
+  {
+    title: "Northwind launch readiness",
+    agenda:
+      "Catalogue migration status, the staging outage, and whether hypercare still starts on the 12th.",
+    inDays: 0,
+    at: "10:00",
+    minutes: 45,
+    location: "Studio room 2",
+    projectKey: "NOR",
+    organizerEmail: "elena.rossi@brandshift.test",
+    attendeeEmails: [
+      "lukas.weber@brandshift.test",
+      "ines.ferreira@brandshift.test",
+      "priya.raman@brandshift.test",
+    ],
+  },
+  {
+    title: "Meridian board walkthrough",
+    agenda: "Dry run of the rollout kit before it goes to the client on the 14th.",
+    inDays: 1,
+    at: "14:30",
+    minutes: 90,
+    location: "https://meet.brandshift.test/meridian",
+    projectKey: "MER",
+    organizerEmail: "claire.moreau@brandshift.test",
+    attendeeEmails: [
+      "nadia.haddad@brandshift.test",
+      "yusuf.karim@brandshift.test",
+      "sofia.laurent@brandshift.test",
+      "marc.dubois@brandshift.test",
+    ],
+  },
+  {
+    title: "Studio weekly",
+    agenda: "What shipped, what is stuck, what is coming. Fifteen minutes, standing up.",
+    inDays: 2,
+    at: "09:15",
+    minutes: 15,
+    location: "Main room",
+    projectKey: null,
+    organizerEmail: "amina.benali@brandshift.test",
+    attendeeEmails: [
+      "tom.decker@brandshift.test",
+      "claire.moreau@brandshift.test",
+      "elena.rossi@brandshift.test",
+      "yusuf.karim@brandshift.test",
+      "sofia.laurent@brandshift.test",
+    ],
+  },
+  {
+    title: "Atlas token review",
+    agenda: "The contrast pass, and whether the new ramps break anything downstream.",
+    inDays: 3,
+    at: "11:00",
+    minutes: 60,
+    location: "Studio room 1",
+    projectKey: "ATL",
+    organizerEmail: "yusuf.karim@brandshift.test",
+    attendeeEmails: ["priya.raman@brandshift.test", "lukas.weber@brandshift.test"],
+  },
+  {
+    title: "Lumen market kickoff",
+    agenda: null,
+    inDays: 4,
+    at: "16:00",
+    minutes: 60,
+    location: null,
+    projectKey: "LUM",
+    organizerEmail: "sofia.laurent@brandshift.test",
+    attendeeEmails: ["marc.dubois@brandshift.test", "ines.ferreira@brandshift.test"],
+  },
+  {
+    title: "Northwind client check-in",
+    agenda: "Weekly with the client. Rescheduled twice already.",
+    inDays: 1,
+    at: "17:00",
+    minutes: 30,
+    location: "https://meet.brandshift.test/northwind",
+    projectKey: "NOR",
+    organizerEmail: "elena.rossi@brandshift.test",
+    attendeeEmails: ["sofia.laurent@brandshift.test", "lukas.weber@brandshift.test"],
+    cancelled: true,
+  },
+  {
+    title: "Meridian identity sign-off",
+    agenda: "Final look at the wordmark before it goes into the rollout kit.",
+    inDays: -4,
+    at: "10:30",
+    minutes: 60,
+    location: "Studio room 1",
+    projectKey: "MER",
+    organizerEmail: "claire.moreau@brandshift.test",
+    attendeeEmails: ["yusuf.karim@brandshift.test", "nadia.haddad@brandshift.test"],
+    notes:
+      "Wordmark approved as drawn, no further rounds. Yusuf to upload the locked files by Wednesday; Nadia can size the branch signage from Thursday. Client to be told the 14th still holds.",
+  },
+  {
+    title: "Quarterly planning",
+    agenda: "Capacity for Q4, and which of the three inbound briefs we take.",
+    inDays: -9,
+    at: "13:00",
+    minutes: 120,
+    location: "Main room",
+    projectKey: null,
+    organizerEmail: "amina.benali@brandshift.test",
+    attendeeEmails: [
+      "tom.decker@brandshift.test",
+      "claire.moreau@brandshift.test",
+      "elena.rossi@brandshift.test",
+      "sofia.laurent@brandshift.test",
+    ],
+    notes:
+      "Taking the Verdant packaging brief and the Kestrel report. Passing on the third: no design capacity before December without pushing Meridian, which we are not doing.",
+  },
+];

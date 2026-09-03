@@ -2,6 +2,8 @@ import "server-only";
 
 import { eq, inArray, isNull } from "drizzle-orm";
 
+import { getTranslations } from "next-intl/server";
+
 import { db } from "@/db/client";
 import { departments, memberships, users } from "@/db/schema/people";
 import { projects } from "@/db/schema/projects";
@@ -9,6 +11,7 @@ import { withOrg } from "@/db/tenancy";
 import type { PaletteEntry } from "@/components/shell/command-palette";
 
 import type { Actor } from "./authz";
+import { destinationsFor } from "./navigation";
 
 /**
  * Everything the command palette can jump to.
@@ -27,6 +30,7 @@ import type { Actor } from "./authz";
  */
 export async function paletteIndex(actor: Actor): Promise<PaletteEntry[]> {
   const scope = withOrg(actor.organizationId);
+  const nav = await getTranslations("Nav");
 
   const [projectRows, membershipRows, departmentRows] = await Promise.all([
     scope.selectFields(
@@ -57,6 +61,16 @@ export async function paletteIndex(actor: Actor): Promise<PaletteEntry[]> {
   const jobTitleByUser = new Map(membershipRows.map((row) => [row.userId, row.jobTitle]));
 
   return [
+    // Every screen this person may open, whether or not it fits on their rail.
+    // A manager has no Calendar destination -- five is the cap -- so without
+    // this the only way there is to know the URL.
+    ...destinationsFor(actor).map((destination) => ({
+      id: `go:${destination.id}`,
+      kind: "destination" as const,
+      label: nav(destination.id),
+      hint: null,
+      href: destination.href,
+    })),
     ...projectRows.map((project) => ({
       id: `project:${project.id}`,
       kind: "project" as const,

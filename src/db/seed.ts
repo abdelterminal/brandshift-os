@@ -21,6 +21,7 @@ import {
   CHANNEL_MESSAGES,
   DEPARTMENTS,
   GENERAL_CHANNEL,
+  MEETINGS,
   ORGANIZATION,
   PERSONAL_TASKS,
   PROJECTS,
@@ -33,6 +34,8 @@ import {
   channelMembers,
   channels,
   departments,
+  meetingAttendees,
+  meetings,
   messages,
   notifications,
   memberships,
@@ -47,6 +50,7 @@ import {
 } from "./schema";
 import { withOrg } from "./tenancy";
 import { hashPassword } from "@/lib/password";
+import { instantFromLocal } from "@/lib/calendar-dates";
 import { slugify } from "@/lib/slug";
 
 /** Every seeded account shares this password. Development only. */
@@ -115,6 +119,7 @@ async function main() {
   // tenant-owned but is seeded here, so it is cleared here too.
   await db.execute(sql`
     truncate table
+      ${meetingAttendees}, ${meetings},
       ${messages}, ${channelMembers}, ${channels},
       ${notifications}, ${activityEvents}, ${tasks}, ${projectMembers}, ${projects},
       ${sessions}, ${memberships}, ${departments}, ${users}, ${organizations}
@@ -494,6 +499,80 @@ async function main() {
   console.log(
     `Created ${channelRows.length} channels, ${memberRows.length} memberships, ${messageRows.length} messages`,
   );
+
+  // --- Meetings ----------------------------------------------------------
+  // Either side of today, so the calendar has a past with notes in it and a
+  // future with invitations to answer. Times are the organization's clock:
+  // "10:00" means ten in the studio, whatever zone the seed runs in.
+  const todayInOrg = new Intl.DateTimeFormat("en-CA", {
+    timeZone: ORGANIZATION.timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+
+  function meetingStart(inDays: number, at: string): Date {
+    const day = new Date(`${todayInOrg}T00:00:00Z`);
+    day.setUTCDate(day.getUTCDate() + inDays);
+    const startsAt = instantFromLocal(
+      `${day.toISOString().slice(0, 10)}T${at}`,
+      ORGANIZATION.timezone,
+    );
+    if (!startsAt) throw new Error(`Unusable seeded meeting time: ${at}`);
+    return startsAt;
+  }
+
+  const meetingRows = await scope.insert(
+    meetings,
+    MEETINGS.map((meeting) => {
+      const startsAt = meetingStart(meeting.inDays, meeting.at);
+      return {
+        title: meeting.title,
+        agenda: meeting.agenda,
+        startsAt,
+        endsAt: new Date(startsAt.getTime() + meeting.minutes * 60_000),
+        location: meeting.location,
+        projectId: meeting.projectKey ? projectByKey.get(meeting.projectKey)!.id : null,
+        organizerUserId: userId(meeting.organizerEmail),
+        createdByUserId: userId(meeting.organizerEmail),
+        notes: meeting.notes ?? null,
+        cancelledAt: meeting.cancelled ? new Date() : null,
+      };
+    }),
+  );
+
+  const attendeeRows = MEETINGS.flatMap((meeting, index) => {
+    const row = meetingRows[index]!;
+    const organizer = userId(meeting.organizerEmail);
+
+    return [
+      // The organizer is always going; that is what calling it means.
+      {
+        meetingId: row.id,
+        userId: organizer,
+        response: "accepted" as const,
+        respondedAt: row.createdAt,
+      },
+      ...meeting.attendeeEmails.map((email, position) => ({
+        meetingId: row.id,
+        userId: userId(email),
+        // A spread of answers, deterministic rather than random, so the
+        // response badges and the "no reply yet" case are all on screen
+        // somewhere on a fresh database.
+        response: (meeting.inDays < 0
+          ? "accepted"
+          : position % 4 === 0
+            ? "needs_action"
+            : position % 4 === 3
+              ? "tentative"
+              : "accepted") as "accepted" | "needs_action" | "tentative",
+        respondedAt: position % 4 === 0 && meeting.inDays >= 0 ? null : row.createdAt,
+      })),
+    ];
+  });
+
+  await scope.insert(meetingAttendees, attendeeRows);
+  console.log(`Created ${meetingRows.length} meetings, ${attendeeRows.length} invitations`);
 
   await report(scope, insertedTasks);
 }

@@ -40,24 +40,55 @@ const NAV_SEGMENTS = new Set([
  */
 const ACCOUNT_SEGMENTS = new Set(["profile", "settings"]);
 
+/**
+ * Segments that are route vocabulary rather than anybody's word.
+ *
+ * `/work/new` and `/calendar/new` both rendered a lowercase "new" in the
+ * trail, which reads like a bug rather than like a place.
+ */
+const COMMON_SEGMENTS = new Set(["new"]);
+
+/**
+ * An id, rather than a word.
+ *
+ * A person and a meeting are addressed by uuid, and a uuid in a breadcrumb
+ * tells you nothing about where you are -- which is the one thing a breadcrumb
+ * is for. Those segments are dropped and the crumb above becomes the current
+ * one; the page's own heading names the record, so nothing is lost.
+ */
+const ID_SEGMENT = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function Breadcrumbs({ trailingLabel }: { trailingLabel?: string }) {
   const t = useTranslations("Nav");
   const account = useTranslations("Account");
+  const common = useTranslations("Common");
   const shell = useTranslations("Shell");
   const pathname = usePathname();
 
   const segments = pathname.split("/").filter(Boolean);
   if (segments.length === 0) return null;
 
-  const crumbs = segments.map((segment, index) => ({
-    segment,
-    href: `/${segments.slice(0, index + 1).join("/")}`,
-    label: NAV_SEGMENTS.has(segment)
-      ? t(segment)
-      : ACCOUNT_SEGMENTS.has(segment)
-        ? account(segment as "profile" | "settings")
-        : segment,
-    last: index === segments.length - 1,
+  // Hrefs are built from the full path, so dropping a crumb never changes
+  // where the ones above it point.
+  const named = segments
+    .map((segment, index) => ({
+      segment,
+      href: `/${segments.slice(0, index + 1).join("/")}`,
+    }))
+    .filter((crumb) => !ID_SEGMENT.test(crumb.segment));
+
+  if (named.length === 0) return null;
+
+  const crumbs = named.map((crumb, index) => ({
+    ...crumb,
+    label: NAV_SEGMENTS.has(crumb.segment)
+      ? t(crumb.segment)
+      : ACCOUNT_SEGMENTS.has(crumb.segment)
+        ? account(crumb.segment as "profile" | "settings")
+        : COMMON_SEGMENTS.has(crumb.segment)
+          ? common(crumb.segment as "new")
+          : crumb.segment,
+    last: index === named.length - 1,
   }));
 
   return (
@@ -66,10 +97,7 @@ export function Breadcrumbs({ trailingLabel }: { trailingLabel?: string }) {
         {crumbs.map((crumb) => (
           <li key={crumb.href} className="flex min-w-0 items-center gap-1">
             {crumb.last ? (
-              <span
-                aria-current="page"
-                className="text-label text-fg-default truncate font-medium"
-              >
+              <span aria-current="page" className="text-label text-fg-default truncate font-medium">
                 {trailingLabel ?? crumb.label}
               </span>
             ) : (

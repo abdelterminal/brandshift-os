@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { NextMeetings } from "@/components/calendar/next-meetings";
 import { TaskListFlat } from "@/components/work/task-list";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CountBadge } from "@/components/ui/badge";
@@ -8,6 +9,8 @@ import { EmptyState } from "@/components/ui/feedback";
 import { Link } from "@/i18n/navigation";
 import { atLeast } from "@/lib/authz";
 import { requireUser } from "@/lib/auth/guards";
+import { dayKey } from "@/lib/calendar-dates";
+import { nextMeetingsFor } from "@/lib/data/meetings";
 import {
   coordinationQueue,
   listTaskBuckets,
@@ -40,9 +43,10 @@ export default async function TodayPage() {
 
 async function CoordinationQueue() {
   const session = await requireUser();
-  const [t, queue] = await Promise.all([
+  const [t, queue, meetings] = await Promise.all([
     getTranslations("Today"),
     coordinationQueue(session.actor),
+    nextMeetingsFor(session.actor, new Date()),
   ]);
 
   const nothingToDo =
@@ -60,6 +64,15 @@ async function CoordinationQueue() {
         <h1 className="text-display font-display text-fg-default">{t("title")}</h1>
         <p className="text-body text-fg-muted mt-1.5">{t("queueBody")}</p>
       </header>
+
+      {/* Above the queue: a meeting in twenty minutes changes what you start. */}
+      <div className="mt-6">
+        <NextMeetings
+          meetings={meetings}
+          timeZone={session.organization.timezone}
+          today={dayKey(new Date(), session.organization.timezone)}
+        />
+      </div>
 
       {nothingToDo ? (
         <div className="border-border rounded-card mt-6 border">
@@ -107,9 +120,10 @@ async function CoordinationQueue() {
 
 async function MyDay({ name }: { name: string }) {
   const session = await requireUser();
-  const [t, buckets] = await Promise.all([
+  const [t, buckets, meetings] = await Promise.all([
     getTranslations("Today"),
     listTaskBuckets(session.actor, { assigneeUserId: session.actor.userId }),
+    nextMeetingsFor(session.actor, new Date()),
   ]);
 
   // Now is what is late or due today; Next is the rest of the week; Later is
@@ -144,6 +158,19 @@ async function MyDay({ name }: { name: string }) {
         </p>
       </header>
 
+      {/*
+        Before the work, not after it. Somebody with a call in twenty minutes
+        should not start the two-hour task, and finding that out at the bottom
+        of the page is finding it out too late.
+      */}
+      <div className="mt-6">
+        <NextMeetings
+          meetings={meetings}
+          timeZone={session.organization.timezone}
+          today={dayKey(new Date(), session.organization.timezone)}
+        />
+      </div>
+
       {!hasAnyWork ? (
         <div className="border-border rounded-card mt-6 border">
           <EmptyState title={t("noWork")} description={t("noWorkBody")} />
@@ -167,9 +194,7 @@ async function MyDay({ name }: { name: string }) {
                   <TaskListFlat
                     tasks={section.tasks}
                     emptyTitle={section.key === "now" ? t("nothingToday") : t("noWork")}
-                    emptyBody={
-                      section.key === "now" ? t("nothingTodayBody") : t("noWorkBody")
-                    }
+                    emptyBody={section.key === "now" ? t("nothingTodayBody") : t("noWorkBody")}
                   />
                 </div>
               </section>

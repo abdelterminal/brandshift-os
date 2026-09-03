@@ -23,6 +23,8 @@ export type InboxItem = {
   createdAt: string;
   verb: string;
   metadata: Record<string, unknown>;
+  subjectType: string;
+  subjectId: string;
   actorName: string | null;
   taskId: string | null;
   taskTitle: string | null;
@@ -67,7 +69,10 @@ export function NotificationList({ items }: { items: InboxItem[] }) {
 
   function describe(item: InboxItem) {
     const metadata = item.metadata as Record<string, string | undefined>;
-    const title = item.taskTitle ?? item.projectName ?? n("aTask");
+    // The event's own metadata first. It records what the thing was called at
+    // the time, and it is the only source for anything that is neither a task
+    // nor a project -- a meeting title, for one.
+    const title = metadata.title ?? item.taskTitle ?? item.projectName ?? n("aTask");
     try {
       return n(messageKey(item.verb) as "taskAssigned", { title, to: metadata.to ?? "" });
     } catch {
@@ -77,6 +82,7 @@ export function NotificationList({ items }: { items: InboxItem[] }) {
 
   /** Where it takes you. A notification you cannot act on is just noise. */
   function href(item: InboxItem): string {
+    if (item.subjectType === "meeting") return `/calendar/${item.subjectId}`;
     if (item.projectKey && item.taskId) return `/work/${item.projectKey}?task=${item.taskId}`;
     if (item.projectKey) return `/work/${item.projectKey}`;
     return "/today";

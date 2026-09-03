@@ -2,6 +2,7 @@ import { MessagesSquare } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
+import { ProjectMeetings } from "@/components/calendar/project-meetings";
 import { ActivityFeed } from "@/components/work/activity-feed";
 import { ProjectTabs } from "@/components/work/project-tabs";
 import { PersonAvatar } from "@/components/ui/avatar";
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { requireUser } from "@/lib/auth/guards";
 import { listProjectActivity } from "@/lib/data/activity";
+import { listProjectMeetings } from "@/lib/data/meetings";
 import { getProjectByKey, listProjectMembers } from "@/lib/data/projects";
 import { bucketTasks, listProjectTasks, organizationToday } from "@/lib/data/tasks";
 
@@ -48,7 +50,7 @@ export default async function ProjectPage({
   const project = await getProjectByKey(session.actor, key);
   if (!project) notFound();
 
-  const [t, channels, statusLabels, priorities, format, tasks, members, activity] =
+  const [t, channels, statusLabels, priorities, format, tasks, members, activity, meetings] =
     await Promise.all([
       getTranslations("Work"),
       getTranslations("Channels"),
@@ -58,6 +60,7 @@ export default async function ProjectPage({
       listProjectTasks(session.actor, project.id),
       listProjectMembers(session.actor, project.id),
       listProjectActivity(session.actor, project.id),
+      listProjectMeetings(session.actor, project.id),
     ]);
 
   const open = tasks.filter(
@@ -154,6 +157,13 @@ export default async function ProjectPage({
             role: member.role,
           }))}
           activity={<ActivityFeed events={activity} />}
+          meetings={
+            <ProjectMeetings
+              meetings={meetings}
+              projectId={project.id}
+              timeZone={session.organization.timezone}
+            />
+          }
         />
       </div>
     </div>

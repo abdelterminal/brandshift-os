@@ -54,4 +54,5 @@ export const activitySubjectEnum = pgEnum("activity_subject", [
   "department",
   "project",
   "task",
+  "meeting",
 ]);

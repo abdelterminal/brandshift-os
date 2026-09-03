@@ -22,6 +22,20 @@
       "when": 1788393360226,
       "tag": "0002_rapid_arclight",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788423514843,
+      "tag": "0003_gigantic_puck",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788423752666,
+      "tag": "0004_quick_morlocks",
+      "breakpoints": true
     }
   ]
 }

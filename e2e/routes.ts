@@ -14,8 +14,10 @@ export const MEMBER_ROUTES = [
   "/en/today",
   "/en/work",
   "/en/people",
-  "/en/calendar",
   "/en/inbox",
+  "/en/calendar",
+  "/en/calendar?view=month&range=month",
+  "/en/calendar/new",
   "/en/channels",
   "/en/channels/general",
   "/en/channels/northwind-e-commerce-replatform",
@@ -24,7 +26,13 @@ export const MEMBER_ROUTES = [
 ] as const;
 
 /** Additionally reachable by a manager. */
-export const MANAGER_ROUTES = ["/en/insights", "/en/work/new"] as const;
+export const MANAGER_ROUTES = [
+  "/en/insights",
+  "/en/work/new",
+  // A project page, because the board inside it is the app's other horizontal
+  // scroller and the sweep is what proves it scrolls inside its own box.
+  "/en/work/NOR",
+] as const;
 
 /** The widths the definition of done names. */
 export const VIEWPORTS = [

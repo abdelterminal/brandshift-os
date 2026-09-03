@@ -283,9 +283,43 @@ Decisions worth knowing:
 - Deals get channels when CRM does. `channel_kind` already names them, so that is a row, not a
   migration.
 
+### Calendar and Meetings  [DONE]
+
+- [x] **The calendar owns nothing.** Meetings live in `meetings`; task and project
+      deadlines are read off the rows that own them. An `events` table a deadline is copied into
+      is a calendar that disagrees with the task by the end of the week, and then two places to fix
+- [x] Agenda by default, month grid when asked -- a list answers "what have I got on" and a grid
+      answers "what shape is my month", and people arrive with the first question. The same call as
+      lists before boards
+- [x] Every choice is in the URL -- range, whose, layout, which week -- so a calendar view can be
+      sent to somebody rather than described over the phone
+- [x] `meetings` / `meeting_attendees`, both tenant-owned. `needs_action` is a real answer, not a
+      null: an organizer has to see who has not replied
+- [x] **Clashes are shown while you are still choosing.** The guest list checks each person against
+      the chosen slot as you tick them, the same idea as the project wizard showing someone's
+      workload at the moment you assign them
+- [x] Moving a meeting withdraws every answer. A yes was a yes to a time
+- [x] Cancelling keeps the row and says so in words. People blocked an hour out for it
+- [x] Notes -- what was decided -- writable by anyone who was there, which is the only reason a
+      past meeting is worth keeping on the calendar
+- [x] `can()` finally uses its resource argument: whether you may move a meeting depends on who
+      called it, not on your role alone
+- [x] Next up on Today, above the work, because a call in twenty minutes changes what you start
+- [x] The command palette now knows about screens, so a manager -- whose five rail destinations
+      leave no room for Calendar -- can still get there by name
+- [x] Seeded: eight meetings either side of today, one already cancelled and two already written up
+
+Decisions worth knowing:
+- **Times are the organization's clock.** `datetime-local` carries no zone, and everyone booking a
+  meeting means the time in the studio. The offset is measured at the instant in question rather
+  than assumed, because Paris is +01:00 in January and +02:00 in July.
+- Meetings are the only thing on the calendar that notify. A deadline is already visible on the
+  task; a meeting moves somebody else's day.
+- No recurrence, no external calendar sync, no reminders. Each is its own feature rather than a
+  corner of this one -- see `KNOWN-GAPS.md`.
+
 ### Next
 
-- Calendar and Meetings
 - Attendance and leave
 - Insights and reporting
 - **CRM**: contacts, companies, leads, pipeline/deals, activities

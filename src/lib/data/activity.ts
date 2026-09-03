@@ -21,7 +21,7 @@ import { fanOut } from "./notifications";
 export type ActivityRow = {
   id: string;
   verb: string;
-  subjectType: "organization" | "user" | "department" | "project" | "task";
+  subjectType: "organization" | "user" | "department" | "project" | "task" | "meeting";
   subjectId: string;
   projectId: string | null;
   taskId: string | null;

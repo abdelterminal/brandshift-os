@@ -63,12 +63,23 @@ export type Action =
   | "project.create"
   | "task.create"
   | "channel.post"
+  | "meeting.schedule"
+  | "meeting.manage"
   | "member.invite"
   | "member.editRole"
   | "organization.switch"
   | "organization.editSettings";
 
-const RULES: Record<Action, (actor: Actor) => boolean> = {
+/**
+ * What a rule is allowed to look at besides the actor.
+ *
+ * Deliberately the narrowest shape that answers the question rather than the
+ * whole row: a rule that receives an entire meeting is a rule that can start
+ * depending on its title.
+ */
+export type Resource = { organizerUserId?: string | null; ownerUserId?: string | null };
+
+const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   // Everyone with a membership can see their own day and their own work.
   "today.view": () => true,
   "work.view": () => true,
@@ -91,6 +102,18 @@ const RULES: Record<Action, (actor: Actor) => boolean> = {
 
   "project.create": (actor) => atLeast(actor, "manager"),
   "task.create": () => true,
+
+  // Anyone may put a meeting in the diary; in an agency this size, needing
+  // permission to ask four people for half an hour is the bottleneck, not the
+  // safeguard.
+  "meeting.schedule": () => true,
+
+  // Changing or cancelling one is different: it moves other people's day. The
+  // organizer may, and an admin may, because somebody has to be able to clear
+  // the calendar of a person who has left.
+  "meeting.manage": (actor, resource) =>
+    resource?.organizerUserId === actor.userId || atLeast(actor, "admin"),
+
   "member.invite": (actor) => atLeast(actor, "admin") || hasModule(actor, "people"),
   "member.editRole": (actor) => atLeast(actor, "admin"),
 
@@ -102,16 +125,23 @@ const RULES: Record<Action, (actor: Actor) => boolean> = {
  * The single question every caller asks.
  *
  *     if (can(actor, "project.create")) { ... }
+ *     if (can(actor, "meeting.manage", meeting)) { ... }
  *
- * A resource argument arrives in M5, when rules start depending on the row --
- * "may edit this project because they own it". The signature takes it now so
- * call sites do not have to change.
+ * The resource is the row the rule depends on, for the rules that depend on
+ * one. Meetings are the first: whether you may move one is a fact about who
+ * called it, not about your role alone.
  */
-export function can(actor: Actor, action: Action, _resource?: unknown): boolean {
-  return RULES[action](actor);
+export function can(actor: Actor, action: Action, resource?: Resource): boolean {
+  return RULES[action](actor, resource);
 }
 
-/** Every action this actor is allowed, for debugging and for tests. */
+/**
+ * Every action this actor is allowed, for debugging and for tests.
+ *
+ * Resource-dependent rules are answered without one, which is the honest
+ * reading of "allowed in general": you may manage a meeting you called, and
+ * this cannot know which meeting is meant.
+ */
 export function allowedActions(actor: Actor): Action[] {
   return (Object.keys(RULES) as Action[]).filter((action) => can(actor, action));
 }

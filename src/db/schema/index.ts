@@ -11,4 +11,5 @@ export * from "./tasks";
 export * from "./activity";
 export * from "./notifications";
 export * from "./channels";
+export * from "./meetings";
 export * from "./relations";

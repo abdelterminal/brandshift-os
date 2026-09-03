@@ -105,6 +105,34 @@ const MEMBER_RAIL: Destination[] = [
 ];
 
 /**
+ * Every place in the app, whether or not it fits on a rail.
+ *
+ * The rail holds five. The app has more than five screens, and the ones that
+ * do not fit still have to be findable -- a manager has no Calendar on their
+ * rail, and before this they could reach it only by typing the URL. This is
+ * what the command palette offers, so "somewhere I cannot see is somewhere I
+ * cannot get to" stops being true.
+ *
+ * Profile and Settings are here and not on the rail. The rule is that they
+ * have one home in the navigation, which is the avatar menu; being able to
+ * jump to them by name is not a second home, it is a shortcut to the one.
+ */
+export const ALL_DESTINATIONS: Destination[] = [
+  { id: "today", href: "/today", icon: "today" },
+  { id: "work", href: "/work", icon: "work", requires: "work.view" },
+  { id: "channels", href: "/channels", icon: "channels", requires: "channel.view" },
+  { id: "calendar", href: "/calendar", icon: "calendar", requires: "calendar.view" },
+  { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" },
+  { id: "people", href: "/people", icon: "people", requires: "people.view" },
+  { id: "insights", href: "/insights", icon: "insights", requires: "insights.view" },
+];
+
+/** The ones this person may actually open. */
+export function destinationsFor(actor: Actor): Destination[] {
+  return ALL_DESTINATIONS.filter((item) => !item.requires || can(actor, item.requires));
+}
+
+/**
  * The rail for one person: their role picks the set, `can()` filters it, and
  * the cap is enforced rather than trusted.
  */

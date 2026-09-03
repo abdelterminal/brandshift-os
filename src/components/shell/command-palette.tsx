@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, FolderKanban, Search, Sun, User } from "lucide-react";
+import { Building2, Compass, FolderKanban, Search, Sun, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -26,13 +26,14 @@ import { focusRing, transition } from "../ui/styles";
 
 export type PaletteEntry = {
   id: string;
-  kind: "project" | "person" | "department";
+  kind: "destination" | "project" | "person" | "department";
   label: string;
   hint?: string | null;
   href: string;
 };
 
 const KIND_ICON = {
+  destination: Compass,
   project: FolderKanban,
   person: User,
   department: Building2,
@@ -91,7 +92,10 @@ export function CommandPalette({ entries }: { entries: PaletteEntry[] }) {
         .map(({ entry }) => entry)
     : [];
 
+  // Places first. Somebody who opens this and types three letters is usually
+  // trying to get somewhere, not to find a record.
   const groups: Array<[PaletteEntry["kind"], string]> = [
+    ["destination", t("groupGoTo")],
     ["project", t("groupProjects")],
     ["person", t("groupPeople")],
     ["department", t("groupDepartments")],

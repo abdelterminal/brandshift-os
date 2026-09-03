@@ -11,7 +11,7 @@ written down nowhere is a gap nobody ever fixes.
 delete the row when it is closed — do not leave a struck-through list of things that are actually
 finished. `CLAUDE.md` points here for the same reason.
 
-Last reviewed: after Channels landed.
+Last reviewed: after Calendar and Meetings landed.
 
 ---
 
@@ -40,6 +40,12 @@ files them as bugs.
 | The e2e suite runs serially, on one database | It completes tasks and publishes projects, so parallel workers would race each other through shared rows. One worker takes about a minute, which is not worth engineering around yet. |
 | axe covers WCAG 2.1 A and AA, not its best-practice rules | Those are opinions worth reading and not worth failing a build over. A suite that cries wolf gets muted, and then it catches nothing. |
 | Notifications have read state but no archive | Read and unread cover the core of an inbox. A third state is worth adding when somebody actually wants to keep a read item out of the way, not before. |
+| Meetings do not repeat | No recurrence, and so no "every Monday". It is the single largest thing missing here, and it is a feature in its own right: a recurrence rule, an exception model for the week somebody moves, and a decision about how far ahead instances exist. Worth building deliberately rather than bolting a `repeat` column onto this. |
+| No external calendar, and no invitations by email | Nothing exports `.ics` and nothing syncs with Google or Outlook, so a meeting booked here is invisible to anybody's phone. The invitation reaches people through the inbox, in the app. Both halves need a mail transport, which this deployment still does not have. |
+| No reminders | Nothing tells you fifteen minutes beforehand. Today shows what is next when you look at it, which is not the same thing. Needs either a scheduler or push, neither of which exists yet. |
+| Free-busy is checked, not displayed as a grid | The guest list tells you who is booked at the slot you have chosen. It does not draw everybody's day so you can find a slot that suits all of them. The first is what stops a mistake; the second is a different screen. |
+| One timezone -- the organization's | Every time on every screen is the studio's clock. Right for an agency in one place; wrong the day somebody is hired in another. The conversion is already in one function (`calendar-dates.ts`), so this becomes a per-person preference rather than a rewrite. |
+| A meeting is visible to the whole organization | Anyone signed in can read any meeting, as with projects and channels. There is no private meeting, which matters the first time somebody books a one-to-one about somebody else. |
 | Presence is per process | It is derived from the SSE connections one container is holding, which is why there is nothing to expire and nothing to clean up after a crash. One container is what this deployment runs. The day it runs two, people on different containers will not see each other in the "here now" row -- messages still reach both, because those go through Postgres. Fixing it means shared state, which is a Redis nobody has yet. |
 | The composer sits at the end of the column, not pinned to the viewport | Pinning it means the shell owning the scroll region -- `h-dvh` with `overflow-hidden`, and `main` scrolling inside it -- which changes the layout of every screen in the app. The unpinned version was chosen after the pinned one was seen to cover the newest message on desktop and land underneath the bottom nav on a phone. Worth revisiting as a shell change, on its own, with the responsive sweep watching. |
 | A channel loads its last 100 entries and no further | No infinite scroll and no "load earlier". A hundred entries is several weeks of a real project channel, and the project's Activity tab holds the full history. Paging back is worth building when somebody actually runs out. |

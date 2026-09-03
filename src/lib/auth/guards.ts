@@ -2,7 +2,7 @@ import "server-only";
 
 import { forbidden, unauthorized } from "next/navigation";
 
-import { can, type Action } from "../authz";
+import { can, type Action, type Resource } from "../authz";
 import { getCurrentUser, type CurrentUser } from "./session";
 
 /**
@@ -59,7 +59,7 @@ export async function requireUser(): Promise<CurrentUser> {
  * Same `can()` the rail calls, so a destination that is hidden and an action
  * that is refused can never disagree.
  */
-export async function requirePermission(action: Action, resource?: unknown): Promise<CurrentUser> {
+export async function requirePermission(action: Action, resource?: Resource): Promise<CurrentUser> {
   const session = await requireUser();
   if (!can(session.actor, action, resource)) forbidden();
   return session;
@@ -80,7 +80,7 @@ export async function requireUserForAction(): Promise<CurrentUser> {
 
 export async function requirePermissionForAction(
   action: Action,
-  resource?: unknown,
+  resource?: Resource,
 ): Promise<CurrentUser> {
   const session = await requireUserForAction();
   if (!can(session.actor, action, resource)) {

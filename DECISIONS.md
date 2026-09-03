@@ -101,6 +101,35 @@ role changes are never folded.
 the channel if the project predates channels and forwards there, so a link followed from a project
 and a link pasted into a message are the same URL.
 
+## Added during Calendar and Meetings
+
+**The calendar owns no rows of its own.** Meetings are a real table; everything else on the screen
+-- task deadlines, project deadlines -- is read where it already lives. The alternative is an
+`events` table that a deadline is copied into, which disagrees with the task the first time
+somebody moves a date and then needs two edits for every change. It also means the rule "no
+invented dashboard metrics" holds here by construction: there is nothing on this screen that is
+not a row somebody can open.
+
+**A list before a grid.** The agenda is the default and the month grid is behind a toggle, for the
+same reason lists come before boards for tasks: a list answers "what have I got on" and a grid
+answers "what shape is my month", and people arrive with the first question.
+
+**The whole view is in the URL.** Which week, whose calendar, week or month, agenda or grid. A
+calendar you cannot send to somebody is one people describe to each other instead.
+
+**Times are the organization's clock, and the offset is measured.** A `datetime-local` input
+carries no zone. Somebody typing 14:30 means half past two in the studio, wherever they happen to
+be sitting. Paris is +01:00 in January and +02:00 in July, so the offset is computed at the
+instant in question rather than assumed once.
+
+**`can()` takes a resource, and meetings are the first rule to use it.** Whether you may move a
+meeting depends on who called it. The signature has carried the argument since M3 for exactly this;
+the alternative -- an `isOrganizer` check written into each action -- is the second place
+permission rules live, which is the thing `authz.ts` exists to prevent.
+
+**Rescheduling withdraws every answer.** A yes was a yes to a time. Carrying it across to a
+different one puts people in a meeting they never agreed to, and the organizer would not know.
+
 ## Deliberately not chosen
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the

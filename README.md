@@ -104,7 +104,15 @@ What is built:
   the project, in the order it happened, so the conversation and its context read as one column.
   New messages arrive without a refresh, and the avatars at the top are whoever else has it open.
 
-Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a project, a person or a department.
+- **Calendar** -- meetings, task deadlines and project deadlines in one agenda, with a month grid
+  behind a toggle. It owns nothing: every deadline is read off the task or project it belongs to,
+  so nothing here can drift out of step with the thing it stands for. The whole view lives in the
+  URL, so you can send someone a week.
+- **Meetings** -- schedule one and see who is already booked *while you are picking them*, not
+  after the invitation has gone out. Answer yes, no or maybe; write up what was decided. Moving a
+  meeting withdraws everyone's answer, and cancelling one leaves it on the calendar saying so.
+
+Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a screen, a project, a person or a department.
 
 ## Design system
 
