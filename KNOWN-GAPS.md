@@ -11,7 +11,7 @@ written down nowhere is a gap nobody ever fixes.
 delete the row when it is closed — do not leave a struck-through list of things that are actually
 finished. `CLAUDE.md` points here for the same reason.
 
-Last reviewed: after ERP landed.
+Last reviewed: after the data migration landed.
 
 ---
 
@@ -42,6 +42,11 @@ files them as bugs.
 | Notifications have read state but no archive | Read and unread cover the core of an inbox. A third state is worth adding when somebody actually wants to keep a read item out of the way, not before. |
 | A won deal does not become a project | Nothing converts one into the other, so the handover from selling the work to doing it is retyping. It is the obvious next thing and it is a decision about what carries across -- the team, the deliverables, the dates -- rather than a button. |
 | Holding `finance` costs you Insights and Pipeline on the rail | One rail per person and five slots on it, so the owner -- who holds every module -- reaches two of her screens through the palette. It is the honest consequence of the cap rather than a bug, and the alternative, a rail that grows with your permissions, is the thing the cap exists to prevent. It becomes worth revisiting if somebody who holds everything says the palette is not enough. |
+| The old app's attendance, lunch records and DMs have nowhere to land | The migration counts and reports them rather than carrying them: there is no timeclock here, and no one-to-one messages. The rows stay in the old Mongo, which is not being deleted. If any of it turns out to matter, it has to become a feature here first -- see the timesheet row above. |
+| A migrated project keeps its old name even where the client was merged | `Obarfum - Content` still reads that way on a project whose company is now `Ô Bar'Fum`. The company is the row that matters and it is correct; renaming forty projects on a guess about how each name was built would be a worse trade. Rename them by hand if it grates. |
+| Nothing verifies a completed migration beyond the report | The run prints what it wrote and the counts were checked by hand against Mongo during the rehearsal. There is no second pass that re-reads both databases and asserts they agree. Worth writing the day this has to be done against data nobody has profiled first. |
+| The login page logs a hydration mismatch in dev | Seen in `next dev` during the migration rehearsal: "some attributes of the server rendered HTML didn't match". It is on `/[locale]/(auth)/login`, unrelated to the migration, and no test catches it because Playwright does not fail on React warnings. Nothing visibly misbehaves, which is exactly why it has survived. Worth chasing with the dev overlay open. |
+| Prettier is not wired into anything | There is no config and `npm run lint` does not check formatting, so the 100-column style everything is written in is a convention held up by hand. Adding a config now reformats 106 files, which is not a diff worth mixing into feature work -- it wants its own commit. |
 | An invoice cannot be printed, saved as a PDF or sent | It exists as a screen and nothing else. Sending it means the mail transport this deployment still lacks; a PDF means a rendering step and a decision about who owns the layout. Until then the document is read in the app or the browser's own print dialog is used, which is not a designed output. This is the largest gap in ERP. |
 | No credit notes | An invoice can be voided in full and nothing can be reversed in part. A real credit note is its own numbered document that points at the invoice it corrects, and the arithmetic already handles negatives -- `roundHalfAwayFromZero` exists for exactly this. What is missing is the document and its number series. |
 | Invoices do not repeat | No retainer, no monthly. An agency on a retainer creates the same invoice twelve times a year by hand. It is the same shape of problem as recurring meetings -- a rule, an exception model, and a decision about how far ahead documents exist -- and it is worth building deliberately rather than adding a `repeat` column. |

@@ -64,6 +64,8 @@ first time (`npx playwright install chromium`).
 
 See [KNOWN-GAPS.md](KNOWN-GAPS.md) for what is deliberately not covered.
 
+To bring the previous app's data across, see [MIGRATION.md](MIGRATION.md).
+
 `/api/health` answers 200 when the database is reachable and 503 when it is not; Compose uses it
 as the app container's healthcheck.
 
@@ -169,9 +171,20 @@ explicitly exempted with a reason.
 - [KNOWN-GAPS.md](KNOWN-GAPS.md) -- what is deliberately unfinished, unverified, or accepted
 - [DECISIONS.md](DECISIONS.md) -- what was decided, and why
 - [ROADMAP.md](ROADMAP.md) -- what is done and what is next
+- [MIGRATION.md](MIGRATION.md) -- bringing the previous app's data across
 
 ## Relationship to the previous app
 
 This replaces `abdelterminal/brandshiftsaas` (Angular + Django + MongoDB). That project is
-untouched, still runs, and remains the system of record until this one reaches parity. There is
-no data migration yet -- see Phase 2 in the roadmap.
+untouched and still runs; it stays the system of record until you decide otherwise.
+
+Its data comes across with `npm run db:migrate:mongo`, which reads Mongo, prints everything it can
+and cannot carry, and writes nothing unless you pass `--commit`. It reads only, applies in one
+transaction, and can be run as often as you like -- every row lands on an id derived from its Mongo
+`_id`, so a second run updates what the first one wrote.
+
+Nobody has to reset a password: the old app's Django hashes are read as they are and upgraded to
+scrypt on first sign-in.
+
+**[MIGRATION.md](MIGRATION.md)** is the runbook -- what arrives, what deliberately does not, and
+the decisions the script makes on your behalf.
