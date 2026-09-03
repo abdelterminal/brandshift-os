@@ -89,6 +89,21 @@ Kept briefly so the same ground is not re-argued.
 - **`DEV_USER_EMAIL`** — the M3 stopgap that picked which seeded person the shell rendered as.
   Removed in M4 when real sign-in landed.
 
+### What using it found
+
+- **The 401 page had never once rendered.** `requireUser()` throws `unauthorized()` from inside
+  `(app)/layout.tsx`, and `unauthorized.tsx` sat beside that layout -- but a boundary covers a
+  segment's *children*, never that segment's own layout. So it caught nothing, and Next's built-in
+  page rendered instead: "You're not authorized to access this page", which reads like a
+  permissions refusal rather than an expired session. Moved one level up, to `[locale]/`.
+
+  Two things kept it quiet for four milestones. The tests around it asserted what should *not* be
+  on screen -- a heading absent, a session surviving -- and every one of those passed against the
+  wrong page. And `curl` cannot tell the two apart: Next's default renders on the client, so the
+  server sends the same bare shell either way, and only a real browser shows the difference.
+  `e2e/anonymous/auth.spec.ts` now signs in twice, has one browser sign the other out, and names
+  the words that must be on screen.
+
 ### What the first run found
 
 Worth recording, because each one had survived a manual pass:

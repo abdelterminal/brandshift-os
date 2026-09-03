@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { MANAGER, SEED_PASSWORD } from "../people";
+import { MANAGER, MEMBER, SEED_PASSWORD } from "../people";
 
 /**
  * The front door.
@@ -105,4 +105,59 @@ test.describe("the password field", () => {
       "true",
     );
   });
+});
+
+/**
+ * A signed cookie whose session row is gone.
+ *
+ * This is the one path the middleware deliberately does not catch: it checks a
+ * signature, not the database, so a revoked session gets waved through and the
+ * page refuses it. Which means `unauthorized.tsx` is the *only* thing standing
+ * between somebody and a dead end -- and for several milestones it was never
+ * reached at all.
+ *
+ * `requireUser()` throws from inside `(app)/layout.tsx`, and a boundary covers
+ * a segment's children rather than that segment's own layout, so the file sat
+ * in `(app)/` catching nothing while Next's built-in page rendered instead:
+ * "You're not authorized to access this page", which reads like a permissions
+ * refusal rather than an expired session.
+ *
+ * Nothing caught it because the tests around it asserted what should *not* be
+ * on screen. This one names the words that should be.
+ */
+test("a session revoked from another device explains itself", async ({ browser }) => {
+  const first = await browser.newContext();
+  const second = await browser.newContext();
+
+  for (const context of [first, second]) {
+    const page = await context.newPage();
+    await page.goto("/en/login");
+    await page.getByLabel("Email").fill(MEMBER.email);
+    await page.getByLabel("Password", { exact: true }).fill(SEED_PASSWORD);
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await page.waitForURL("**/en/today");
+  }
+
+  // The second browser signs the first one out.
+  const settings = await second.newPage();
+  await settings.goto("/en/settings");
+  const other = settings.locator("li").filter({ hasNot: settings.getByText("This device") });
+  await other.getByRole("button", { name: "Sign out" }).first().click();
+
+  // The first browser still holds a cookie that is signed and unexpired, so
+  // the middleware lets it through and the page has to explain.
+  const stranded = (await first.pages())[0]!;
+  const response = await stranded.goto("/en/today");
+  expect(response?.status()).toBe(401);
+
+  await expect(stranded.getByRole("heading", { name: "You are signed out" })).toBeVisible();
+  await expect(stranded.getByText(/signed out from another device/)).toBeVisible();
+
+  // And it is a way back, not a wall: the button works, and the cookie has
+  // been cleared on the way so signing in again is the whole journey.
+  await stranded.getByRole("link", { name: "Sign in" }).click();
+  await expect(stranded).toHaveURL(/\/en\/login/);
+
+  await first.close();
+  await second.close();
 });

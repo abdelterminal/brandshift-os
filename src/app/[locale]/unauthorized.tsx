@@ -10,6 +10,14 @@ import { Link } from "@/i18n/navigation";
  * The session is gone, so the cookie goes too. Reaching this page means a
  * signed cookie survived the middleware but failed the full check: expired,
  * revoked from another device, or invalidated by a password change.
+ *
+ * It lives here, one level above `(app)`, and not beside the layout it
+ * catches. `requireUser()` throws from inside `(app)/layout.tsx`, and a
+ * boundary only covers a segment's *children* -- never that segment's own
+ * layout. Sitting in `(app)/` it was never reached, and Next's built-in page
+ * rendered instead: "You're not authorized to access this page", which reads
+ * like a permissions refusal rather than an expired session. `e2e/anonymous`
+ * now asserts this copy by name so it cannot go quiet again.
  */
 export default async function Unauthorized() {
   const t = await getTranslations("Errors");
