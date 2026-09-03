@@ -118,6 +118,12 @@ What is built:
   appears on the calendar, and scheduling a meeting tells you somebody is *away* rather than merely
   *busy*.
 
+- **Insights** -- what has gone wrong, first: projects at risk, and what has been stuck longest,
+  every row a link to the thing you would open to fix it. Then whether the work is keeping up --
+  tasks created against tasks completed, by week -- and what each person is carrying, meetings and
+  time off included. Every number comes from a row somebody made by using the app. There is no
+  productivity score, and there never will be.
+
 Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a screen, a project, a person or a department.
 
 ## Design system

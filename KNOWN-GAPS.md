@@ -11,7 +11,7 @@ written down nowhere is a gap nobody ever fixes.
 delete the row when it is closed — do not leave a struck-through list of things that are actually
 finished. `CLAUDE.md` points here for the same reason.
 
-Last reviewed: after Attendance and leave landed.
+Last reviewed: after Insights and reporting landed.
 
 ---
 
@@ -40,6 +40,9 @@ files them as bugs.
 | The e2e suite runs serially, on one database | It completes tasks and publishes projects, so parallel workers would race each other through shared rows. One worker takes about a minute, which is not worth engineering around yet. |
 | axe covers WCAG 2.1 A and AA, not its best-practice rules | Those are opinions worth reading and not worth failing a build over. A suite that cries wolf gets muted, and then it catches nothing. |
 | Notifications have read state but no archive | Read and unread cover the core of an inbox. A third state is worth adding when somebody actually wants to keep a read item out of the way, not before. |
+| Insights counts in memory, not in SQL | Each figure is worked out from a few hundred rows pulled back whole, rather than a `date_trunc` and a `group by`. At one agency's volume the difference is not measurable, and the shape of each function is already the shape the SQL version would have. |
+| Insights has no date range and no export | Twelve weeks, always, and no way to send it to anybody. A range picker is easy; an export means deciding what "export" means -- CSV of which table, or a document. Worth doing when somebody asks for a specific one. |
+| Nothing on Insights is per-department or per-client | Everything is the whole organization. Departments exist and would be the obvious first cut, but a filter that only ever has one useful setting is a control nobody touches. Worth adding when there is a second thing to compare. |
 | Public holidays are not modelled | A week off over Christmas costs five days here and four in reality, and the same is true of every national holiday. Doing it properly means a holiday calendar per organization -- and probably per country, once anybody is hired abroad. A hardcoded list of one country's holidays would be worse than the gap, because it would be wrong silently. |
 | Leave allowances do not accrue, carry over or pro-rate | Everybody gets their full annual allowance on 1 January, whatever month they joined and whatever they did not use last year. Real HR policies do all three, and each is a rule an organization would want to set for itself. The allowance is a single number on the membership until somebody needs more. |
 | There is no timeclock and no timesheet | Attendance here means who is away, derived from approved leave. Nobody clocks in, and no hours are recorded against a project. Billable hours are a real want and belong next to ERP invoicing, where the invoice that consumes them lives. |

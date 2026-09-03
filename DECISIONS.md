@@ -154,6 +154,27 @@ request changes nothing rather than being caught by the UI alone.
 and deciding. Where somebody is on a given day is a calendar question, and the calendar already
 exists.
 
+## Added during Insights
+
+**No productivity metric, anywhere.** The obvious thing to put on a reporting screen is tasks
+completed per person, and it is the one number this app will not show. A count of tasks is not a
+count of value -- a person who closed nine small things did not do more than the person who closed
+one hard one -- and beside somebody's name it stops being a planning tool and becomes a scoreboard.
+The load table answers "what is this person carrying", which is the question a coordinator actually
+has.
+
+**Created against completed, never either alone.** A completion count with nothing to compare it to
+is a vanity total, which the design rules already forbid. The pair says whether the queue is
+growing, which is the thing worth knowing before it becomes obvious in the diary.
+
+**Exceptions before trends.** The page opens with what has gone wrong, ranked, each row a link to
+the thing you would open to fix it. The chart is underneath. A screen that opens with a chart is a
+screen people look at once a month.
+
+**A table with bars, not a charting library.** The numbers are the point and a table states them
+exactly; a screen reader gets a real table rather than an SVG it has to be told about; and a chart
+dependency is a decision that costs more than a handful of divs with a width class on them.
+
 ## Deliberately not chosen
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the

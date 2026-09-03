@@ -129,3 +129,19 @@ export function localFromInstant(at: Date, timeZone: string): string {
 
   return `${read("year")}-${read("month")}-${read("day")}T${hour}:${read("minute")}`;
 }
+
+/**
+ * The last `count` week starts, oldest first, ending with the week `today`
+ * falls in.
+ *
+ * Weeks rather than months because a studio's rhythm is weekly: a month is too
+ * coarse to show a bad fortnight, and a day is too noisy to show a trend.
+ */
+export function recentWeeks(count: number, today: string): string[] {
+  const thisWeek = startOfWeek(today);
+  const weeks: string[] = [];
+  for (let index = count - 1; index >= 0; index -= 1) {
+    weeks.push(addDays(thisWeek, -7 * index));
+  }
+  return weeks;
+}

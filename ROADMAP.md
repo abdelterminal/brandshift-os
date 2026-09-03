@@ -355,9 +355,37 @@ Decisions worth knowing:
 - The allowance lives on the membership, not the user: it is a term of employment with one
   organization.
 
+### Insights and reporting  [DONE]
+
+Shaped entirely by two rules that were already written down, and which most reporting screens
+break on their first day: **no invented dashboard metrics**, and **lead with next actions and
+exceptions, never vanity totals**.
+
+- [x] Opens with **At risk** -- projects with blocked work, late work, or a deadline already
+      behind them. Only the ones with something wrong; the healthy projects are already on Work
+- [x] **Stuck longest**, ordered by duration rather than importance, with the blocker's own words
+      on the row. The thing blocked for three weeks is the one nobody is looking at any more
+- [x] **Keeping up** -- tasks created against tasks completed, by week. The pair, never either
+      alone: forty completed says nothing, forty against sixty says the queue is growing
+- [x] **What everyone is carrying** -- open, late and blocked work, plus the two things that
+      quietly eat a week: hours already committed to meetings, and days somebody will not be here
+- [x] Every number traces to a row somebody made by using the app. Nothing is estimated, weighted
+      or scored, and there is no headline figure anywhere on the screen
+- [x] The chart is a real `<table>` with bars drawn on it -- no charting dependency, exact numbers
+      beside every bar, and a screen reader gets a table rather than an SVG
+- [x] No inline `style`, which the rule forbids: bar widths come from a fixed set of classes
+
+Decisions worth knowing:
+- **There is no productivity metric, and no "tasks completed" beside anybody's name.** A count of
+  tasks is not a count of value, and putting one next to a person turns a planning tool into a
+  scoreboard. The load table shows what somebody is carrying, never what they have got through.
+- Counted in memory from a few hundred rows. The day that is not true, each of these becomes a
+  `date_trunc` and a `group by` behind the same shape.
+- Twelve weeks, because a month is too coarse to show a bad fortnight and a day too noisy to show
+  a trend.
+
 ### Next
 
-- Insights and reporting
 - **CRM**: contacts, companies, leads, pipeline/deals, activities
 - **ERP**: quotes, orders, invoices, expenses
 - Data migration from the old MongoDB app, once the schema has settled

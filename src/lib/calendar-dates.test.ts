@@ -6,6 +6,7 @@ import {
   endOfMonth,
   instantFromLocal,
   localFromInstant,
+  recentWeeks,
   startOfDay,
   startOfMonth,
   startOfWeek,
@@ -123,5 +124,20 @@ describe("wall clock and instants", () => {
     for (const bad of ["", "2026-09-03", "not a date", "2026-13-40T99:99"]) {
       expect(instantFromLocal(bad, PARIS)).toBeNull();
     }
+  });
+});
+
+describe("recentWeeks", () => {
+  it("ends with the week today falls in, oldest first", () => {
+    // 2026-09-03 is a Thursday; its week starts Monday 2026-08-31.
+    expect(recentWeeks(3, "2026-09-03")).toEqual(["2026-08-17", "2026-08-24", "2026-08-31"]);
+  });
+
+  it("gives one week for a count of one", () => {
+    expect(recentWeeks(1, "2026-08-31")).toEqual(["2026-08-31"]);
+  });
+
+  it("crosses a year boundary", () => {
+    expect(recentWeeks(2, "2027-01-05")).toEqual(["2026-12-28", "2027-01-04"]);
   });
 });
