@@ -32,6 +32,7 @@ export const MANAGER_ROUTES = [
   // Objectives is open to every role, but the sweep runs it here because the
   // manager fixture is the one that can also create one.
   "/en/objectives",
+  "/en/sops",
   "/en/work/new",
   // A project page, because the board inside it is the app's other horizontal
   // scroller and the sweep is what proves it scrolls inside its own box.

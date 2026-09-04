@@ -11,7 +11,7 @@ written down nowhere is a gap nobody ever fixes.
 delete the row when it is closed — do not leave a struck-through list of things that are actually
 finished. `CLAUDE.md` points here for the same reason.
 
-Last reviewed: after Objectives & KPI landed.
+Last reviewed: after the SOP library landed.
 
 ---
 
@@ -54,6 +54,12 @@ files them as bugs.
 | Objectives do not link to the work that moves them | No relation to a project, a task or a deal, so "what are we actually doing about this" is answered by reading both screens. It is the obvious next relation, and it is a decision about which direction the link points rather than a column. |
 | Objectives appear nowhere on Insights | `objectiveSummary()` exists and nothing calls it. "How are we doing" and "against what" are one question and they are currently two screens. Left until the numbers had a milestone's worth of real data behind them. |
 | A shared `DialogClose render={<Button>}` logs a Base UI warning | "A component that acts as a button expected a native `<button>`" appears in `next dev` on every screen using that pattern -- `/en/leave` and `/en/objectives` were both confirmed, so it predates this milestone and lives in the UI kit rather than in any one feature. Dev-only, nothing visibly misbehaves, and no test catches it because Playwright does not fail on React warnings. |
+| A procedure has no attachments and no images | Steps are text. A procedure that needs a diagram, a template file or a screenshot cannot hold one, which for a creative agency is a real limit -- "here is the frame we shoot" is a picture. It waits on the same file storage a receipt, a signed proposal and a channel attachment all wait on. |
+| Nothing chases an overdue review | The list shows what is stale and that is the whole mechanism: somebody has to open the screen. No email, no inbox notification, no digest. Needs the mail transport, like everything else on this list that wants to reach somebody who is not already looking. |
+| A procedure has no history and no versions | Editing the steps replaces them. There is no record of what a procedure said last year, which matters exactly when somebody asks why a job was done the way it was. `replaceSteps` is written so this becomes a real diff rather than a rewrite. |
+| Only title, summary and steps can be edited after creation | Owner, department and review interval are set once from the dialog. Changing them means creating another procedure, which is heavy-handed for fixing a typo in the interval. |
+| Steps cannot be reordered without retyping them | The editor replaces the list wholesale, so moving step four above step two means editing both. Drag has no keyboard equivalent, so this wants up/down buttons rather than a drag handle. |
+| SOPs are not linked to the work they describe | A procedure about delivering a film project points at no project, and no project points back. The Templates milestone is where that link belongs, since that is what turns a procedure into actual tasks. |
 | An invoice cannot be printed, saved as a PDF or sent | It exists as a screen and nothing else. Sending it means the mail transport this deployment still lacks; a PDF means a rendering step and a decision about who owns the layout. Until then the document is read in the app or the browser's own print dialog is used, which is not a designed output. This is the largest gap in ERP. |
 | No credit notes | An invoice can be voided in full and nothing can be reversed in part. A real credit note is its own numbered document that points at the invoice it corrects, and the arithmetic already handles negatives -- `roundHalfAwayFromZero` exists for exactly this. What is missing is the document and its number series. |
 | Invoices do not repeat | No retainer, no monthly. An agency on a retainer creates the same invoice twelve times a year by hand. It is the same shape of problem as recurring meetings -- a rule, an exception model, and a decision about how far ahead documents exist -- and it is worth building deliberately rather than adding a `repeat` column. |

@@ -10,6 +10,7 @@ import {
   ReceiptEuro,
   Target,
   Goal,
+  BookOpenCheck,
   Sun,
   Users,
   type LucideIcon,
@@ -39,4 +40,5 @@ export const NAV_ICONS: Record<NavIconName, LucideIcon> = {
   crm: Target,
   finance: ReceiptEuro,
   objectives: Goal,
+  sops: BookOpenCheck,
 };

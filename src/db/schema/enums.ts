@@ -163,6 +163,15 @@ export const objectiveOutcomeEnum = pgEnum("objective_outcome", [
   "missed",
   "abandoned",
 ]);
+/**
+ * Where a procedure is in its life.
+ *
+ * `draft` is being written and is not to be followed yet; `published` is the
+ * way the work is done here; `retired` is kept rather than deleted, because
+ * "we used to do it this way and stopped" is a thing people need to be able
+ * to point at.
+ */
+export const sopStatusEnum = pgEnum("sop_status", ["draft", "published", "retired"]);
 /** Supported locales. Both ship complete; there is no partial-translation state. */
 export const localeEnum = pgEnum("locale", ["en", "fr"]);
 
@@ -185,4 +194,5 @@ export const activitySubjectEnum = pgEnum("activity_subject", [
   "expense",
   "objective",
   "key_result",
+  "sop",
 ]);

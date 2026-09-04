@@ -332,6 +332,34 @@ a tax rate is, and nothing on this screen has ever been a float.
 and the primary action. A number that is merely disappointing is none of those, and spending the
 accent on it is how red stops meaning anything.
 
+## Added during the SOP library
+
+**The point of a procedure library is knowing what has gone stale.** Storage is a shared folder.
+What a shared folder cannot tell you is which of its documents is now lying to people -- and a
+procedure nobody has checked in a year does not sit there harmlessly, it gives wrong instructions
+with the authority of having been written down. So every SOP carries a review interval and the
+date it was last read, and the screen opens with the ones that are overdue or were never checked
+at all.
+
+**A review is one click, with no confirmation and no second signature.** This is the decision the
+whole feature stands on. A six-month check that costs a form is a check nobody performs, and a
+review queue that can never be cleared is worse than having no queue: people learn to scroll past
+it, and then it cannot warn them about the one that matters.
+
+**The owner may review their own procedure, whatever their role.** The opposite of the leave rule,
+and deliberately so. Approving your own time off is a conflict of interest; confirming that the
+procedure you wrote is still accurate is just the work. Requiring a manager to countersign is how
+the queue becomes permanently overdue.
+
+**Steps are rows, not prose.** A procedure is an ordered list of things somebody does, so it is
+modelled as one. That means no Markdown parser and therefore no dependency and no HTML-injection
+surface on text several people can edit -- and it gives the Templates milestone a step it can turn
+into a task, exactly as a quote line already becomes one.
+
+**Retired, never deleted.** "We used to do it this way and stopped" is a thing people need to be
+able to point at, particularly when somebody asks why a client was handled differently two years
+ago.
+
 ## Deliberately not chosen
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the

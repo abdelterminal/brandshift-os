@@ -33,7 +33,8 @@ export type NavIconName =
   | "leave"
   | "crm"
   | "finance"
-  | "objectives";
+  | "objectives"
+  | "sops";
 
 export type Destination = {
   /** Key into the `Nav` message catalogue, unless `label` overrides it. */
@@ -208,6 +209,9 @@ export const ALL_DESTINATIONS: Destination[] = [
   // most, which is exactly what the palette is for. Insights links to it,
   // because "how are we doing" and "against what" are one question.
   { id: "objectives", href: "/objectives", icon: "objectives", requires: "objective.view" },
+  // Like Objectives: not on a rail, because five is the cap and a procedure
+  // is something you go and look up rather than somewhere you live.
+  { id: "sops", href: "/sops", icon: "sops", requires: "sop.view" },
   { id: "leave", href: "/leave", icon: "leave", requires: "leave.view" },
   { id: "people", href: "/people", icon: "people", requires: "people.view" },
   {

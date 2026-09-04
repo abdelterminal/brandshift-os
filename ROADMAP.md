@@ -540,12 +540,43 @@ Decisions worth knowing:
 - **Not on any rail.** Five is the cap and every rail is full. Objectives is in the palette and
   the More menu; direction is something people look at deliberately, weekly at most.
 
+### SOP Library  [DONE]
+
+- [x] `sops` / `sop_steps`. A procedure is an owner, a summary, an ordered list of steps, and
+      the date somebody last confirmed it is still right
+- [x] **The screen leads with what has gone stale.** That is the only thing on it costing
+      anybody anything: a procedure nobody has checked in a year does not sit there harmlessly,
+      it tells people to do the wrong thing with the authority of being written down
+- [x] **"Never reviewed" and "overdue" are different states**, ranked differently, because they
+      are different problems with different fixes
+- [x] `reviewDueOn` is computed from the last review plus the interval, never stored -- the
+      third time this app has made that call, after leave balances and objective health
+- [x] Steps are **rows, not prose**: no Markdown parser, no HTML-injection surface on text
+      several people edit, and something for Templates to turn into tasks
+- [x] Reviewing is **one click, no dialog**. The owner may review their own procedure whatever
+      their role
+- [x] Retired procedures are kept, not deleted -- "we used to do it this way" is a fact people
+      need to point at
+- [x] 23 unit tests on the review arithmetic and the ordering; 7 e2e specs
+- [x] Seeded in all four review states on purpose, including one badly overdue and one never
+      checked
+
+Decisions worth knowing:
+- **A review is one click.** No second signature, no approval flow. A six-month check that costs
+  a form is a check nobody does, and then every procedure in the library is permanently overdue
+  and the queue becomes noise.
+- **Steps rather than a document body.** A procedure *is* an ordered list of things somebody
+  does. Modelling it as one costs nothing, renders with no dependency, and gives Templates a
+  step to turn into a task exactly as a quote line already becomes one.
+- **Six months by default** -- long enough not to be busywork, short enough that a procedure
+  cannot quietly outlive the way the work is actually done.
+- **Amber, not red**, for an overdue review. Red is for blocked, overdue *work*, destructive
+  actions and the primary action.
+
 ### Next
 
-- **SOP Library** -- documents with an owner and a review date. Needs a content model, and it is
-  the first thing here that wants file storage.
 - **Templates** -- reusable project and task templates. The quote-to-project handover is already
-  most of the machinery; this is the same idea without a quote in front of it.
+  most of the machinery, and an SOP's steps are now a second thing that wants to become tasks.
 - **Weekly Reviews** -- a recorded ritual rather than a screen you happen to look at. Insights and
   Objectives already hold everything one would read out; what is missing is the record of what was
   said and decided.
@@ -554,6 +585,7 @@ Still true, and still the largest single gap: **a mail transport**. Invites, not
 invoice sending and password resets all wait on it.
 
 ---
+
 ## Verification gate (every milestone)
 
 ```bash

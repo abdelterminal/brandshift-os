@@ -63,6 +63,7 @@ export type Action =
   | "crm.view"
   | "finance.view"
   | "objective.view"
+  | "sop.view"
   // Doing
   | "project.create"
   | "task.create"
@@ -75,6 +76,8 @@ export type Action =
   | "finance.manage"
   | "objective.manage"
   | "objective.record"
+  | "sop.manage"
+  | "sop.review"
   | "member.invite"
   | "member.editRole"
   | "organization.switch"
@@ -151,6 +154,24 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   // screen goes stale: the person with the figure is rarely the person with
   // the permission, and a checkpoint carries its author's name either way.
   "objective.record": () => true,
+
+  // How the work is done here is for everyone who does it. A procedure
+  // library half the company cannot read is a shared folder with extra steps.
+  "sop.view": () => true,
+
+  // Writing and retiring procedures is a manager's job, or anybody holding
+  // `people` -- the flag that already covers how the organization runs
+  // itself rather than what it sells.
+  "sop.manage": (actor) => atLeast(actor, "manager") || hasModule(actor, "people"),
+
+  // But the six-month check can be done by whoever owns the procedure,
+  // whatever their role. Requiring a manager to countersign every review is
+  // how a review queue becomes permanently overdue, and an overdue queue
+  // nobody is able to clear is worse than having no queue at all.
+  "sop.review": (actor, resource) =>
+    resource?.ownerUserId === actor.userId ||
+    atLeast(actor, "manager") ||
+    hasModule(actor, "people"),
 
   "project.create": (actor) => atLeast(actor, "manager"),
   "task.create": () => true,

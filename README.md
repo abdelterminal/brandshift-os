@@ -146,6 +146,12 @@ What is built:
   is stored that could be computed, and "nobody has measured this" is a state of its own rather
   than a zero. There is no company health score and there will not be one.
 
+- **Procedures** -- how the work is done here, and when somebody last confirmed it still is.
+  Each one has an owner, an ordered list of steps and a review interval; the screen opens with
+  the ones that have gone stale, because a procedure nobody has checked in a year gives wrong
+  instructions with the authority of being written down. Marking one reviewed is a single click,
+  and it records who and when.
+
 Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a screen, a project, a person or a department.
 
 ## Design system

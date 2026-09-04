@@ -16,4 +16,5 @@ export * from "./leave";
 export * from "./crm";
 export * from "./finance";
 export * from "./objectives";
+export * from "./sops";
 export * from "./relations";

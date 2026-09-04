@@ -65,6 +65,8 @@ import {
   keyResultCheckpoints,
   keyResults,
   objectives,
+  sopSteps,
+  sops,
   type NewTask,
 } from "./schema";
 import { withOrg } from "./tenancy";
@@ -997,6 +999,122 @@ async function main() {
   console.log(
     `Created ${objectiveRows.length} objectives, ${keyResultRows.length} key results, ${checkpointRows.length} checkpoints`,
   );
+
+  // -------------------------------------------------------------------------
+  // Procedures
+  // -------------------------------------------------------------------------
+
+  /**
+   * Four procedures in four review states, on purpose: current, due soon,
+   * badly overdue, and never reviewed.
+   *
+   * The last two are the ones worth seeding. A library where everything is
+   * green proves nothing about the screen, and "overdue" and "never checked"
+   * are the two states the whole feature exists to surface -- they need to be
+   * visible in development or nobody ever looks at how they render.
+   */
+  const sopRows = await scope.insert(sops, [
+    {
+      slug: "delivering-a-film-project",
+      title: "Delivering a film project",
+      summary: "From the moment a film job is signed to the day the final cut is handed over.",
+      status: "published" as const,
+      departmentId: departmentId("design"),
+      ownerUserId: userId("yusuf.karim@brandshift.test"),
+      reviewIntervalDays: 180,
+      lastReviewedOn: day(-20),
+      lastReviewedByUserId: userId("yusuf.karim@brandshift.test"),
+      createdByUserId: userId("amina.benali@brandshift.test"),
+    },
+    {
+      slug: "onboarding-a-new-client",
+      title: "Onboarding a new client",
+      summary: "What happens between a signed quote and the first working session.",
+      status: "published" as const,
+      departmentId: departmentId("client-services"),
+      ownerUserId: userId("sofia.laurent@brandshift.test"),
+      reviewIntervalDays: 180,
+      // Due in about a fortnight.
+      lastReviewedOn: day(-166),
+      lastReviewedByUserId: userId("sofia.laurent@brandshift.test"),
+      createdByUserId: userId("sofia.laurent@brandshift.test"),
+    },
+    {
+      slug: "handing-over-a-website",
+      title: "Handing over a website",
+      summary: "Access, backups, and who to call when it breaks at the weekend.",
+      status: "published" as const,
+      departmentId: departmentId("engineering"),
+      ownerUserId: userId("elena.rossi@brandshift.test"),
+      reviewIntervalDays: 180,
+      // Nearly a year past its review: the worst case in the library.
+      lastReviewedOn: day(-340),
+      lastReviewedByUserId: userId("elena.rossi@brandshift.test"),
+      createdByUserId: userId("elena.rossi@brandshift.test"),
+    },
+    {
+      slug: "answering-an-rfp",
+      title: "Answering an RFP",
+      summary: "Written after the last one and never checked since.",
+      status: "draft" as const,
+      ownerUserId: userId("claire.moreau@brandshift.test"),
+      reviewIntervalDays: 365,
+      lastReviewedOn: null,
+      createdByUserId: userId("claire.moreau@brandshift.test"),
+    },
+  ]);
+
+  /** A procedure's steps, numbered by their order in the list. */
+  const stepsFor = (sopId: string, rows: Array<[string, string | null]>) =>
+    rows.map(([title, detail], index) => ({ sopId, position: index, title, detail }));
+
+  const sopStepRows = await scope.insert(sopSteps, [
+    ...stepsFor(sopRows[0].id, [
+      [
+        "Confirm the shoot dates with the client in writing",
+        "Email, not a call. The date is the thing everything else hangs off.",
+      ],
+      ["Book the crew and the kit", null],
+      ["Send the call sheet 48 hours before", "Everybody on it, including the client contact."],
+      [
+        "Back up the cards twice before leaving the location",
+        "One copy stays with a different person.",
+      ],
+      ["Deliver the first cut for review", null],
+      [
+        "Hand over the masters and archive the project",
+        "Archive goes to the studio drive, not to somebody's laptop.",
+      ],
+    ]),
+    ...stepsFor(sopRows[1].id, [
+      ["Create the company and the deal in the pipeline", null],
+      [
+        "Set up the project and its channel",
+        "Use the quote to create the project so the deliverables come across.",
+      ],
+      [
+        "Introduce the team by name in the channel",
+        "A client who knows who is doing the work chases less.",
+      ],
+      ["Book the kickoff", null],
+    ]),
+    ...stepsFor(sopRows[2].id, [
+      ["Transfer the domain and the hosting to the client's account", null],
+      ["Hand over credentials through a password manager, never by email", null],
+      ["Confirm backups are running and say where they go", null],
+      [
+        "Agree in writing who is called out of hours, and what for",
+        "This is the step that gets skipped and the one that causes the argument.",
+      ],
+    ]),
+    ...stepsFor(sopRows[3].id, [
+      ["Decide whether to answer it at all", "Most are not worth the days they cost."],
+      ["Pull the three closest case studies", null],
+      ["Write the answer, then cut it by a third", null],
+    ]),
+  ]);
+
+  console.log(`Created ${sopRows.length} procedures, ${sopStepRows.length} steps`);
 
   await report(scope, insertedTasks);
 }

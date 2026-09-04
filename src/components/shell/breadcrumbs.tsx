@@ -41,6 +41,8 @@ const NAV_SEGMENTS = new Set([
   "expenses",
   "team",
   "myWork",
+  "objectives",
+  "sops",
 ]);
 
 /**
