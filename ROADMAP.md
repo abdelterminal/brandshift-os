@@ -5,6 +5,30 @@ milestone before starting the next.
 
 Anything deferred rather than done goes in `KNOWN-GAPS.md`, in the same commit.
 
+## Current handoff — 2026-09-05
+
+The PDF-download and clean-404 milestone is complete, independently reviewed, committed, and
+pushed to `origin/main` as `63a0aa8d6b334c0285fef7eed9ddce3695c045ec`.
+
+What happened after the initial implementation:
+
+- Production-style Docker runtime testing exposed a missing Playwright runtime file:
+  Next.js standalone output did not include `playwright-core/browsers.json`. `Dockerfile` now
+  copies the complete `playwright-core` package into the runtime image.
+- The rebuilt container launches Alpine Chromium successfully as the non-root `nextjs` user.
+  Quote and invoice downloads were exercised through a real authenticated session; English and
+  French quote PDFs returned valid one-page PDFs, as did the invoice PDF.
+- Malformed document ids return 404, anonymous PDF requests go to sign-in, the PDF response is
+  non-cacheable and marked `nosniff`, and concurrent renders leave the app healthy.
+- The final gate passed: TypeScript, ESLint, **299/299 unit tests**, production build, and
+  **319/319 end-to-end tests**. `npm audit --omit=dev --audit-level=high` found no vulnerabilities.
+- Independent security/correctness review found no remaining blockers. The working tree was clean
+  after the commit, and local `main` matched `origin/main` when this handoff was written.
+
+Do not redo this milestone. Continue from `KNOWN-GAPS.md`; the remaining PDF caveats are already
+recorded there (external logos are blocked from server rendering, and the no-browser 503 branch is
+not covered by an automated image test).
+
 ---
 
 ## Phase 1 -- Foundation + first vertical slice
