@@ -139,6 +139,13 @@ What is built:
   deleted. Payments are recorded and the status follows the arithmetic. An accepted quote becomes
   a project with a task per line, which is the handover that used to be retyping.
 
+- **Objectives** -- what the company is trying to do, and how it will know. An objective is a
+  sentence; a key result is the number it is judged by; a checkpoint is somebody writing down what
+  that number actually is, on a day, with their name on it. Progress is measured from the start
+  rather than from zero, so 40 to 60 against a target of 100 reads as a third of the way. Nothing
+  is stored that could be computed, and "nobody has measured this" is a state of its own rather
+  than a zero. There is no company health score and there will not be one.
+
 Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a screen, a project, a person or a department.
 
 ## Design system

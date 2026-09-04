@@ -32,7 +32,8 @@ export type NavIconName =
   | "channels"
   | "leave"
   | "crm"
-  | "finance";
+  | "finance"
+  | "objectives";
 
 export type Destination = {
   /** Key into the `Nav` message catalogue, unless `label` overrides it. */
@@ -202,6 +203,11 @@ export const ALL_DESTINATIONS: Destination[] = [
     icon: "finance",
     requires: "finance.view",
   },
+  // Objectives is not on any rail. Five is the cap and every rail is full;
+  // direction is something people go and look at deliberately, weekly at
+  // most, which is exactly what the palette is for. Insights links to it,
+  // because "how are we doing" and "against what" are one question.
+  { id: "objectives", href: "/objectives", icon: "objectives", requires: "objective.view" },
   { id: "leave", href: "/leave", icon: "leave", requires: "leave.view" },
   { id: "people", href: "/people", icon: "people", requires: "people.view" },
   {
@@ -214,9 +220,7 @@ export const ALL_DESTINATIONS: Destination[] = [
 
 /** The ones this person may actually open. */
 export function destinationsFor(actor: Actor): Destination[] {
-  return ALL_DESTINATIONS.filter(
-    (item) => !item.requires || can(actor, item.requires),
-  );
+  return ALL_DESTINATIONS.filter((item) => !item.requires || can(actor, item.requires));
 }
 
 /**
@@ -233,9 +237,7 @@ export function railFor(actor: Actor): Destination[] {
       : atLeast(actor, "manager")
         ? ADMIN_RAIL
         : MEMBER_RAIL;
-  const visible = rail.filter(
-    (item) => !item.requires || can(actor, item.requires),
-  );
+  const visible = rail.filter((item) => !item.requires || can(actor, item.requires));
 
   if (visible.length > MAX_PRIMARY_DESTINATIONS) {
     throw new Error(

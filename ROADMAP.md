@@ -493,16 +493,67 @@ Decisions worth knowing:
 - **An ambiguous owner is left empty.** The old `owner` is a typed first name; it resolves only
   when exactly one person answers to it.
 
+
+## Phase 3 -- from the Notion workspace
+
+`Mediast OS` in Notion is the operating system this app is replacing. Its hub page names ten
+areas; five of them are already built here (Projects, Tasks, Team, Clients, CRM Commercial) and
+`Mediast HQ` is roughly Today plus Insights. The remaining four are genuinely new, and this is
+them, in the order they are worth building.
+
+The export was only the hub page -- the ten sub-pages are link-to-page blocks pointing elsewhere
+and did not come across, so these are built from the structure. **The content of each area still
+has to come from Notion**, and none of it has been invented here.
+
+### Objectives & KPI  [DONE]
+
+- [x] `objectives` / `key_results` / `key_result_checkpoints`. An objective is a sentence, a key
+      result is the number it is judged by, and a checkpoint is somebody writing down what that
+      number actually is on a given day
+- [x] **Progress is never stored.** It is computed from the latest checkpoint against the start
+      and the target, and health -- on track, at risk, behind -- from that against elapsed time.
+      The same call as leave balances, and the opposite of invoice totals
+- [x] **Measured from the start, not from zero.** 40 to 60 against a target of 100 is a third of
+      the way, not 60%. The e2e asserts `aria-valuenow="50"` on a seeded key result that a naive
+      implementation would report as 70
+- [x] **"Not measured" is a state of its own**, distinct from zero, everywhere -- in the model, on
+      the screen, and in what a screen reader is told (`aria-valuenow` is omitted, not set to 0)
+- [x] Values are integers in the scale their unit defines -- cents, basis points, thousandths --
+      reusing `money.ts` rather than inventing a second numeric representation. 28 unit tests
+- [x] Closing an objective is deliberate and asks how it went, in words as well as an outcome.
+      It can be undone
+- [x] Open to everyone to read, manager-or-`insights` to set, **anyone to measure**
+- [x] Seeded in three states on purpose: on track, slipped, and never measured
+
+Decisions worth knowing:
+- **No weighting.** An objective's progress is the plain mean of its key results. Weights are a
+  number somebody invents in a meeting and never revisits, and they make the headline figure
+  impossible to check by eye. If one key result matters more, it should be its own objective.
+- **Unmeasured key results are left out of the mean, not counted as zero.** Counting them as zero
+  makes an objective look like it is failing when the truth is that nobody has looked.
+- **No company health score.** A single number blending unrelated goals is the definition of an
+  invented metric, which the design rules forbid. Insights gets counts of real objectives in real
+  states instead.
+- **Health bands are forgiving on purpose.** Work does not arrive linearly -- a campaign lands in
+  one week and moves a quarter's number -- so nothing is called `behind` until it is a long way
+  adrift. A screen that shouts every Tuesday stops being read.
+- **Not on any rail.** Five is the cap and every rail is full. Objectives is in the palette and
+  the More menu; direction is something people look at deliberately, weekly at most.
+
 ### Next
 
-Nothing. Every milestone on this roadmap is done.
+- **SOP Library** -- documents with an owner and a review date. Needs a content model, and it is
+  the first thing here that wants file storage.
+- **Templates** -- reusable project and task templates. The quote-to-project handover is already
+  most of the machinery; this is the same idea without a quote in front of it.
+- **Weekly Reviews** -- a recorded ritual rather than a screen you happen to look at. Insights and
+  Objectives already hold everything one would read out; what is missing is the record of what was
+  said and decided.
 
-What would come next, when somebody asks for it: a mail transport, which is the one missing piece
-behind invites, notifications, invoice sending and password resets alike. `KNOWN-GAPS.md` is the
-list, and the largest single entry there is that **an invoice cannot yet be printed or sent**.
+Still true, and still the largest single gap: **a mail transport**. Invites, notifications,
+invoice sending and password resets all wait on it.
 
 ---
-
 ## Verification gate (every milestone)
 
 ```bash

@@ -62,6 +62,7 @@ export type Action =
   | "leave.view"
   | "crm.view"
   | "finance.view"
+  | "objective.view"
   // Doing
   | "project.create"
   | "task.create"
@@ -72,6 +73,8 @@ export type Action =
   | "leave.approve"
   | "crm.manage"
   | "finance.manage"
+  | "objective.manage"
+  | "objective.record"
   | "member.invite"
   | "member.editRole"
   | "organization.switch"
@@ -131,6 +134,23 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   // is the person who records that it arrived.
   "finance.view": (actor) => hasModule(actor, "finance"),
   "finance.manage": (actor) => hasModule(actor, "finance"),
+
+  // Where the company is trying to get to is not privileged information --
+  // a goal half the company cannot see is a goal nobody pulls towards, which
+  // is the same argument that keeps channels open to everyone. The numbers
+  // behind it are the org's own, not anybody's salary.
+  "objective.view": () => true,
+
+  // Setting direction is a manager's job, or anybody holding `insights` --
+  // the flag that already gates reporting across the whole organization,
+  // which is the same question asked in the future tense.
+  "objective.manage": (actor) => atLeast(actor, "manager") || hasModule(actor, "insights"),
+
+  // Writing down what a number actually is, though, is open to whoever knows
+  // it. Requiring a manager to enter every measurement is how a goal-tracking
+  // screen goes stale: the person with the figure is rarely the person with
+  // the permission, and a checkpoint carries its author's name either way.
+  "objective.record": () => true,
 
   "project.create": (actor) => atLeast(actor, "manager"),
   "task.create": () => true,

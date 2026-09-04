@@ -125,6 +125,44 @@ export const leaveStatusEnum = pgEnum("leave_status", [
   "cancelled",
 ]);
 
+/**
+ * What a key result is counted in.
+ *
+ * The unit decides the scale the value is stored at, and every one of them is
+ * an integer -- the same discipline as `money.ts`, for the same reason. A
+ * target of 250,000 MAD is 25,000,000 cents; 85% is 8,500 basis points; 12.5
+ * days is 12,500 thousandths. Nothing here is ever a float.
+ */
+export const keyResultUnitEnum = pgEnum("key_result_unit", [
+  "count",
+  "percent",
+  "currency",
+  "days",
+]);
+
+/**
+ * Which way is good.
+ *
+ * Revenue goes up and churn goes down, and a progress bar that cannot tell
+ * the difference will congratulate you for the wrong one.
+ */
+export const keyResultDirectionEnum = pgEnum("key_result_direction", ["increase", "decrease"]);
+
+/**
+ * How an objective ended.
+ *
+ * Only set when it is closed, and closing is deliberate: an objective that
+ * quietly expires at the end of its quarter teaches nobody anything. Health
+ * while it is open -- on track, at risk, behind -- is *derived* from real
+ * checkpoints against real elapsed time, never stored, because a stored RAG
+ * status is a field nobody updates.
+ */
+export const objectiveOutcomeEnum = pgEnum("objective_outcome", [
+  "achieved",
+  "partly",
+  "missed",
+  "abandoned",
+]);
 /** Supported locales. Both ship complete; there is no partial-translation state. */
 export const localeEnum = pgEnum("locale", ["en", "fr"]);
 
@@ -145,4 +183,6 @@ export const activitySubjectEnum = pgEnum("activity_subject", [
   "quote",
   "invoice",
   "expense",
+  "objective",
+  "key_result",
 ]);

@@ -64,6 +64,13 @@
       "when": 1788457436738,
       "tag": "0008_public_ultimo",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788517676343,
+      "tag": "0009_numerous_jackpot",
+      "breakpoints": true
     }
   ]
 }

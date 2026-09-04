@@ -13,6 +13,7 @@ import {
   quoteLines,
   quotes,
 } from "./schema/finance";
+import { objectives, keyResults, keyResultCheckpoints } from "./schema/objectives";
 import { leaveRequests } from "./schema/leave";
 import { meetingAttendees, meetings } from "./schema/meetings";
 import { notifications } from "./schema/notifications";
@@ -70,6 +71,9 @@ export const TENANT_TABLES = {
   invoices,
   invoiceLines,
   expenses,
+  objectives,
+  keyResults,
+  keyResultCheckpoints,
 } as const;
 
 export type TenantTable = (typeof TENANT_TABLES)[keyof typeof TENANT_TABLES];

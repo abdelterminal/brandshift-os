@@ -9,6 +9,7 @@ import {
   Palmtree,
   ReceiptEuro,
   Target,
+  Goal,
   Sun,
   Users,
   type LucideIcon,
@@ -37,4 +38,5 @@ export const NAV_ICONS: Record<NavIconName, LucideIcon> = {
   leave: Palmtree,
   crm: Target,
   finance: ReceiptEuro,
+  objectives: Goal,
 };

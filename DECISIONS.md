@@ -292,6 +292,46 @@ the decision is visible rather than silent.
 and the rehearsal ran against a copy of the Docker volume. Until somebody says otherwise the old
 app is still the system of record, and a migration that modifies its source is not a migration.
 
+## Added during Objectives & KPI
+
+**Progress is computed, health is computed, and neither is ever stored.** A stored progress
+figure is wrong the moment a checkpoint is added; a stored RAG status is a field somebody has to
+remember to update and nobody ever does. Both are derived from checkpoints people entered against
+dates people chose. This is the same call as leave balances and the deliberate opposite of invoice
+totals -- a balance is a fact about the present, a document is a snapshot of what was sent.
+
+**Progress is measured from the start.** Going from 40 to 60 against a target of 100 is a third of
+the way, not 60%. Recording `startValue` is what makes that possible, and tools that store only
+the target are the ones that flatter their users -- the single thing a goal-tracking screen must
+never do.
+
+**"Not measured" is a first-class state.** It is not zero, and the difference matters: one of them
+is a number that has not moved and the other is nobody having looked. It stays distinct in the
+model (`currentValue` is nullable), in the mean (unmeasured key results are excluded rather than
+counted as zero), on the screen, and in the accessibility tree -- the bar omits `aria-valuenow`
+rather than reporting nought.
+
+**No weighting, and no company health score.** An objective's progress is the plain mean of its
+key results. Weights are invented in a meeting, never revisited, and make the headline number
+impossible to check by eye; a single score blending unrelated goals is exactly the invented metric
+the design rules forbid. If one key result matters more than the others, it is its own objective.
+
+**Anybody may record a figure; only a manager may set direction.** The person who knows the number
+is rarely the person with the permission, and requiring a manager for every measurement is how a
+goal screen goes stale. Every checkpoint carries its author, so the record says who said so.
+
+**Objectives are readable by everyone.** Direction that half the company cannot see is direction
+nobody pulls towards -- the same argument that keeps channels open. Revenue targets are the
+organization's own numbers, not anybody's salary.
+
+**Values are integers in the scale their unit defines.** Cents, basis points, thousandths -- all
+of them already in `money.ts`, reused rather than reinvented. A percentage is stored the same way
+a tax rate is, and nothing on this screen has ever been a float.
+
+**Amber, not red, for a goal that is behind.** Red is reserved for blocked, overdue, destructive
+and the primary action. A number that is merely disappointing is none of those, and spending the
+accent on it is how red stops meaning anything.
+
 ## Deliberately not chosen
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the

@@ -62,6 +62,9 @@ import {
   tasks,
   users,
   type NewActivityEvent,
+  keyResultCheckpoints,
+  keyResults,
+  objectives,
   type NewTask,
 } from "./schema";
 import { withOrg } from "./tenancy";
@@ -853,6 +856,146 @@ async function main() {
 
   console.log(
     `Created ${quoteRows.length} quotes, ${invoiceRows.length} invoices, ${expenseRows.length} expenses`,
+  );
+
+  // -------------------------------------------------------------------------
+  // Objectives
+  // -------------------------------------------------------------------------
+
+  /**
+   * Three objectives for the current quarter, deliberately in three different
+   * states: one on track, one that has slipped, and one nobody has measured.
+   *
+   * The third is the important one. A seed where every bar is a cheerful blue
+   * proves nothing about the screen -- "not measured" is the state this design
+   * treats as distinct from zero, and it needs to be visible in development or
+   * the distinction is never looked at.
+   */
+  const quarterStart = new Date(
+    Date.UTC(TODAY.getUTCFullYear(), Math.floor(TODAY.getUTCMonth() / 3) * 3, 1),
+  );
+  const quarterEnd = new Date(
+    Date.UTC(TODAY.getUTCFullYear(), Math.floor(TODAY.getUTCMonth() / 3) * 3 + 3, 0),
+  );
+  const asDay = (value: Date) => value.toISOString().slice(0, 10);
+
+  const objectiveRows = await scope.insert(objectives, [
+    {
+      title: "Win back the retainer clients we lost last year",
+      description:
+        "Two of the three left over slow delivery rather than price. Fix the delivery story, then go back to them.",
+      periodStart: asDay(quarterStart),
+      periodEnd: asDay(quarterEnd),
+      ownerUserId: userId("amina.benali@brandshift.test"),
+      createdByUserId: userId("amina.benali@brandshift.test"),
+    },
+    {
+      title: "Make the studio predictable to work with",
+      description: "Deadlines that hold, and a client who is never surprised.",
+      periodStart: asDay(quarterStart),
+      periodEnd: asDay(quarterEnd),
+      ownerUserId: userId("elena.rossi@brandshift.test"),
+      departmentId: departmentId("engineering"),
+      createdByUserId: userId("amina.benali@brandshift.test"),
+    },
+    {
+      title: "Grow the film side into a standalone offer",
+      description: "It sells as an add-on today. It should sell on its own.",
+      periodStart: asDay(quarterStart),
+      periodEnd: asDay(quarterEnd),
+      ownerUserId: userId("sofia.laurent@brandshift.test"),
+      createdByUserId: userId("amina.benali@brandshift.test"),
+    },
+  ]);
+
+  const keyResultRows = await scope.insert(keyResults, [
+    // On track: measured, and roughly keeping up with the calendar.
+    {
+      objectiveId: objectiveRows[0].id,
+      title: "Retainer revenue per month",
+      unit: "currency" as const,
+      direction: "increase" as const,
+      startValue: 12_000_00,
+      targetValue: 30_000_00,
+      position: 0,
+    },
+    {
+      objectiveId: objectiveRows[0].id,
+      title: "Clients on a retainer",
+      unit: "count" as const,
+      direction: "increase" as const,
+      startValue: 2,
+      targetValue: 5,
+      position: 1,
+    },
+    // Slipped: a number that should fall and has barely moved.
+    {
+      objectiveId: objectiveRows[1].id,
+      title: "Deadlines missed per month",
+      unit: "count" as const,
+      direction: "decrease" as const,
+      startValue: 9,
+      targetValue: 2,
+      position: 0,
+    },
+    {
+      objectiveId: objectiveRows[1].id,
+      title: "Projects delivered on the promised date",
+      unit: "percent" as const,
+      direction: "increase" as const,
+      startValue: 6_000,
+      targetValue: 9_000,
+      position: 1,
+    },
+    // Never measured: no checkpoints at all, on purpose.
+    {
+      objectiveId: objectiveRows[2].id,
+      title: "Film projects sold without a design package",
+      unit: "count" as const,
+      direction: "increase" as const,
+      startValue: 0,
+      targetValue: 6,
+      position: 0,
+    },
+  ]);
+
+  const checkpointRows = await scope.insert(keyResultCheckpoints, [
+    {
+      keyResultId: keyResultRows[0].id,
+      value: 18_500_00,
+      recordedOn: day(-14),
+      note: "Kestrel signed for six months.",
+      recordedByUserId: userId("amina.benali@brandshift.test"),
+    },
+    {
+      keyResultId: keyResultRows[0].id,
+      value: 21_000_00,
+      recordedOn: day(-3),
+      recordedByUserId: userId("amina.benali@brandshift.test"),
+    },
+    {
+      keyResultId: keyResultRows[1].id,
+      value: 3,
+      recordedOn: day(-3),
+      recordedByUserId: userId("amina.benali@brandshift.test"),
+    },
+    {
+      keyResultId: keyResultRows[2].id,
+      value: 8,
+      recordedOn: day(-7),
+      note: "Two slipped in the same week; both were waiting on client copy.",
+      recordedByUserId: userId("elena.rossi@brandshift.test"),
+    },
+    {
+      keyResultId: keyResultRows[3].id,
+      value: 6_500,
+      recordedOn: day(-7),
+      recordedByUserId: userId("elena.rossi@brandshift.test"),
+    },
+  ]);
+
+  console.log(
+    `Created ${objectiveRows.length} objectives, ${keyResultRows.length} key results, ${checkpointRows.length} checkpoints`,
   );
 
   await report(scope, insertedTasks);
