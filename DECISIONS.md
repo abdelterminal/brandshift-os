@@ -491,6 +491,36 @@ you complete it is not guidance, it is a demand, and the second showing teaches 
 of that decision is that leaving them otherwise put the card in front of every e2e fixture on
 every screen.
 
+## Added when quotes and invoices learned to print
+
+**The design was not invented.** BrandShift already had a devis renderer -- three HTML tools
+sharing one jsPDF layout -- and quotes have been going out in it since June. Matching it was
+cheaper than designing something, and more importantly a client who accepted a devis should
+recognise the invoice that follows it. What was translated rather than copied: colour, which
+comes from tokens because the codebase forbids the hex the original wrote twelve times; and
+type, which is Space Grotesk and Inter -- the fonts that tool always declared, and that the PDF
+only missed because jsPDF ships none.
+
+**The printed document is a separate route, not a mode.** `/finance/quotes/[id]` is for the
+person selling the work: status, the convert-to-project handover, the decline reason. The print
+route is for the person being sold to. Folding them together would mean one screen with a
+switch on it, and the thing you want to send somebody would have no address of its own.
+
+**A sheet is always paper.** `.sheet` redefines the semantic surface and foreground tokens to
+their light values, so the document is ink on white whatever theme the reader has chosen. The
+component never learns about this -- it goes on writing `text-fg-muted` like every other screen,
+and the scope decides what that means. The alternative, a second set of print-only classes,
+would be a parallel design system to keep in step.
+
+**A document does not reflow.** The sheet is 210mm wide at 320px as at 1440, and scrolls inside
+its own container. A quote that rewraps on a phone is not the quote that was sent, and the
+page itself still never scrolls sideways -- which is the rule that actually matters.
+
+**The letterhead lives on the organization.** Tagline, city, website and contact email are
+columns on `organizations`, all nullable and each printed only when set. Two tenants on one
+machine send out two different letterheads, so it is not a config file; and a quote with no
+tagline should have no gap where a tagline would go.
+
 ## Deliberately not chosen
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the

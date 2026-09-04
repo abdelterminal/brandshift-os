@@ -177,6 +177,10 @@ What is built:
   outbox. The form says the same sentence whatever the address is, and a stranger asking writes
   nothing at all, so the outbox cannot be used to find out who has an account.
 
+Quotes and invoices have a **print view** -- the document as the client receives it, in the
+same devis design BrandShift has been sending since June. It has its own URL outside the app
+shell, stays ink-on-white whatever theme you use, and prints to A4.
+
 Somebody arriving for the first time gets a **five-step tour** of the shell -- the rail, Today,
 how a task opens, the palette, and the avatar menu -- shown once and never again. It rings the
 real controls rather than drawing pictures of them, Escape closes it, and skipping counts as an

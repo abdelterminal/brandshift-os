@@ -1,3 +1,4 @@
+import { Printer } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
@@ -44,8 +45,9 @@ export default async function QuotePage({ params }: PageProps<"/[locale]/finance
   const quote = await getQuote(session.actor, quoteId);
   if (!quote) notFound();
 
-  const [t, statuses, format, lines] = await Promise.all([
+  const [t, sheet, statuses, format, lines] = await Promise.all([
     getTranslations("Finance"),
+    getTranslations("Sheet"),
     getTranslations("QuoteStatus"),
     getFormatter(),
     listQuoteLines(session.actor, quote.id),
@@ -76,6 +78,10 @@ export default async function QuotePage({ params }: PageProps<"/[locale]/finance
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <Button variant="secondary" render={<Link href={`/finance/quotes/${quote.id}/print`} />}>
+              <Printer aria-hidden className="size-4" />
+              {sheet("print")}
+            </Button>
             <Badge tone={TONE[quote.status]}>{statuses(quote.status)}</Badge>
           </div>
         </div>

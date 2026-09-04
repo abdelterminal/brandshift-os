@@ -17,6 +17,18 @@ export const organizations = pgTable(
     slug: text("slug").notNull().unique(),
     name: text("name").notNull(),
     logoUrl: text("logo_url"),
+    /*
+      What the company calls itself on a document it sends out.
+
+      All nullable, and every one of them is printed only if it is set: a quote
+      with no tagline should have no gap where a tagline would go. These live
+      on the tenant rather than in a config file because two organizations on
+      the same machine send out two different letterheads.
+    */
+    tagline: text("tagline"),
+    city: text("city"),
+    website: text("website"),
+    contactEmail: text("contact_email"),
     /** Fallback locale for members who have not chosen one. */
     defaultLocale: localeEnum("default_locale").notNull().default("en"),
     /** IANA zone, e.g. `Europe/Paris`. Drives "due today" and "overdue". */

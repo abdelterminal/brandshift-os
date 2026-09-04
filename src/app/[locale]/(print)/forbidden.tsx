@@ -1,6 +1,6 @@
 import { ForbiddenNotice } from "@/components/errors/forbidden";
 
-/** Rendered inside the shell, so a refused person still has the rail. */
+/** The print group has no shell, so this renders bare. */
 export default function Forbidden() {
   return <ForbiddenNotice />;
 }

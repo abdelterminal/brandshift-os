@@ -272,3 +272,93 @@
     }
   }
 }
+
+/*
+  The printed document -- a quote or an invoice, as the client receives it.
+
+  Two things make this different from every other screen in the app.
+
+  **It is always paper.** A devis is ink on white, whatever theme the person
+  who printed it happens to use, and a dark-theme user pressing Print should
+  not get a black rectangle or a document nobody can read once it is on a desk.
+  So `.sheet` re-points the semantic tokens at their light values rather than
+  hard-coding colours into the component: everything inside goes on using
+  `text-fg-muted` and `border-border` exactly as it does everywhere else, and
+  the scope decides what those mean. Nothing in the component knows it is
+  printing.
+
+  **Its measurements are millimetres.** The layout came from a jsPDF renderer
+  drawing on A4 at a 16mm margin, and keeping those units is what makes the
+  HTML land on the page where the PDF did.
+*/
+@layer components {
+  .sheet {
+    color-scheme: light;
+
+    --surface-base: var(--neutral-0);
+    --surface-raised: var(--neutral-0);
+    --surface-inset: var(--neutral-50);
+    --fg-default: var(--neutral-1000);
+    --fg-muted: var(--neutral-600);
+    --fg-subtle: var(--neutral-550);
+    --border: var(--neutral-200);
+    --accent-subtle: var(--red-50);
+
+    width: 210mm;
+    min-height: 297mm;
+    padding: 16mm;
+    margin-inline: auto;
+    background: var(--surface-raised);
+    color: var(--fg-default);
+    /* A sheet is a sheet at every width. Below A4 the whole thing scales down
+       rather than reflowing, because a document that rewraps on a phone is no
+       longer the document that was sent. */
+    transform-origin: top center;
+  }
+
+  @media (max-width: 226mm) {
+    .sheet-scaler {
+      overflow-x: auto;
+    }
+  }
+
+  /* The one rule that has to be a length rather than a token: the red bar is
+     a fixed 9mm on the page, matching the PDF it came from. */
+  .sheet-total-bar {
+    min-height: 9mm;
+  }
+
+  @media print {
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    /* Nothing but the document. The controls that got you here are furniture. */
+    .sheet-hide-in-print {
+      display: none !important;
+    }
+
+    .sheet {
+      width: auto;
+      min-height: auto;
+      margin: 0;
+      box-shadow: none;
+    }
+
+    /* Browsers drop background fills when printing unless asked. The red
+       totals bar and the pale recap block are not decoration -- they are how
+       you find the number you owe. */
+    .sheet,
+    .sheet * {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* A line item should not be torn across two pages. */
+    .sheet tr,
+    .sheet-keep-together {
+      break-inside: avoid;
+    }
+  }
+}

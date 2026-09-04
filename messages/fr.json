@@ -1252,5 +1252,31 @@
     "paletteBody": "Objectifs, procédures, modèles, revues, congés — tout ce qui n'est pas dans vos cinq. Tapez un projet, une personne ou un écran et ce sera le premier résultat.",
     "accountTitle": "Vous êtes ici",
     "accountBody": "Votre profil, vos réglages, vos appareils connectés, et la sortie. Uniquement ici — jamais aussi dans la barre latérale, pour n'avoir qu'un seul endroit où chercher."
+  },
+  "Sheet": {
+    "quote": "Devis",
+    "invoice": "Facture",
+    "preparedFor": "Préparé pour",
+    "validUntil": "Validité jusqu'au {date}",
+    "dueOn": "Échéance {date}",
+    "service": "Prestation",
+    "qty": "Qté",
+    "unitPrice": "Prix unitaire",
+    "amount": "Montant",
+    "subtotal": "Total HT",
+    "tax": "TVA",
+    "taxAt": "TVA {rate}%",
+    "totalDue": "Total TTC",
+    "paid": "Payé",
+    "owed": "Reste dû",
+    "onSignature": "À la signature : {amount}",
+    "payableBy": "À régler avant le {date} : {amount}",
+    "onReceipt": "réception",
+    "conditions": "Conditions",
+    "agreedClient": "Bon pour accord — client",
+    "nameDateSignature": "Nom, date et signature",
+    "dateSignature": "Date et signature",
+    "print": "Imprimer",
+    "backToDocument": "Retour"
   }
 }

@@ -14,6 +14,12 @@ export const ORGANIZATION = {
   name: "BrandShift",
   timezone: "Europe/Paris",
   defaultLocale: "fr" as const,
+  // The letterhead, taken from the devis tool these documents are modelled on
+  // rather than invented -- it is what has been going out on quotes since June.
+  tagline: "Agence de Communication & Marketing Digital",
+  city: "Meknès, Maroc",
+  website: "brandshift.ma",
+  contactEmail: "contact@brandshift.ma",
 };
 
 export const DEPARTMENTS = [
@@ -1077,6 +1083,29 @@ export type SeedLine = {
   /** Basis points: 2000 is 20%. */
   tax: number;
 };
+
+/**
+ * The conditions block, as it reads on a real BrandShift devis.
+ *
+ * Boilerplate an agency reuses rather than retypes, which is why it is one
+ * constant and not a field on each quote. It is free text and prints one
+ * bullet per line -- the person writing the quote decides the wording, and
+ * the deposit percentage lives here rather than in a column, because it is a
+ * sentence that gets negotiated and not a number the software computes.
+ */
+export const QUOTE_TERMS = [
+  "Payment: 40% deposit on signature, the balance on delivery.",
+  "Revisions: as set out against each line above.",
+  "Ownership: deliverables transfer on final payment. BrandShift keeps the source files and may show the work in its portfolio.",
+  "This offer stands until the validity date shown above.",
+].join("\n");
+
+/** The same, for a document that is already owed rather than proposed. */
+export const INVOICE_TERMS = [
+  "Payable by bank transfer to the account on file, quoting the invoice number.",
+  "Late payment is subject to interest at the statutory rate.",
+  "Queries on this invoice should reach us within 14 days of its date.",
+].join("\n");
 
 export type SeedQuote = {
   companyName: string;

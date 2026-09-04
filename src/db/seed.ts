@@ -29,6 +29,8 @@ import {
   LEAVE,
   MEETINGS,
   QUOTES,
+  QUOTE_TERMS,
+  INVOICE_TERMS,
   ORGANIZATION,
   PERSONAL_TASKS,
   PROJECTS,
@@ -178,6 +180,10 @@ async function main() {
       name: ORGANIZATION.name,
       timezone: ORGANIZATION.timezone,
       defaultLocale: ORGANIZATION.defaultLocale,
+      tagline: ORGANIZATION.tagline,
+      city: ORGANIZATION.city,
+      website: ORGANIZATION.website,
+      contactEmail: ORGANIZATION.contactEmail,
     })
     .returning();
 
@@ -789,6 +795,7 @@ async function main() {
         sentAt: quote.status === "draft" ? null : new Date(),
         decidedAt: decided ? new Date() : null,
         declineReason: quote.declineReason ?? null,
+        terms: QUOTE_TERMS,
         ownerUserId: userId(quote.ownerEmail),
         createdByUserId: userId(quote.ownerEmail),
       };
@@ -839,6 +846,7 @@ async function main() {
         paidAt: invoice.status === "paid" ? new Date() : null,
         voidedAt: invoice.status === "void" ? new Date() : null,
         voidReason: invoice.voidReason ?? null,
+        terms: INVOICE_TERMS,
         createdByUserId: userId("tom.decker@brandshift.test"),
       };
     }),

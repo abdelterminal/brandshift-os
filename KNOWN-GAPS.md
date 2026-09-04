@@ -11,7 +11,7 @@ written down nowhere is a gap nobody ever fixes.
 delete the row when it is closed — do not leave a struck-through list of things that are actually
 finished. `CLAUDE.md` points here for the same reason.
 
-Last reviewed: after the guided tour landed.
+Last reviewed: after quotes and invoices learned to print.
 
 ---
 
@@ -90,6 +90,11 @@ section below.
 | The tour cannot be replayed | Once it is finished or skipped it is gone, and there is no "show me that again" anywhere. The column is there and clearing it is a one-line action; what is missing is somewhere sensible to put the button, which is Profile rather than Settings and wants a line of copy nobody has written. |
 | The tour describes the shell, not the work | Five steps about where things are. It says nothing about how to run a project, quote a job or close a review -- those would each want their own walkthrough on their own screen, triggered the first time somebody opens it. Worth doing one at a time, if anybody actually gets lost there. |
 | The tour is the same for everyone | A designer and the person who sends the invoices see different rails, and both are told "five places". The steps are not filtered by what that person can actually reach, which is a small lie on the two rails that differ. |
+| The letterhead can only be changed in the database | Tagline, city, website and contact email are columns on `organizations` and are set by the seed. There is no form in Settings, so changing what prints on every quote means a SQL statement. The fields are nullable and the sheet omits what is absent, so this is a missing screen rather than a broken document. |
+| There is no PDF, only Print | The sheet is HTML and relies on the browser's own Print to PDF. That is genuinely enough for one person sending a quote, and it is how the file gets its correct fonts. What it does not give you is a PDF the server can attach to something -- which is the day this needs a headless renderer. |
+| The printed document cannot be sent from the app | You print it, or you save it and attach it yourself. Emailing it needs the outbox to carry attachments and a rendered file to attach, so it is behind both rows above and the sleeping email work. |
+| The logo is a URL, not an upload | `organizations.logo_url` prints whatever it points at. There is nowhere to upload one, because file storage is asleep by decision -- so an organization without a hosted logo prints its name in the brand red instead, which is a deliberate fallback and not a placeholder. |
+| A malformed id in a URL returns 500, not 404 | Every `[id]` route passes the path segment straight to Postgres, so `/finance/quotes/not-a-uuid` fails as an invalid uuid rather than a missing row. Found while building the print view; it predates it and behaves identically on the routes that were already there, so it is an app-wide pattern -- people, objectives, projects and the rest -- and wants one shared guard rather than a fix per route. |
 | The outbox keeps message bodies forever | Including invite links, which set passwords. They expire, and anybody who can read the outbox can already invite people, so it grants nothing new -- but there is no pruning, and a year of notifications will sit there. Wants a retention rule the day notifications start being emailed. |
 | An invoice cannot be printed, saved as a PDF or sent | It exists as a screen and nothing else. Sending it means the mail transport this deployment still lacks; a PDF means a rendering step and a decision about who owns the layout. Until then the document is read in the app or the browser's own print dialog is used, which is not a designed output. This is the largest gap in ERP. |
 | No email, no calls, no attachments on a deal | A deal has notes and a channel. There is no logged call, no email thread and nowhere to put a signed proposal. Email needs the mail transport this deployment still lacks; files need somewhere to put them. |

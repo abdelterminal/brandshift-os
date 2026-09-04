@@ -1,9 +1,11 @@
+import { Printer } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
 import { DocumentLines } from "@/components/finance/document";
 import { InvoiceControls } from "@/components/finance/document-controls";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { focusRing, transition } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
 import { requirePermission } from "@/lib/auth/guards";
@@ -47,8 +49,9 @@ export default async function InvoicePage({
   const invoice = await getInvoice(session.actor, invoiceId);
   if (!invoice) notFound();
 
-  const [t, statuses, format, lines] = await Promise.all([
+  const [t, sheet, statuses, format, lines] = await Promise.all([
     getTranslations("Finance"),
+    getTranslations("Sheet"),
     getTranslations("InvoiceStatus"),
     getFormatter(),
     listInvoiceLines(session.actor, invoice.id),
@@ -104,6 +107,10 @@ export default async function InvoicePage({
 
           <div className="flex flex-wrap items-center gap-2">
             {late ? <Badge tone="blocked">{t("overdue")}</Badge> : null}
+            <Button variant="secondary" render={<Link href={`/finance/invoices/${invoice.id}/print`} />}>
+              <Printer aria-hidden className="size-4" />
+              {sheet("print")}
+            </Button>
             <Badge tone={TONE[invoice.status]}>{statuses(invoice.status)}</Badge>
           </div>
         </div>

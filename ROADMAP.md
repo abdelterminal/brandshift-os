@@ -731,6 +731,37 @@ Decisions worth knowing:
 
 ---
 
+### The document the client actually receives  [DONE]
+
+- [x] **Quotes and invoices print as the devis BrandShift already sends.** The design was not
+      designed here -- it was lifted from `BrandShift-Devis-*.html`, the jsPDF renderer that has
+      been producing quotes since June: A4 at a 16mm margin, grey uppercase column heads over a
+      hairline, a solid red bar under the totals, the pale recap block, the two signature boxes
+      and the contact line in the footer
+- [x] **Its own route, outside the shell** -- `/finance/quotes/[id]/print` and the invoice
+      equivalent. The quote screen is for the person selling the work; this is for the person
+      being sold to, and it has a URL of its own so it can be sent to somebody
+- [x] **Always paper.** `.sheet` re-points the semantic tokens at their light values, so a
+      dark-theme user pressing Print gets a readable document rather than a black rectangle.
+      Nothing in the component knows it is printing
+- [x] **A letterhead on the organization** -- tagline, city, website, contact email, all nullable
+      and each printed only if it is set. Seeded with BrandShift's real values, taken from the
+      devis tool rather than invented
+- [x] `@page` A4, backgrounds forced on so the red bar survives the printer, line items that do
+      not tear across a page, and the controls hidden from the paper
+- [x] 15 e2e specs, including all five viewports and an axe sweep
+
+Decisions worth knowing:
+- **The totals bar is `--accent`, not `--brand`.** It is the one place white text sits on red,
+  and `--accent` is the token that carries white at AA. The wordmark keeps the true `#FD0000`
+  and is set at display size so that it clears AA as large text.
+- **Three columns, or four.** The original had prestation/quantity/price because its price *was*
+  the line price. Here the fourth column appears only when a quantity actually differs from one.
+- **The deposit is prose, not a column.** The original had a percentage typed into a form; that
+  is a sentence that gets negotiated, so it lives in `terms` where the author decides it.
+
+---
+
 ## Backups
 
 One machine, one Postgres volume, and everything anybody has typed into this app lives in it.

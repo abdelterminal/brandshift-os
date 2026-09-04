@@ -1252,5 +1252,31 @@
     "paletteBody": "Objectives, procedures, templates, reviews, time off — everything that is not on your five. Start typing a project, a person or a screen and it will be the first result.",
     "accountTitle": "You live in here",
     "accountBody": "Your profile, your settings, your signed-in devices, and the way out. They are only here — never also in the sidebar, so there is one place to look."
+  },
+  "Sheet": {
+    "quote": "Quote",
+    "invoice": "Invoice",
+    "preparedFor": "Prepared for",
+    "validUntil": "Valid until {date}",
+    "dueOn": "Due {date}",
+    "service": "Service",
+    "qty": "Qty",
+    "unitPrice": "Unit price",
+    "amount": "Amount",
+    "subtotal": "Subtotal",
+    "tax": "VAT",
+    "taxAt": "VAT {rate}%",
+    "totalDue": "Total",
+    "paid": "Paid",
+    "owed": "Still owed",
+    "onSignature": "Due on signature: {amount}",
+    "payableBy": "Payable by {date}: {amount}",
+    "onReceipt": "receipt",
+    "conditions": "Conditions",
+    "agreedClient": "Agreed — client",
+    "nameDateSignature": "Name, date & signature",
+    "dateSignature": "Date & signature",
+    "print": "Print",
+    "backToDocument": "Back"
   }
 }
