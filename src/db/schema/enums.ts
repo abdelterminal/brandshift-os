@@ -195,4 +195,5 @@ export const activitySubjectEnum = pgEnum("activity_subject", [
   "objective",
   "key_result",
   "sop",
+  "template",
 ]);

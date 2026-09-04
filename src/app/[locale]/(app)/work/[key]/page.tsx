@@ -5,11 +5,13 @@ import { notFound } from "next/navigation";
 import { ProjectMeetings } from "@/components/calendar/project-meetings";
 import { ActivityFeed } from "@/components/work/activity-feed";
 import { ProjectTabs } from "@/components/work/project-tabs";
+import { CaptureTemplateButton } from "@/components/templates/controls";
 import { PersonAvatar } from "@/components/ui/avatar";
 import { CountBadge, StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { requireUser } from "@/lib/auth/guards";
+import { can } from "@/lib/authz";
 import { listProjectActivity } from "@/lib/data/activity";
 import { listProjectMeetings } from "@/lib/data/meetings";
 import { getProjectByKey, listProjectMembers } from "@/lib/data/projects";
@@ -50,18 +52,31 @@ export default async function ProjectPage({
   const project = await getProjectByKey(session.actor, key);
   if (!project) notFound();
 
-  const [t, channels, statusLabels, priorities, format, tasks, members, activity, meetings] =
-    await Promise.all([
-      getTranslations("Work"),
-      getTranslations("Channels"),
-      getTranslations("ProjectStatus"),
-      getTranslations("Priority"),
-      getFormatter(),
-      listProjectTasks(session.actor, project.id),
-      listProjectMembers(session.actor, project.id),
-      listProjectActivity(session.actor, project.id),
-      listProjectMeetings(session.actor, project.id),
-    ]);
+  const [
+    t,
+    channels,
+    templateText,
+    statusLabels,
+    priorities,
+    format,
+    tasks,
+    members,
+    activity,
+    meetings,
+  ] = await Promise.all([
+    getTranslations("Work"),
+    getTranslations("Channels"),
+    getTranslations("Templates"),
+    getTranslations("ProjectStatus"),
+    getTranslations("Priority"),
+    getFormatter(),
+    listProjectTasks(session.actor, project.id),
+    listProjectMembers(session.actor, project.id),
+    listProjectActivity(session.actor, project.id),
+    listProjectMeetings(session.actor, project.id),
+  ]);
+
+  const mayManageTemplates = can(session.actor, "template.manage");
 
   const open = tasks.filter(
     (task) => task.status === "todo" || task.status === "in_progress" || task.status === "blocked",
@@ -94,6 +109,20 @@ export default async function ProjectPage({
               <MessagesSquare aria-hidden className="size-4" />
               {channels("openChannel")}
             </Button>
+
+            {/*
+              Keep the shape of a job that went well. Offsets are measured back
+              from this project's start date, so the template can be run again
+              from any Monday -- see `fromProjectTasks`.
+            */}
+            {mayManageTemplates && tasks.length > 0 ? (
+              <CaptureTemplateButton
+                from="project"
+                sourceId={project.id}
+                suggestedName={project.name}
+                label={templateText("captureFromProject")}
+              />
+            ) : null}
           </div>
         </div>
 

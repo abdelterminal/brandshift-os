@@ -573,10 +573,41 @@ Decisions worth knowing:
 - **Amber, not red**, for an overdue review. Red is for blocked, overdue *work*, destructive
   actions and the primary action.
 
+### Templates  [DONE]
+
+- [x] `project_templates` / `template_tasks`. A template is the shape of a job worth doing the
+      same way twice: the tasks, in order, each with the day of the project it falls due
+- [x] **`offsetDays` is the whole point.** A template carries a *schedule*, not just a list --
+      "kickoff on day zero, first cut on day fourteen, delivery on day thirty" is the part nobody
+      reconstructs from memory, and the part that puts real deadlines on a real calendar the
+      moment a project is created
+- [x] **Blank means no deadline**, and stays that way through the round trip. Plenty of work in
+      a project genuinely has no date, and anything that is not a whole number of days is refused
+      rather than read as day zero
+- [x] **A procedure becomes a template** -- the link the SOP milestone was built to make possible.
+      Steps come across in order; no schedule is invented on their behalf
+- [x] **A project that went well becomes a template**, keeping its shape rather than its calendar:
+      each deadline is measured back into an offset from the start date
+- [x] Starting a project is one transaction covering the project, its first member and every
+      task -- the same shape as `createProjectFromQuote`, which it deliberately mirrors
+- [x] 28 unit tests on the date arithmetic, 8 e2e specs, seeded with one scheduled template and
+      one with no dates at all
+
+Decisions worth knowing:
+- **No default assignee on a template task.** A template outlives the people in it: the person
+  who always did the edit leaves, and every project started afterwards quietly assigns work to
+  somebody who is gone. Assigning is a decision made per project, with the real team's workload
+  in front of you -- which is what the project wizard already exists to show.
+- **Offsets are calendar days, not working days.** A template that says day thirty means thirty
+  days. Turning that into six working weeks would surprise whoever wrote it; the weekend rule
+  belongs to leave, where somebody's allowance is actually being spent.
+- **The project's own deadline is its last task's**, which is what the template said the job
+  takes.
+- **Starting a project needs `project.create`, not `template.manage`.** Reading a template and
+  running a job from it is not the same privilege as deciding what the template says.
+
 ### Next
 
-- **Templates** -- reusable project and task templates. The quote-to-project handover is already
-  most of the machinery, and an SOP's steps are now a second thing that wants to become tasks.
 - **Weekly Reviews** -- a recorded ritual rather than a screen you happen to look at. Insights and
   Objectives already hold everything one would read out; what is missing is the record of what was
   said and decided.

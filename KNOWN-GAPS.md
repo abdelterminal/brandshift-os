@@ -11,7 +11,7 @@ written down nowhere is a gap nobody ever fixes.
 delete the row when it is closed — do not leave a struck-through list of things that are actually
 finished. `CLAUDE.md` points here for the same reason.
 
-Last reviewed: after the SOP library landed.
+Last reviewed: after Templates landed.
 
 ---
 
@@ -60,6 +60,12 @@ files them as bugs.
 | Only title, summary and steps can be edited after creation | Owner, department and review interval are set once from the dialog. Changing them means creating another procedure, which is heavy-handed for fixing a typo in the interval. |
 | Steps cannot be reordered without retyping them | The editor replaces the list wholesale, so moving step four above step two means editing both. Drag has no keyboard equivalent, so this wants up/down buttons rather than a drag handle. |
 | SOPs are not linked to the work they describe | A procedure about delivering a film project points at no project, and no project points back. The Templates milestone is where that link belongs, since that is what turns a procedure into actual tasks. |
+| A template cannot be started from the project wizard | The five-step wizard and "start from a template" are two separate ways to create a project, and somebody who begins in the wizard has no way to reach a template from there. Merging them means deciding whether the template pre-fills the wizard or replaces it, which is a design question rather than a wiring one. |
+| Template tasks cannot be reordered without retyping | Editing replaces the list wholesale, so moving task four above task two means editing both. The same gap as SOP steps, and it wants the same fix: up and down buttons, since a drag has no keyboard equivalent. |
+| Only the tasks can be edited after a template is created | Name, description and department are set once. Changing them means making another template. |
+| Starting a project from a template assigns nobody | Deliberate -- see `DECISIONS.md` -- but it does mean every project starts with a board of unassigned work, and the wizard's workload view is the thing that would fix it. The two want joining up. |
+| Nothing tracks which template a project came from | A project started from a template keeps no reference to it, so "is this template actually any good" cannot be answered, and improving a template does nothing for the projects already running on it. A column and a decision about whether changes propagate. |
+| A retired template stays retired with no way back in the UI | `archiveTemplate` sets the date and nothing clears it. The SOP library has a restore path and this does not, which is an inconsistency rather than a decision. |
 | An invoice cannot be printed, saved as a PDF or sent | It exists as a screen and nothing else. Sending it means the mail transport this deployment still lacks; a PDF means a rendering step and a decision about who owns the layout. Until then the document is read in the app or the browser's own print dialog is used, which is not a designed output. This is the largest gap in ERP. |
 | No credit notes | An invoice can be voided in full and nothing can be reversed in part. A real credit note is its own numbered document that points at the invoice it corrects, and the arithmetic already handles negatives -- `roundHalfAwayFromZero` exists for exactly this. What is missing is the document and its number series. |
 | Invoices do not repeat | No retainer, no monthly. An agency on a retainer creates the same invoice twelve times a year by hand. It is the same shape of problem as recurring meetings -- a rule, an exception model, and a decision about how far ahead documents exist -- and it is worth building deliberately rather than adding a `repeat` column. |

@@ -360,6 +360,37 @@ into a task, exactly as a quote line already becomes one.
 able to point at, particularly when somebody asks why a client was handled differently two years
 ago.
 
+## Added during Templates
+
+**A template carries a schedule, not just a list.** `offsetDays` on each task is the difference
+between a checklist and a template: "kickoff on day zero, first cut on day fourteen, delivery on
+day thirty" is the part nobody reconstructs correctly from memory, and it is what puts real
+deadlines on a real calendar the moment a project is created.
+
+**No default assignee, ever.** A template outlives the people in it. The person who always did
+the edit leaves, and every project started afterwards quietly assigns work to somebody who is
+gone -- and nothing says so, because the template looks fine. Assigning is a decision made per
+project with the actual team's workload in front of you, which is what the project wizard exists
+to show.
+
+**Blank means no deadline, and that is a real answer.** Plenty of work in a project has no date,
+and inventing one so the column is never empty is how a board fills up with deadlines nobody
+believes. Anything that is not a whole number of days is refused rather than read as zero, which
+would silently put a deadline on the first day of every project started from the template.
+
+**Offsets are calendar days, not working days.** A template that says day thirty means thirty
+days. Quietly turning that into six working weeks would surprise whoever wrote it. The weekend
+rule belongs to leave, where somebody's allowance is being spent, and nowhere else.
+
+**Three things now become tasks, and they all go through one transaction.** A quote's lines, an
+SOP's steps, and a template's tasks -- `startProject` deliberately mirrors
+`createProjectFromQuote` so a half-created project is not a state anybody can reach. Capturing
+runs the other way: a procedure keeps its order and gains no schedule, and a project keeps its
+shape and loses its calendar.
+
+**A Server Action must not be named `use*`.** `useTemplate` read better than `startFromTemplate`
+and made eslint treat it as a React hook. Noted because the better name is the trap.
+
 ## Deliberately not chosen
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the

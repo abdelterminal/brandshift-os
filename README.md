@@ -152,6 +152,11 @@ What is built:
   instructions with the authority of being written down. Marking one reviewed is a single click,
   and it records who and when.
 
+- **Templates** -- the shape of a job worth doing the same way twice. Each task carries the day
+  of the project it falls due, so starting a template on a Monday puts real deadlines on a real
+  calendar straight away. A procedure can become a template, and so can a project that went well
+  -- that one keeps the shape and drops the calendar, so it can be run again from any date.
+
 Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a screen, a project, a person or a department.
 
 ## Design system

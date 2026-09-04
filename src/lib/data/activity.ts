@@ -36,7 +36,8 @@ export type ActivityRow = {
     | "expense"
     | "objective"
     | "key_result"
-    | "sop";
+    | "sop"
+    | "template";
   subjectId: string;
   projectId: string | null;
   taskId: string | null;

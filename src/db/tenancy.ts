@@ -15,6 +15,7 @@ import {
 } from "./schema/finance";
 import { objectives, keyResults, keyResultCheckpoints } from "./schema/objectives";
 import { sops, sopSteps } from "./schema/sops";
+import { projectTemplates, templateTasks } from "./schema/templates";
 import { leaveRequests } from "./schema/leave";
 import { meetingAttendees, meetings } from "./schema/meetings";
 import { notifications } from "./schema/notifications";
@@ -77,6 +78,8 @@ export const TENANT_TABLES = {
   keyResultCheckpoints,
   sops,
   sopSteps,
+  projectTemplates,
+  templateTasks,
 } as const;
 
 export type TenantTable = (typeof TENANT_TABLES)[keyof typeof TENANT_TABLES];

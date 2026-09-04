@@ -2,6 +2,7 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
 import { EditStepsDialog, MarkReviewedButton, StatusButton } from "@/components/sops/controls";
+import { CaptureTemplateButton } from "@/components/templates/controls";
 import { Badge } from "@/components/ui/badge";
 import { requirePermission } from "@/lib/auth/guards";
 import { can } from "@/lib/authz";
@@ -47,7 +48,11 @@ export default async function SopPage({ params }: { params: Promise<{ slug: stri
   const sop = await getSop(session.actor, slug, today);
   if (!sop) notFound();
 
-  const [t, format] = await Promise.all([getTranslations("Sops"), getFormatter()]);
+  const [t, templateText, format] = await Promise.all([
+    getTranslations("Sops"),
+    getTranslations("Templates"),
+    getFormatter(),
+  ]);
 
   const mayManage = can(session.actor, "sop.manage");
   const mayReview = can(session.actor, "sop.review", {
@@ -156,7 +161,20 @@ export default async function SopPage({ params }: { params: Promise<{ slug: stri
       </section>
 
       {mayManage ? (
-        <section className="flex justify-end">
+        <section className="flex flex-wrap justify-end gap-2">
+          {/*
+            The link the SOP milestone was built to make possible: a procedure
+            says what happens and in what order, and a template is that turned
+            into tasks with dates against them.
+          */}
+          {sop.steps.length > 0 ? (
+            <CaptureTemplateButton
+              from="sop"
+              sourceId={sop.id}
+              suggestedName={sop.title}
+              label={templateText("captureFromSop")}
+            />
+          ) : null}
           <StatusButton sopId={sop.id} status={sop.status} />
         </section>
       ) : null}

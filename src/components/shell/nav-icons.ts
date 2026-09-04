@@ -11,6 +11,7 @@ import {
   Target,
   Goal,
   BookOpenCheck,
+  Copy,
   Sun,
   Users,
   type LucideIcon,
@@ -41,4 +42,5 @@ export const NAV_ICONS: Record<NavIconName, LucideIcon> = {
   finance: ReceiptEuro,
   objectives: Goal,
   sops: BookOpenCheck,
+  templates: Copy,
 };

@@ -67,6 +67,8 @@ import {
   objectives,
   sopSteps,
   sops,
+  projectTemplates,
+  templateTasks,
   type NewTask,
 } from "./schema";
 import { withOrg } from "./tenancy";
@@ -1115,6 +1117,71 @@ async function main() {
   ]);
 
   console.log(`Created ${sopRows.length} procedures, ${sopStepRows.length} steps`);
+
+  // -------------------------------------------------------------------------
+  // Templates
+  // -------------------------------------------------------------------------
+
+  /**
+   * Two templates, one with a schedule and one without.
+   *
+   * The second is the interesting case: a template whose tasks carry no
+   * offsets, which is what a procedure turns into. It proves the screen and
+   * the arithmetic both cope with "no deadline" as a real answer rather than
+   * treating it as day zero.
+   */
+  const templateRows = await scope.insert(projectTemplates, [
+    {
+      slug: "film-project",
+      name: "Film project",
+      description: "Shoot, cut and deliver. Six weeks from kickoff if nothing slips.",
+      departmentId: departmentId("design"),
+      createdByUserId: userId("yusuf.karim@brandshift.test"),
+    },
+    {
+      slug: "website-handover",
+      name: "Website handover",
+      description: "Everything that has to happen before a site stops being ours.",
+      departmentId: departmentId("engineering"),
+      createdByUserId: userId("elena.rossi@brandshift.test"),
+    },
+  ]);
+
+  /** Title, priority, and the day of the project it is due -- null for none. */
+  const templateTasksFor = (
+    templateId: string,
+    rows: Array<[string, "low" | "medium" | "high" | "urgent", number | null]>,
+  ) =>
+    rows.map(([title, priority, offsetDays], index) => ({
+      templateId,
+      position: index,
+      title,
+      description: null,
+      priority,
+      offsetDays,
+    }));
+
+  const templateTaskRows = await scope.insert(templateTasks, [
+    ...templateTasksFor(templateRows[0].id, [
+      ["Kickoff with the client", "high", 0],
+      ["Lock the treatment", "high", 5],
+      ["Book crew and kit", "urgent", 7],
+      ["Shoot", "urgent", 14],
+      ["First cut for review", "high", 28],
+      ["Deliver masters and archive", "medium", 42],
+    ]),
+    // No offsets at all: this is the shape a procedure becomes.
+    ...templateTasksFor(templateRows[1].id, [
+      ["Transfer domain and hosting", "high", null],
+      ["Hand over credentials through a password manager", "urgent", null],
+      ["Confirm backups are running", "high", null],
+      ["Agree out-of-hours cover in writing", "medium", null],
+    ]),
+  ]);
+
+  console.log(
+    `Created ${templateRows.length} templates, ${templateTaskRows.length} template tasks`,
+  );
 
   await report(scope, insertedTasks);
 }

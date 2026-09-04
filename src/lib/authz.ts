@@ -64,6 +64,7 @@ export type Action =
   | "finance.view"
   | "objective.view"
   | "sop.view"
+  | "template.view"
   // Doing
   | "project.create"
   | "task.create"
@@ -78,6 +79,7 @@ export type Action =
   | "objective.record"
   | "sop.manage"
   | "sop.review"
+  | "template.manage"
   | "member.invite"
   | "member.editRole"
   | "organization.switch"
@@ -158,6 +160,16 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   // How the work is done here is for everyone who does it. A procedure
   // library half the company cannot read is a shared folder with extra steps.
   "sop.view": () => true,
+
+  // A template is how a job is run, which is the same kind of knowledge a
+  // procedure is, and open to everyone for the same reason.
+  "template.view": () => true,
+
+  // Writing one is a manager's job, and so is starting a project from one --
+  // though that second permission is `project.create`, checked where it is
+  // used, because reading a template and running a job from it are not the
+  // same privilege as deciding what the template says.
+  "template.manage": (actor) => atLeast(actor, "manager"),
 
   // Writing and retiring procedures is a manager's job, or anybody holding
   // `people` -- the flag that already covers how the organization runs

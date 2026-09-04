@@ -43,6 +43,7 @@ const NAV_SEGMENTS = new Set([
   "myWork",
   "objectives",
   "sops",
+  "templates",
 ]);
 
 /**
