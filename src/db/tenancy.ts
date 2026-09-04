@@ -6,17 +6,12 @@ import type { PgColumn, PgInsertValue, PgTable, PgUpdateSetSource } from "drizzl
 import { activityEvents } from "./schema/activity";
 import { channelMembers, channels, messages } from "./schema/channels";
 import { companies, contacts, deals } from "./schema/crm";
-import {
-  expenses,
-  invoiceLines,
-  invoices,
-  quoteLines,
-  quotes,
-} from "./schema/finance";
+import { expenses, invoiceLines, invoices, quoteLines, quotes } from "./schema/finance";
 import { objectives, keyResults, keyResultCheckpoints } from "./schema/objectives";
 import { sops, sopSteps } from "./schema/sops";
 import { projectTemplates, templateTasks } from "./schema/templates";
 import { weeklyReviews, reviewDecisions } from "./schema/reviews";
+import { outboxMessages } from "./schema/mail";
 import { leaveRequests } from "./schema/leave";
 import { meetingAttendees, meetings } from "./schema/meetings";
 import { notifications } from "./schema/notifications";
@@ -83,6 +78,7 @@ export const TENANT_TABLES = {
   templateTasks,
   weeklyReviews,
   reviewDecisions,
+  outboxMessages,
 } as const;
 
 export type TenantTable = (typeof TENANT_TABLES)[keyof typeof TENANT_TABLES];
@@ -105,6 +101,12 @@ export const ORG_COLUMN_EXCEPTIONS: Readonly<Record<string, string>> = {
     "session is currently acting in, and the org switcher changes it. Sessions are looked " +
     "up by token digest before any organization is known, so scoping them by org would " +
     "make sign-in impossible. Session queries filter by user id or token digest instead.",
+  auth_tokens:
+    "The same shape as sessions, and the same reason. An invite or reset link is looked up " +
+    "by digest by somebody who has no session at all, and the organization it belongs to is " +
+    "what the row tells you -- scoping the lookup by org would need the answer in order to " +
+    "ask the question. Writes go through withOrg(); only the lookup and the single-use " +
+    "update are by digest, which is narrower than an org filter rather than wider.",
 };
 
 /**

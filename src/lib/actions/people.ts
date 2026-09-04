@@ -10,6 +10,9 @@ import { memberships, users, type ModulePermissions } from "@/db/schema/people";
 import { withOrg } from "@/db/tenancy";
 import { requirePermissionForAction } from "@/lib/auth/guards";
 import { recordActivity } from "@/lib/data/activity";
+import { createToken } from "@/lib/auth/tokens";
+import { inviteMessage } from "@/lib/mail/templates";
+import { flush, queue } from "@/lib/mail/transport";
 import { hashPassword } from "@/lib/password";
 
 /**
@@ -20,8 +23,7 @@ import { hashPassword } from "@/lib/password";
  */
 
 export type PeopleResult =
-  | { ok: true }
-  | { ok: false; error: string; fieldErrors?: Record<string, string> };
+  { ok: true } | { ok: false; error: string; fieldErrors?: Record<string, string> };
 
 const inviteSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email()),
@@ -109,10 +111,16 @@ export async function invitePerson(formData: FormData): Promise<PeopleResult> {
       permissions: {},
     });
 
-    return { userId, membershipId: membership!.id };
+    // Minted in the same transaction as the membership: an invitation that
+    // exists without a way to accept it is the state this whole change is
+    // fixing, and it should not be reachable even by a crash.
+    const token = await createToken(session.actor.organizationId, userId, "invite", tx);
+
+    return { userId, membershipId: membership!.id, token };
   });
 
-  if (!created) return { ok: false, error: "alreadyMember", fieldErrors: { email: "alreadyMember" } };
+  if (!created)
+    return { ok: false, error: "alreadyMember", fieldErrors: { email: "alreadyMember" } };
 
   await recordActivity(session.actor, {
     verb: "member.invited",
@@ -120,6 +128,28 @@ export async function invitePerson(formData: FormData): Promise<PeopleResult> {
     subjectId: created.userId,
     metadata: { email: data.email, role: data.role },
   });
+
+  // Written to the outbox whatever happens next. On this deployment nothing
+  // is delivered -- there is no mail server on a local network -- but the
+  // message exists in full and an admin can read it, link included, from the
+  // outbox under Settings. That is what the invite dialog now says.
+  const message = await inviteMessage({
+    toEmail: data.email,
+    toName: data.name,
+    // The recipient's language, which is not necessarily the inviter's: the
+    // organization default is the best guess available before they have ever
+    // signed in and set one.
+    locale: (await getLocale()) === "fr" ? "fr" : "en",
+    organizationName: session.organization.name,
+    invitedByName: session.user.name,
+    token: created.token,
+  });
+
+  await queue(session.actor, message);
+
+  // Not awaited: an invite form should not sit on an SMTP timeout. On the
+  // default driver this returns immediately having attempted nothing.
+  void flush(session.actor).catch(() => {});
 
   const locale = await getLocale();
   revalidatePath(`/${locale}/people`);

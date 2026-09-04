@@ -19,4 +19,5 @@ export * from "./objectives";
 export * from "./sops";
 export * from "./templates";
 export * from "./reviews";
+export * from "./mail";
 export * from "./relations";

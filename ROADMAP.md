@@ -241,7 +241,8 @@ Decisions worth knowing:
   whole feed re-filtered for relevance on every page load.
 - Read state only -- there is no archive or dismiss yet. Read/unread covers the core; a third
   state can wait until somebody wants it.
-- Still no email or push. That needs a mail transport, which nothing here has yet.
+- Still no push, and notifications are still in-app only. The mail transport that landed later
+  makes emailing them possible; nothing has been wired to it yet.
 
 ### Channels  [DONE]
 
@@ -639,18 +640,56 @@ Decisions worth knowing:
 
 ---
 
+### Mail transport, and invitations that work  [DONE]
+
+- [x] `outbox_messages` -- **every message is recorded whether or not anything is sent**. The
+      driver decides delivery; the row is written either way. On a LAN that means the app does
+      everything it would do with mail except the part it genuinely cannot, and the part it
+      cannot do is readable on a screen
+- [x] Two drivers behind one interface: `outbox` (the default, delivers nothing) and `smtp`.
+      Moving to a VPS is `MAIL_DRIVER=smtp` -- no caller changes, and messages queued before
+      the move are still there to send
+- [x] `nodemailer` is imported on demand, so the LAN build does not pay for a dependency it
+      never calls
+- [x] The outbox is a screen under Settings, behind `member.invite`, showing each message in
+      full. On a network with no mail server that screen **is** the delivery mechanism
+- [x] **Invitations now work.** There was no token, no accept route and no reset: an invited
+      person got a password hash nothing could match and had nowhere to go, while the sign-up
+      form said "you get in by invitation". `auth_tokens`, `/accept/<token>`, single use,
+      digest-only storage, and the membership goes `invited` -> `active` on acceptance
+- [x] Messages are written in the **recipient's** locale, not the sender's
+- [x] 14 unit tests on the parts that can be checked without a mail server, 10 e2e covering
+      invite -> outbox -> link -> password -> signed in
+
+Decisions worth knowing:
+- **`skipped` is not `failed`.** A message the outbox driver declined to send was never
+  attempted, so it counts no attempt and records no error. Conflating the two would make the
+  outbox read as a list of errors on a deployment working exactly as intended -- and saying
+  "sent" when nothing left the building is the one lie this system must not tell.
+- **A one-time link survives an existing session.** The middleware used to bounce any
+  signed-in visitor off every public path. Somebody already in one organization, invited to a
+  second, would have clicked their invitation and landed on Today with the token silently
+  spent from the URL.
+- **`auth_tokens` is a documented tenancy exception**, like `sessions`: a link is looked up by
+  digest by somebody with no session, and the organization is what the row tells you. Scoping
+  the lookup by org would need the answer in order to ask the question.
+- **Plain text, no HTML.** An HTML email is a rendering project with its own testing problem;
+  plain text is read correctly by every client.
+
+---
+
 ## After this
 
-Every milestone on this roadmap, and every area the Notion hub named, is built.
-
-The one piece of infrastructure standing behind the most gaps is **a mail transport**. Invites,
-notifications, invoice sending, overdue-invoice chasing, review reminders and password resets
-all wait on it, and none of them is hard once it exists.
-
-After that, in rough order of how often the gap is felt:
+Every milestone on this roadmap is built, and so is every area the Notion hub named. What follows
+is not a plan -- it is `KNOWN-GAPS.md` in the order the gaps are actually felt.
 
 - **File storage** -- a receipt on an expense, a signed proposal on a deal, a diagram in a
-  procedure, an attachment in a channel. Four features are missing the same thing.
+  procedure, an attachment in a channel. Four features are missing the same thing, and it is
+  now the largest single blocker.
+- **Password reset.** The token, the screen and the transport all exist; what is missing is the
+  "forgot your password" form that mints one. Half a day.
+- **Something that drains the queue.** There is no scheduler, so the only things that move a
+  message are queueing one and pressing retry.
 - **An invoice that can be printed or sent.** It exists as a screen and nothing else.
 - **Joining the project wizard to templates**, so starting from a template still shows the
   team's real workload while work is assigned.

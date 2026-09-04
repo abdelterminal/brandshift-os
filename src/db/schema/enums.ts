@@ -172,6 +172,15 @@ export const objectiveOutcomeEnum = pgEnum("objective_outcome", [
  * to point at.
  */
 export const sopStatusEnum = pgEnum("sop_status", ["draft", "published", "retired"]);
+/**
+ * Where a message is in its life.
+ *
+ * `skipped` is the state that only exists on a network with no mail server:
+ * the message was written down and deliberately not attempted, which is not
+ * the same as having failed. Conflating the two would make the outbox look
+ * like a list of errors on a deployment that is working exactly as intended.
+ */
+export const mailStatusEnum = pgEnum("mail_status", ["queued", "sent", "failed", "skipped"]);
 /** Supported locales. Both ship complete; there is no partial-translation state. */
 export const localeEnum = pgEnum("locale", ["en", "fr"]);
 

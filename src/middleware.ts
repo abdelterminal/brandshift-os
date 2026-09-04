@@ -27,7 +27,21 @@ import { routing } from "@/i18n/routing";
 const intlMiddleware = createMiddleware(routing);
 
 /** Reachable without a session. Everything else is not. */
-const PUBLIC_PATHS = ["/login", "/signup"];
+// `/accept` and `/reset` are reached from a one-time link by somebody who by
+// definition has no session yet. Leaving them out sent every invitation to the
+// sign-in page, which is exactly where an invited person cannot get in.
+const PUBLIC_PATHS = ["/login", "/signup", "/accept", "/reset"];
+
+/**
+ * Public paths a signed-in person is bounced away from.
+ *
+ * Sign-in and sign-up only. A one-time link is deliberately *not* here: being
+ * signed in as somebody does not mean the link in your hand is meaningless.
+ * Somebody already in one organization who is invited to a second would have
+ * clicked their invitation and landed on Today, with the invitation appearing
+ * to do nothing at all -- and the token silently spent from the URL.
+ */
+const SIGNED_IN_REDIRECTS = ["/login", "/signup"];
 
 function stripLocale(pathname: string): string {
   const match = /^\/(en|fr)(\/.*)?$/.exec(pathname);
@@ -61,7 +75,11 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (claims && isPublic) {
+  const bouncesWhenSignedIn = SIGNED_IN_REDIRECTS.some(
+    (entry) => path === entry || path.startsWith(`${entry}/`),
+  );
+
+  if (claims && bouncesWhenSignedIn) {
     return NextResponse.redirect(new URL(`/${locale}/today`, request.url));
   }
 

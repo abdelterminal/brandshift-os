@@ -11,7 +11,7 @@ written down nowhere is a gap nobody ever fixes.
 delete the row when it is closed — do not leave a struck-through list of things that are actually
 finished. `CLAUDE.md` points here for the same reason.
 
-Last reviewed: after Profile and the deal editor landed.
+Last reviewed: after the mail transport and working invitations landed.
 
 ---
 
@@ -43,10 +43,14 @@ and they all become small the day it exists -- which is why it is the first thin
 
 | Thing | Why |
 |---|---|
-| Invites send no email | No mail transport exists yet -- see the notifications row below, which is the same gap. The invite dialog says so on screen rather than implying a message was sent. |
 | Nothing reminds anybody to record a figure | A key result nobody measures shows as "not measured" forever, and the only thing that surfaces it is somebody opening the screen. A nudge needs the scheduler and the mail transport this deployment still lacks -- the same two things four other gaps wait on. |
 | Nothing chases an overdue review | The list shows what is stale and that is the whole mechanism: somebody has to open the screen. No email, no inbox notification, no digest. Needs the mail transport, like everything else on this list that wants to reach somebody who is not already looking. |
 | Nothing reminds anybody to hold a review | The screen lists the weeks that were skipped and that is the whole mechanism -- somebody has to open it. A Monday nudge needs the scheduler and the mail transport that five other gaps also wait on. |
+| Nothing drains the mail queue on its own | There is no scheduler, so the only two things that ever move a message are queueing one and pressing retry in the outbox. On the default driver nothing is being delivered anyway, so this only starts to matter the day `MAIL_DRIVER=smtp` is set -- at which point it wants a cron, or a queue worker, or Vercel-style scheduled route. |
+| No password reset form | The token, the `/reset/<token>` screen and the transport all exist and are tested; what is missing is the "forgot your password" form that mints one, and the rate limiting it would need. Half a day, and the pieces are already in place. |
+| Emails are plain text | No HTML, no branding, no logo. Deliberate to begin with -- an HTML email is a rendering project with its own testing problem, and every client interprets it differently -- but it does mean an invitation from this app looks like a note rather than like the studio. |
+| The outbox keeps message bodies forever | Including invite links, which set passwords. They expire, and anybody who can read the outbox can already invite people, so it grants nothing new -- but there is no pruning, and a year of notifications will sit there. Wants a retention rule the day notifications start being emailed. |
+| Nothing knows whether a message actually arrived | `sent` means it left this machine. There is no bounce handling and no delivery receipt, which would need a mailbox to read and a webhook to receive. |
 | An invoice cannot be printed, saved as a PDF or sent | It exists as a screen and nothing else. Sending it means the mail transport this deployment still lacks; a PDF means a rendering step and a decision about who owns the layout. Until then the document is read in the app or the browser's own print dialog is used, which is not a designed output. This is the largest gap in ERP. |
 | Nothing chases an overdue invoice | The invoices list marks what is past its due date and no further. No reminder goes out, to the client or to anybody here, because both would need a mail transport. |
 | No email, no calls, no attachments on a deal | A deal has notes and a channel. There is no logged call, no email thread and nowhere to put a signed proposal. Email needs the mail transport this deployment still lacks; files need somewhere to put them. |

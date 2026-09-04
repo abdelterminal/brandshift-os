@@ -167,6 +167,12 @@ What is built:
   hidden, what you may not: your role, your permissions, your department. Those are terms of
   employment, not preferences. Devices and passwords are next door in Settings.
 
+- **Invitations** -- invite somebody and they get a one-time link that lets them choose a
+  password and land signed in. On this deployment nothing is emailed: a local network has no
+  mail server, so the message is written to an **outbox** under Settings where an admin reads
+  it and passes the link on. Set `MAIL_DRIVER=smtp` and the same messages start being
+  delivered, including the ones already queued.
+
 Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a screen, a project, a person or a department.
 
 ## Design system
