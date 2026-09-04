@@ -691,13 +691,36 @@ is not a plan -- it is `KNOWN-GAPS.md` in the order the gaps are actually felt.
 - ~~**File storage**~~ -- **asleep on purpose.** Four features want it and none of them gets it
   yet: the storage is easy, the backup story is not, and a file that silently is not backed up
   looks like safekeeping. Written up in `DECISIONS.md`, with what should wake it.
-- **Something that drains the queue.** There is no scheduler, so the only things that move a
-  message are queueing one and pressing retry.
+- ~~**Reminders, digests, chasing, HTML email**~~ -- **asleep on purpose.** There is no SMTP
+  server here and there is not going to be one; invitations and resets work through the outbox
+  by hand. These wake up if this moves to a VPS. `DECISIONS.md` has the reasoning.
 - **An invoice that can be printed or sent.** It exists as a screen and nothing else.
 - **Joining the project wizard to templates**, so starting from a template still shows the
   team's real workload while work is assigned.
 
 `KNOWN-GAPS.md` is the full list, and it is honest.
+
+---
+
+## Backups
+
+One machine, one Postgres volume, and everything anybody has typed into this app lives in it.
+There is no replica and no provider taking snapshots behind the scenes, so a disk failure
+without a dump is the end of the data -- a larger risk than anything left in `KNOWN-GAPS.md`.
+
+```powershell
+.\backup.ps1              # writes a dump into .\backups\, keeps the last 30
+```
+
+`pg_dump` runs inside the container, so nothing has to be installed on the host. The output is
+plain SQL -- bigger than the custom format, and readable, which matters when the file you are
+restoring from is the only copy you have. The script refuses to report success on a dump too
+small to be real, because a backup that exists and is empty is worse than none.
+
+The restore command is printed after every run. It has been tested: a dump restored into an
+empty database gave back the same row counts, table for table.
+
+**`backups/` is gitignored.** It is real company data.
 
 ---
 

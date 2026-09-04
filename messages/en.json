@@ -1212,7 +1212,9 @@
     "kindReset": "Password reset",
     "kindNotification": "Notification",
     "show": "Show message",
-    "hide": "Hide message"
+    "hide": "Hide message",
+    "copyLink": "Copy the link",
+    "copied": "Copied"
   },
   "Forgot": {
     "title": "Reset your password",

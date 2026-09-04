@@ -447,6 +447,29 @@ operational story to attach them to.
 moves somewhere with a backup story; or an invoice needs to carry a PDF attachment rather than
 being read on screen. The first is the honest trigger and the other two make it cheap.
 
+## Everything downstream of email, deliberately asleep
+
+This deployment has no SMTP server and is not going to have one: it runs on one machine on a
+local network, and people connect to it across that network. The mail transport already accounts
+for that -- the default driver records every message and delivers none, and the outbox under
+Settings is where an admin reads an invitation and passes the link on by hand. Invitations and
+password resets are complete features on that basis, not degraded ones.
+
+What is asleep is everything that would be built *on top* of delivery: reminders, weekly digests,
+chasing an overdue invoice or an unreviewed procedure, meeting invitations by email, `.ics`
+export, and HTML message bodies. Every one of them assumes a message reaches somebody without a
+person carrying it, and on this network none of them does. Building them would produce a queue
+that fills up with things nobody will ever read, and a screen full of features that appear to
+work and quietly do not.
+
+**The SMTP driver stays.** It costs nothing -- `nodemailer` is imported on demand, so the LAN
+build never loads it -- and it is the whole margin: the day this moves to a VPS, `MAIL_DRIVER=smtp`
+starts delivering the same rows, including the ones queued before the move. Removing it would be
+work done to make a later decision harder.
+
+**What should wake this up** is that move, and nothing else. Not somebody asking for reminders --
+the honest answer to that today is that the app cannot send them.
+
 ## Deliberately not chosen
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the

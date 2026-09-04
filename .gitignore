@@ -42,3 +42,6 @@ next-env.d.ts
 # playwright
 /test-results/
 /playwright-report/
+
+# Database dumps from backup.ps1. Real company data -- never committed.
+backups/

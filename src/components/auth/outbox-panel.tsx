@@ -52,6 +52,58 @@ const KIND_KEY: Record<string, string> = {
   notification: "kindNotification",
 };
 
+/**
+ * The link on its own, ready to paste.
+ *
+ * On a network with no mail server this is the actual delivery step: somebody
+ * opens the message, takes the link, and sends it however they already talk to
+ * the person -- so making them select a URL out of a wrapped block of text was
+ * the wrong amount of friction on the one action this screen exists for.
+ *
+ * Falls back to showing the link in a selectable field when the clipboard is
+ * unavailable, which it is over plain HTTP on anything but localhost -- and a
+ * LAN deployment is exactly that.
+ */
+function CopyLink({ body }: { body: string }) {
+  const t = useTranslations("Outbox");
+
+  const link = body.match(/https?:\/\/\S+\/(?:accept|reset)\/\S+/)?.[0];
+  const [copied, setCopied] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  if (!link) return null;
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(link!);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // No clipboard: over plain HTTP the API is unavailable outside
+      // localhost, which is every machine on the network but this one.
+      setFailed(true);
+    }
+  }
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-2">
+      <Button size="sm" onClick={copy}>
+        {copied ? t("copied") : t("copyLink")}
+      </Button>
+
+      {failed ? (
+        <input
+          readOnly
+          value={link}
+          aria-label={t("copyLink")}
+          onFocus={(event) => event.currentTarget.select()}
+          className="border-border-control bg-surface-raised text-body text-fg-default h-9 min-w-0 flex-1 rounded-control border px-2.5"
+        />
+      ) : null}
+    </div>
+  );
+}
+
 export function OutboxPanel({ rows, sending }: { rows: OutboxRow[]; sending: boolean }) {
   const t = useTranslations("Outbox");
   const format = useFormatter();
@@ -106,11 +158,16 @@ export function OutboxPanel({ rows, sending }: { rows: OutboxRow[]; sending: boo
                 </div>
 
                 {open === row.id ? (
-                  // `whitespace-pre-wrap`, because the body is plain text and
-                  // its line breaks are the only formatting it has.
-                  <pre className="text-body text-fg-default bg-surface-sunken mt-3 overflow-x-auto rounded-card p-3 font-sans whitespace-pre-wrap">
-                    {row.body}
-                  </pre>
+                  <>
+                    {/*
+                      `whitespace-pre-wrap`, because the body is plain text and
+                      its line breaks are the only formatting it has.
+                    */}
+                    <pre className="text-body text-fg-default bg-surface-sunken mt-3 overflow-x-auto rounded-card p-3 font-sans whitespace-pre-wrap">
+                      {row.body}
+                    </pre>
+                    <CopyLink body={row.body} />
+                  </>
                 ) : null}
               </li>
             ))}

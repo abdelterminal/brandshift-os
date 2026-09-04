@@ -1212,7 +1212,9 @@
     "kindReset": "Réinitialisation",
     "kindNotification": "Notification",
     "show": "Afficher le message",
-    "hide": "Masquer le message"
+    "hide": "Masquer le message",
+    "copyLink": "Copier le lien",
+    "copied": "Copié"
   },
   "Forgot": {
     "title": "Réinitialiser votre mot de passe",
