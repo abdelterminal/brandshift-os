@@ -15,6 +15,18 @@ import { expect, type Page } from "@playwright/test";
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 
 export async function expectNoAxeViolations(page: Page, label: string) {
+  // Wait for the document to have a title before scanning.
+  //
+  // `generateMetadata` is async and streams, so the `<title>` arrives after
+  // the body it describes. Scanning in between yields exactly one violation --
+  // `document-title` -- against a page that is perfectly fine a moment later.
+  // It bit roughly one full run in four, always on a different test, which is
+  // the worst kind of failure: real-looking, unreproducible in isolation, and
+  // eventually ignored.
+  await expect
+    .poll(() => page.title(), { timeout: 5000, message: `${label}: no <title> ever arrived` })
+    .not.toBe("");
+
   const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
 
   const summary = results.violations

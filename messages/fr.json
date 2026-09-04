@@ -639,7 +639,7 @@
     "nothingAtRiskBody": "Aucun projet n'a de travail bloqué, de tâche en retard ni d'échéance dépassée. C'est l'état vide que l'on souhaite.",
     "openTasks": "{count, plural, one {# tâche ouverte} other {# tâches ouvertes}}",
     "blockedCount": "{count, plural, one {# bloquée} other {# bloquées}}",
-    "overdueCount": "{count, plural, one {# en retard} other {# en retard}}",
+    "overdueCount": "Factures en retard",
     "pastDue": "Échéance dépassée",
     "stuck": "Bloqué depuis le plus longtemps",
     "stuckBody": "Classé par durée, non par importance. Ce qui est bloqué depuis trois semaines est ce que plus personne ne regarde.",
@@ -659,7 +659,20 @@
     "overdue": "En retard",
     "blockedColumn": "Bloquées",
     "meetings": "Heures de réunion",
-    "away": "Absent (30 jours)"
+    "away": "Absent (30 jours)",
+    "objectives": "Par rapport à quoi",
+    "objectivesBody": "Ce que l’entreprise s’est fixé, et où en sont ces objectifs.",
+    "objectivesOpen": "En cours",
+    "objectivesBehind": "En retard",
+    "objectivesNotMeasured": "Non mesurés",
+    "objectivesAwaitingClose": "Terminés, non clôturés",
+    "openObjectives": "Ouvrir les objectifs",
+    "money": "Argent",
+    "moneyBody": "Ce qui est dû et ce qui est en retard. Visible uniquement avec le module finance.",
+    "outstanding": "En attente",
+    "overdueValue": "En retard",
+    "quotesOut": "Devis envoyés",
+    "openFinance": "Ouvrir la finance"
   },
   "DealStage": {
     "lead": "Piste",
@@ -1222,5 +1235,22 @@
     "email": "E-mail",
     "submit": "Envoyer le lien",
     "sent": "Si cette adresse correspond à un compte, un lien est en route. Il fonctionne une fois et expire dans une heure."
+  },
+  "Tour": {
+    "progress": "Étape {step} sur {total}",
+    "next": "Suivant",
+    "back": "Retour",
+    "skip": "Passer",
+    "done": "C'est compris",
+    "railTitle": "Voici tout ce que vous pouvez ouvrir",
+    "railBody": "Cinq endroits, jamais plus, et ils dépendent de ce que vous faites ici — un designer et la personne qui envoie les factures n'ont pas les mêmes cinq. Le reste est à une touche près.",
+    "todayTitle": "Aujourd'hui est votre file, pas un tableau de bord",
+    "todayBody": "Cela s'ouvre sur ce qui est arrêté, en retard, ou sans personne dessus. Si Aujourd'hui est vide, rien ne vous attend — c'est tout l'intérêt.",
+    "workTitle": "Travail contient les projets",
+    "workBody": "Un projet s'ouvre en liste ; le tableau est derrière un bouton. Cliquer une tâche l'ouvre à côté de la liste et l'inscrit dans l'adresse, pour envoyer à quelqu'un exactement ce que vous regardez.",
+    "paletteTitle": "Appuyez sur ⌘K pour tout le reste",
+    "paletteBody": "Objectifs, procédures, modèles, revues, congés — tout ce qui n'est pas dans vos cinq. Tapez un projet, une personne ou un écran et ce sera le premier résultat.",
+    "accountTitle": "Vous êtes ici",
+    "accountBody": "Votre profil, vos réglages, vos appareils connectés, et la sortie. Uniquement ici — jamais aussi dans la barre latérale, pour n'avoir qu'un seul endroit où chercher."
   }
 }

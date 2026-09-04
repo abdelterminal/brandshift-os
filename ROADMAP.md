@@ -702,6 +702,35 @@ is not a plan -- it is `KNOWN-GAPS.md` in the order the gaps are actually felt.
 
 ---
 
+### The guided tour, and Insights against objectives  [DONE]
+
+- [x] **A five-step tour, shown once**, to somebody who has just accepted an invitation. The
+      rail and why it is five things; Today as a queue rather than a dashboard; a task opening
+      beside the list and landing in the URL; `⌘K` for everything not on the rail; and the
+      avatar menu as the one place Profile and Settings live
+- [x] It **rings the real element** rather than drawing a picture of one -- `data-tour` on the
+      actual rail, palette and avatar, and a stylesheet rule that outlines whatever is active
+- [x] **No positioning maths and no inline styles.** A card that floats beside its target needs
+      measured coordinates in a `style` attribute, which this codebase forbids. The card sits in
+      one fixed place and the target is what changes -- nothing to recompute on scroll or
+      resize, and it behaves the same at 320px as at 1440
+- [x] `users.tour_completed_at`, not `localStorage`: whether somebody has been shown around is a
+      fact about the person, not the browser they were sitting at
+- [x] Escape closes it, focus moves into it, skipping counts as an answer, and nothing is left
+      ringed afterwards. 10 e2e specs, driven through the real invite flow
+- [x] **Insights now says what the work was supposed to add up to.** `objectiveSummary()` had
+      existed since objectives shipped with nothing calling it; the money block is behind
+      `finance.view`, because holding `insights` says you may read how the work is going, not
+      what the company is owed
+
+Decisions worth knowing:
+- **Seeded staff are marked onboarded.** They have been here for months, and leaving them
+  otherwise would have put the card in front of every e2e fixture on every screen.
+- **Counts, never a blended score,** on the Insights objectives block -- one number mixing
+  unrelated goals is the invented metric the design rules forbid.
+
+---
+
 ## Backups
 
 One machine, one Postgres volume, and everything anybody has typed into this app lives in it.

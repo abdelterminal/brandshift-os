@@ -177,6 +177,11 @@ What is built:
   outbox. The form says the same sentence whatever the address is, and a stranger asking writes
   nothing at all, so the outbox cannot be used to find out who has an account.
 
+Somebody arriving for the first time gets a **five-step tour** of the shell -- the rail, Today,
+how a task opens, the palette, and the avatar menu -- shown once and never again. It rings the
+real controls rather than drawing pictures of them, Escape closes it, and skipping counts as an
+answer.
+
 Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a screen, a project, a person or a department.
 
 ## Design system

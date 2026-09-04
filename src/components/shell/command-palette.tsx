@@ -120,6 +120,7 @@ export function CommandPalette({ entries }: { entries: PaletteEntry[] }) {
         type="button"
         onClick={() => setOpen(true)}
         aria-label={t("open")}
+        data-tour="palette"
         className={cn(
           "text-body text-fg-subtle bg-surface-inset border-border-control",
           "hover:border-border-hover hover:text-fg-muted",

@@ -54,6 +54,15 @@ export const users = pgTable(
       .notNull()
       .defaultNow(),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+    /**
+     * When this person finished the guided tour, or dismissed it.
+     *
+     * On the user rather than in `localStorage`, because "have I been shown
+     * how this works" is a fact about the person and not about the browser
+     * they happen to be sitting at. Somebody who did the tour on the studio
+     * machine should not be walked through it again on their laptop.
+     */
+    tourCompletedAt: timestamp("tour_completed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),

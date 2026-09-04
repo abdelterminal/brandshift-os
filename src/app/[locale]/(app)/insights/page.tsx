@@ -7,6 +7,9 @@ import { EmptyState } from "@/components/ui/feedback";
 import { focusRingInset, transition } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
 import { requirePermission } from "@/lib/auth/guards";
+import { can } from "@/lib/authz";
+import { financeSummary } from "@/lib/data/finance";
+import { objectiveSummary } from "@/lib/data/objectives";
 import { dayKey } from "@/lib/calendar-dates";
 import {
   loadByPerson,
@@ -54,13 +57,19 @@ export default async function InsightsPage() {
   const now = new Date();
   const today = dayKey(now, timeZone);
 
-  const [t, format, atRisk, throughput, load, blocked] = await Promise.all([
+  // Finance is behind its own module flag: holding `insights` says you may
+  // read how the work is going, not what the company is owed.
+  const maySeeMoney = can(session.actor, "finance.view");
+
+  const [t, format, atRisk, throughput, load, blocked, objectives, money] = await Promise.all([
     getTranslations("Insights"),
     getFormatter(),
     projectsAtRisk(session.actor, today),
     weeklyThroughput(session.actor, WEEKS, today, timeZone),
     loadByPerson(session.actor, today, timeZone),
     longestBlocked(session.actor, now),
+    objectiveSummary(session.actor, now),
+    maySeeMoney ? financeSummary(session.actor, today) : Promise.resolve(null),
   ]);
 
   const row = cn(
@@ -159,6 +168,97 @@ export default async function InsightsPage() {
         )}
       </section>
 
+      {/*
+        Against what. Insights already said how the work was going and never
+        said what it was supposed to add up to -- `objectiveSummary` existed
+        from the day objectives shipped and nothing called it.
+
+        Counts of real objectives in real states, never a blended score: one
+        number mixing unrelated goals is the invented metric the design rules
+        forbid.
+      */}
+      <section className="mb-8">
+        <h2 className="text-heading font-display text-fg-default mb-1">{t("objectives")}</h2>
+        <p className="text-caption text-fg-muted mb-3">{t("objectivesBody")}</p>
+
+        <dl className="border-border bg-surface-raised grid grid-cols-2 gap-x-6 gap-y-3 rounded-card border p-4 sm:grid-cols-4">
+          {(
+            [
+              ["objectivesOpen", objectives.open],
+              ["objectivesBehind", objectives.behind],
+              ["objectivesNotMeasured", objectives.notMeasured],
+              ["objectivesAwaitingClose", objectives.awaitingClose],
+            ] as const
+          ).map(([key, value]) => (
+            <div key={key}>
+              <dt className="text-caption text-fg-muted">{t(key)}</dt>
+              <dd className="text-heading text-fg-default tabular-nums">{value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <Link
+          href="/objectives"
+          className={cn(
+            "text-body text-accent-text mt-3 inline-block underline underline-offset-2 rounded-[6px]",
+            focusRingInset,
+            transition,
+          )}
+        >
+          {t("openObjectives")}
+        </Link>
+      </section>
+
+      {money ? (
+        <section className="mb-8">
+          <h2 className="text-heading font-display text-fg-default mb-1">{t("money")}</h2>
+          <p className="text-caption text-fg-muted mb-3">{t("moneyBody")}</p>
+
+          <dl className="border-border bg-surface-raised grid grid-cols-2 gap-x-6 gap-y-3 rounded-card border p-4 sm:grid-cols-4">
+            <div>
+              <dt className="text-caption text-fg-muted">{t("outstanding")}</dt>
+              <dd className="text-heading text-fg-default tabular-nums">
+                {format.number(money.outstanding / 100, {
+                  style: "currency",
+                  currency: session.organization.currency,
+                  maximumFractionDigits: 0,
+                })}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-caption text-fg-muted">{t("overdueValue")}</dt>
+              <dd className="text-heading text-fg-default tabular-nums">
+                {format.number(money.overdueValue / 100, {
+                  style: "currency",
+                  currency: session.organization.currency,
+                  maximumFractionDigits: 0,
+                })}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-caption text-fg-muted">{t("overdueCount")}</dt>
+              <dd className="text-heading text-fg-default tabular-nums">{money.overdue.length}</dd>
+            </div>
+            <div>
+              <dt className="text-caption text-fg-muted">{t("quotesOut")}</dt>
+              <dd className="text-heading text-fg-default tabular-nums">
+                {money.quotesOut.length}
+              </dd>
+            </div>
+          </dl>
+
+          <Link
+            href="/finance"
+            className={cn(
+              "text-body text-accent-text mt-3 inline-block underline underline-offset-2 rounded-[6px]",
+              focusRingInset,
+              transition,
+            )}
+          >
+            {t("openFinance")}
+          </Link>
+        </section>
+      ) : null}
       <section className="mb-8">
         <h2 className="text-heading font-display text-fg-default mb-1">{t("throughput")}</h2>
         <p className="text-caption text-fg-muted mb-2">{t("throughputBody")}</p>

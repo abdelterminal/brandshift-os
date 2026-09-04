@@ -47,6 +47,8 @@ export type CurrentUser = {
     email: string;
     avatarUrl: string | null;
     locale: "en" | "fr" | null;
+    /** Null until they have been shown around. The shell reads this. */
+    tourCompletedAt: Date | null;
   };
   membership: {
     role: Actor["role"];
@@ -213,6 +215,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       email: row.user.email,
       avatarUrl: row.user.avatarUrl,
       locale: row.user.locale,
+      tourCompletedAt: row.user.tourCompletedAt,
     },
     membership: {
       role: current.role,
@@ -298,11 +301,7 @@ export async function revokeOtherSessions(userId: string, keepSessionId: string)
     .update(sessions)
     .set({ revokedAt: new Date() })
     .where(
-      and(
-        eq(sessions.userId, userId),
-        isNull(sessions.revokedAt),
-        ne(sessions.id, keepSessionId),
-      ),
+      and(eq(sessions.userId, userId), isNull(sessions.revokedAt), ne(sessions.id, keepSessionId)),
     )
     .returning({ id: sessions.id });
 

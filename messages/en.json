@@ -639,7 +639,7 @@
     "nothingAtRiskBody": "No project has blocked work, overdue tasks or a deadline behind it. This is the empty state you want.",
     "openTasks": "{count, plural, one {# open task} other {# open tasks}}",
     "blockedCount": "{count, plural, one {# blocked} other {# blocked}}",
-    "overdueCount": "{count, plural, one {# overdue} other {# overdue}}",
+    "overdueCount": "Overdue invoices",
     "pastDue": "Past its deadline",
     "stuck": "Stuck longest",
     "stuckBody": "Ordered by how long, not by how important. The thing blocked for three weeks is the one nobody is looking at any more.",
@@ -659,7 +659,20 @@
     "overdue": "Overdue",
     "blockedColumn": "Blocked",
     "meetings": "Meeting hours",
-    "away": "Away (30 days)"
+    "away": "Away (30 days)",
+    "objectives": "Against what",
+    "objectivesBody": "What the company said it was trying to do, and how those are standing.",
+    "objectivesOpen": "Open",
+    "objectivesBehind": "Behind",
+    "objectivesNotMeasured": "Not measured",
+    "objectivesAwaitingClose": "Ended, not closed",
+    "openObjectives": "Open objectives",
+    "money": "Money",
+    "moneyBody": "What is owed and what is late. Only visible to people who hold the finance module.",
+    "outstanding": "Outstanding",
+    "overdueValue": "Overdue",
+    "quotesOut": "Quotes out",
+    "openFinance": "Open finance"
   },
   "DealStage": {
     "lead": "Lead",
@@ -1222,5 +1235,22 @@
     "email": "Email",
     "submit": "Send the link",
     "sent": "If that address belongs to an account, a link is on its way. It works once and expires in an hour."
+  },
+  "Tour": {
+    "progress": "Step {step} of {total}",
+    "next": "Next",
+    "back": "Back",
+    "skip": "Skip",
+    "done": "Got it",
+    "railTitle": "This is everywhere you go",
+    "railBody": "Five places, never more, and they depend on what you do here — a designer and the person who sends the invoices do not get the same five. Everything else is a keystroke away.",
+    "todayTitle": "Today is your queue, not a dashboard",
+    "todayBody": "It opens with what has stopped, slipped, or has nobody on it. If Today is empty, there is nothing waiting on you — that is the whole point of it.",
+    "workTitle": "Work holds the projects",
+    "workBody": "A project opens as a list; the board is behind a toggle. Clicking a task opens it beside the list and puts it in the address bar, so you can send somebody the exact thing you are looking at.",
+    "paletteTitle": "Press ⌘K for anything else",
+    "paletteBody": "Objectives, procedures, templates, reviews, time off — everything that is not on your five. Start typing a project, a person or a screen and it will be the first result.",
+    "accountTitle": "You live in here",
+    "accountBody": "Your profile, your settings, your signed-in devices, and the way out. They are only here — never also in the sidebar, so there is one place to look."
   }
 }

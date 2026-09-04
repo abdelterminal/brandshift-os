@@ -123,6 +123,20 @@ function day(offsetDays: number): string {
 }
 
 /** A timestamp `offsetDays` from now, at a plausible hour of the working day. */
+/**
+ * A date that costs no randomness.
+ *
+ * `moment()` draws twice from the seeded generator to pick a time of day, so
+ * anything that only needs *a* date in the past should use this instead --
+ * adding a draw shifts every value seeded after it.
+ */
+function fixedDaysAgo(days: number): Date {
+  const at = new Date(TODAY);
+  at.setDate(at.getDate() - days);
+  at.setHours(12, 0, 0, 0);
+  return at;
+}
+
 function moment(offsetDays: number): Date {
   const d = new Date(TODAY);
   d.setDate(d.getDate() + offsetDays);
@@ -185,6 +199,16 @@ async function main() {
         locale: person.locale,
         createdAt: moment(-randomInt(120, 400)),
         lastLoginAt: moment(-randomInt(0, 6)),
+        // Established staff, not newcomers: they have been here for months.
+        // Leaving this null would put the guided tour in front of every
+        // seeded person on every screen -- including every e2e fixture.
+        //
+        // A fixed offset, and deliberately not `moment()`: that draws twice
+        // from the seeded PRNG, so calling it here shifted every random draw
+        // after it. The data stayed deterministic and became *different* --
+        // every task status and due date moved, and e2e specs asserting on
+        // seeded content failed a long way from the change that caused it.
+        tourCompletedAt: fixedDaysAgo(60),
       })),
     )
     .returning();

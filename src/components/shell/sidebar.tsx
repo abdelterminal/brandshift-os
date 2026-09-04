@@ -106,6 +106,9 @@ export function Sidebar({
   return (
     <nav
       aria-label={t("primary")}
+      // Named for the tour, which rings the real rail rather than drawing a
+      // picture of one.
+      data-tour="rail"
       className="bg-sidebar-surface border-sidebar-border hidden w-56 shrink-0 flex-col border-r md:flex"
     >
       <div className="flex h-14 items-center gap-2 px-4">

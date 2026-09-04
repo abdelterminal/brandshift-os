@@ -166,6 +166,7 @@ export function AccountMenu({
     <Menu>
       <MenuTrigger
         aria-label={t("menu")}
+        data-tour="account"
         // A ring, not `hover:opacity-85`. Dimming the trigger dimmed the
         // initials inside it to 4.19:1 -- fading a control that contains text
         // is a contrast failure wearing a hover state.

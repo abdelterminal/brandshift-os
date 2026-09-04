@@ -4,6 +4,7 @@ import { Breadcrumbs } from "@/components/shell/breadcrumbs";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { CommandPalette } from "@/components/shell/command-palette";
 import { Sidebar } from "@/components/shell/sidebar";
+import { Tour } from "@/components/shell/tour";
 import { AccountMenu, LocaleSwitcher, OrgSwitcher } from "@/components/shell/switchers";
 import { ThemeToggle } from "@/components/theme";
 import { ToastProvider, ToastViewport } from "@/components/ui/toast";
@@ -126,6 +127,14 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
           overflow={overflowFor(actor)}
           counts={counts}
         />
+
+        {/*
+          Shown once, to somebody who has never been shown around. The whole
+          app is built on the rule that a user must never feel lost, and until
+          now the first thing a new person met was a shell full of words
+          nobody had explained.
+        */}
+        {user.tourCompletedAt === null ? <Tour /> : null}
         <ToastViewport />
       </ToastProvider>
     </TooltipProvider>

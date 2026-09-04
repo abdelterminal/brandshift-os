@@ -11,7 +11,7 @@ written down nowhere is a gap nobody ever fixes.
 delete the row when it is closed — do not leave a struck-through list of things that are actually
 finished. `CLAUDE.md` points here for the same reason.
 
-Last reviewed: after the email follow-ups were put to sleep.
+Last reviewed: after the guided tour landed.
 
 ---
 
@@ -87,6 +87,9 @@ section below.
 
 | Thing | Why |
 |---|---|
+| The tour cannot be replayed | Once it is finished or skipped it is gone, and there is no "show me that again" anywhere. The column is there and clearing it is a one-line action; what is missing is somewhere sensible to put the button, which is Profile rather than Settings and wants a line of copy nobody has written. |
+| The tour describes the shell, not the work | Five steps about where things are. It says nothing about how to run a project, quote a job or close a review -- those would each want their own walkthrough on their own screen, triggered the first time somebody opens it. Worth doing one at a time, if anybody actually gets lost there. |
+| The tour is the same for everyone | A designer and the person who sends the invoices see different rails, and both are told "five places". The steps are not filtered by what that person can actually reach, which is a small lie on the two rails that differ. |
 | The outbox keeps message bodies forever | Including invite links, which set passwords. They expire, and anybody who can read the outbox can already invite people, so it grants nothing new -- but there is no pruning, and a year of notifications will sit there. Wants a retention rule the day notifications start being emailed. |
 | An invoice cannot be printed, saved as a PDF or sent | It exists as a screen and nothing else. Sending it means the mail transport this deployment still lacks; a PDF means a rendering step and a decision about who owns the layout. Until then the document is read in the app or the browser's own print dialog is used, which is not a designed output. This is the largest gap in ERP. |
 | No email, no calls, no attachments on a deal | A deal has notes and a channel. There is no logged call, no email thread and nowhere to put a signed proposal. Email needs the mail transport this deployment still lacks; files need somewhere to put them. |
@@ -100,7 +103,6 @@ section below.
 | The Notion workspace's own content never arrived | The export was the hub page only -- its ten areas are link-to-page blocks pointing at pages the export did not include, and the connected Notion account cannot see them. Objectives was built from the structure, so the model is real and the *content* is not: no SOP, template, KPI or review text has been carried across, and none has been invented. |
 | Key results cannot be edited or removed after creation | Title, unit, direction, start and target are set once from the dialog. Correcting a typo in a target means closing the objective and making another. Worth wiring to an inline edit, with the caveat that changing a target after checkpoints exist silently rewrites the progress history. |
 | Objectives do not link to the work that moves them | No relation to a project, a task or a deal, so "what are we actually doing about this" is answered by reading both screens. It is the obvious next relation, and it is a decision about which direction the link points rather than a column. |
-| Objectives appear nowhere on Insights | `objectiveSummary()` exists and nothing calls it. "How are we doing" and "against what" are one question and they are currently two screens. Left until the numbers had a milestone's worth of real data behind them. |
 | A shared `DialogClose render={<Button>}` logs a Base UI warning | "A component that acts as a button expected a native `<button>`" appears in `next dev` on every screen using that pattern -- `/en/leave` and `/en/objectives` were both confirmed, so it predates this milestone and lives in the UI kit rather than in any one feature. Dev-only, nothing visibly misbehaves, and no test catches it because Playwright does not fail on React warnings. |
 | A procedure has no history and no versions | Editing the steps replaces them. There is no record of what a procedure said last year, which matters exactly when somebody asks why a job was done the way it was. `replaceSteps` is written so this becomes a real diff rather than a rewrite. |
 | Only title, summary and steps can be edited after creation | Owner, department and review interval are set once from the dialog. Changing them means creating another procedure, which is heavy-handed for fixing a typo in the interval. |
@@ -120,7 +122,6 @@ section below.
 | Payments are typed in, and nothing reconciles them | Somebody reads the bank statement and records what arrived. There is no bank feed, no matching, and no way to notice that a payment was recorded twice. Right at one agency's volume; the first thing to want at ten times it. |
 | Anybody with `finance` can mark an expense reimbursed, including their own | There is no approval step on money out, in the way there deliberately is on leave. It was left out because an agency this size reimburses on trust and an approval queue nobody uses is worse than none. It becomes wrong the day somebody who is not the person paying can file one. |
 | No tax report, and no accounting export | The tax on every line is stored exactly, and nothing adds it up for a quarter or hands it to an accountant. Both are a day's work each and both need somebody to say which format their accountant actually wants -- which is why neither was guessed at. |
-| Finance appears nowhere on Insights | Revenue, what is outstanding, what is overdue by age -- all answerable from rows that now exist, and none of them on the page that exists to answer questions like that. Deliberately left until the numbers had a milestone's worth of real data behind them. |
 | Money on a project is quoted, never actual | An invoice can point at a project; no cost ever does. There is no budget, no time recorded against the work, and so no answer to "did we make anything on this". That needs the timesheet the leave milestone also wanted, and it is the real reason to build one. |
 | A deal does not become a project directly | It becomes a quote, and an accepted quote becomes a project with a task per line. The handover exists and the retyping is gone; what is still missing is the short path for work that was never quoted. |
 | Contacts have no page of their own | A contact is a name, a job title and two ways to reach them; everything else about the relationship lives on the company or the deal. It becomes a page the day a contact needs its own history. |

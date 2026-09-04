@@ -470,6 +470,27 @@ work done to make a later decision harder.
 **What should wake this up** is that move, and nothing else. Not somebody asking for reminders --
 the honest answer to that today is that the app cannot send them.
 
+## Added during the guided tour
+
+**The tour rings the real thing.** `data-tour` goes on the actual rail, the actual palette
+button, the actual avatar, and a rule in `globals.css` outlines whichever one is active. The
+alternative -- a card that floats beside its target -- needs measured coordinates written into a
+`style` attribute, and inline styles are forbidden here. The card therefore sits in one fixed
+place and the *target* is what moves, which also means nothing to recompute on scroll or resize
+and identical behaviour at 320px and 1440.
+
+**Shown once, and recorded on the user.** `users.tour_completed_at` rather than `localStorage`:
+whether somebody has been shown around is a fact about the person, not about the browser they
+happened to be sitting at. Doing the tour on the studio machine should not mean doing it again
+on your own laptop.
+
+**Skipping is an answer.** It writes the same column as finishing. A tour that reappears until
+you complete it is not guidance, it is a demand, and the second showing teaches nobody anything.
+
+**Seeded staff are onboarded in the seed.** They have worked here for months. The practical half
+of that decision is that leaving them otherwise put the card in front of every e2e fixture on
+every screen.
+
 ## Deliberately not chosen
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the
