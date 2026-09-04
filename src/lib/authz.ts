@@ -65,6 +65,7 @@ export type Action =
   | "objective.view"
   | "sop.view"
   | "template.view"
+  | "review.view"
   // Doing
   | "project.create"
   | "task.create"
@@ -80,6 +81,7 @@ export type Action =
   | "sop.manage"
   | "sop.review"
   | "template.manage"
+  | "review.manage"
   | "member.invite"
   | "member.editRole"
   | "organization.switch"
@@ -164,6 +166,16 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   // A template is how a job is run, which is the same kind of knowledge a
   // procedure is, and open to everyone for the same reason.
   "template.view": () => true,
+
+  // How the company talks about itself, week by week. Open to everyone for
+  // the same reason objectives are: a review half the company cannot read is
+  // a meeting held in a corridor.
+  "review.view": () => true,
+
+  // Holding one, writing it up and publishing it is a manager's job, or
+  // anybody holding `insights` -- the flag that already gates reporting
+  // across the whole organization.
+  "review.manage": (actor) => atLeast(actor, "manager") || hasModule(actor, "insights"),
 
   // Writing one is a manager's job, and so is starting a project from one --
   // though that second permission is `project.create`, checked where it is

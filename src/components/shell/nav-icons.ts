@@ -12,6 +12,7 @@ import {
   Goal,
   BookOpenCheck,
   Copy,
+  CalendarCheck,
   Sun,
   Users,
   type LucideIcon,
@@ -43,4 +44,5 @@ export const NAV_ICONS: Record<NavIconName, LucideIcon> = {
   objectives: Goal,
   sops: BookOpenCheck,
   templates: Copy,
+  reviews: CalendarCheck,
 };

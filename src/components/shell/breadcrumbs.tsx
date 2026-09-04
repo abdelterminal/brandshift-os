@@ -44,6 +44,7 @@ const NAV_SEGMENTS = new Set([
   "objectives",
   "sops",
   "templates",
+  "reviews",
 ]);
 
 /**

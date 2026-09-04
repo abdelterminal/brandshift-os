@@ -11,7 +11,7 @@ written down nowhere is a gap nobody ever fixes.
 delete the row when it is closed — do not leave a struck-through list of things that are actually
 finished. `CLAUDE.md` points here for the same reason.
 
-Last reviewed: after Templates landed.
+Last reviewed: after Weekly Reviews landed.
 
 ---
 
@@ -66,6 +66,11 @@ files them as bugs.
 | Starting a project from a template assigns nobody | Deliberate -- see `DECISIONS.md` -- but it does mean every project starts with a board of unassigned work, and the wizard's workload view is the thing that would fix it. The two want joining up. |
 | Nothing tracks which template a project came from | A project started from a template keeps no reference to it, so "is this template actually any good" cannot be answered, and improving a template does nothing for the projects already running on it. A column and a decision about whether changes propagate. |
 | A retired template stays retired with no way back in the UI | `archiveTemplate` sets the date and nothing clears it. The SOP library has a restore path and this does not, which is an inconsistency rather than a decision. |
+| Nothing reminds anybody to hold a review | The screen lists the weeks that were skipped and that is the whole mechanism -- somebody has to open it. A Monday nudge needs the scheduler and the mail transport that five other gaps also wait on. |
+| A decision cannot become a task | It has an owner and a date and lives only on the review, so it is not on anybody's Today and nothing chases it beyond the reviews screen. Turning one into a task means choosing a project, which is a small design question rather than a wiring one -- and it would make the fourth path in this app from a definition to a task. |
+| A review covers the whole organization, never a department | One review per week for everybody. A studio that grows two teams that do not overlap will want one each, which is a column and a decision about who sees whose. |
+| The snapshot cannot be recomputed after publishing | Reopening a published review clears the frozen figures and recounts from scratch, which is right, but there is no way to say "keep the write-up and refresh the numbers". Rarely wanted; noted because the first person to want it will not find it. |
+| A draft is visible to everyone, but only its numbers | Somebody without `review.manage` sees that the week is being reviewed and sees the figures, but not the half-written notes. That is deliberate -- working notes are not a record -- though it does mean a draft page is thin for most of the company. |
 | An invoice cannot be printed, saved as a PDF or sent | It exists as a screen and nothing else. Sending it means the mail transport this deployment still lacks; a PDF means a rendering step and a decision about who owns the layout. Until then the document is read in the app or the browser's own print dialog is used, which is not a designed output. This is the largest gap in ERP. |
 | No credit notes | An invoice can be voided in full and nothing can be reversed in part. A real credit note is its own numbered document that points at the invoice it corrects, and the arithmetic already handles negatives -- `roundHalfAwayFromZero` exists for exactly this. What is missing is the document and its number series. |
 | Invoices do not repeat | No retainer, no monthly. An agency on a retainer creates the same invoice twelve times a year by hand. It is the same shape of problem as recurring meetings -- a rule, an exception model, and a decision about how far ahead documents exist -- and it is worth building deliberately rather than adding a `repeat` column. |

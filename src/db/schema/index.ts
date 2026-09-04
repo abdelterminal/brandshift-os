@@ -18,4 +18,5 @@ export * from "./finance";
 export * from "./objectives";
 export * from "./sops";
 export * from "./templates";
+export * from "./reviews";
 export * from "./relations";

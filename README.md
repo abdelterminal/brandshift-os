@@ -157,6 +157,12 @@ What is built:
   calendar straight away. A procedure can become a template, and so can a project that went well
   -- that one keeps the shape and drops the calendar, so it can be run again from any date.
 
+- **Weekly reviews** -- the record of what the room made of the week, and what it decided.
+  Insights and Objectives already hold the numbers; a review holds the sentence somebody said
+  about them. A draft counts live and a published one keeps the figures it was written against,
+  because a review is a document. The screen opens with the weeks nobody wrote up, and with
+  decisions from earlier reviews whose date has come and gone.
+
 Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a screen, a project, a person or a department.
 
 ## Design system

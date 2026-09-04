@@ -391,6 +391,35 @@ shape and loses its calendar.
 **A Server Action must not be named `use*`.** `useTemplate` read better than `startFromTemplate`
 and made eslint treat it as a React hook. Noted because the better name is the trap.
 
+## Added during Weekly Reviews
+
+**Publishing freezes the numbers.** While a review is a draft its figures are computed live,
+because the week is still moving. The moment it is published they are written into the row,
+because a review is a *document*: opening last quarter's and finding this quarter's numbers in it
+would be worse than useless, since the room never saw those. This is the same call as an
+invoice's stored totals and the deliberate opposite of a leave balance -- the third time this
+distinction has decided a schema, and it has been right every time.
+
+**Every figure comes from a function that already existed.** Insights, objectives, procedures,
+leave. Nothing new is counted in a review, so a review and the screens it summarises cannot
+disagree. A fourth place for the company's numbers to be computed would be a fourth place for
+them to be wrong.
+
+**The screen leads with the weeks nobody wrote up.** A list of the reviews you did hold is a
+diary; the value is the week you skipped. But *never reviewed* is not the same as *skipped*: an
+organization that started reviewing in March did not skip January, and the week currently in
+progress has not been missed either. Nagging somebody on a Tuesday about a week with three days
+left in it is how a screen teaches people to ignore it.
+
+**A decision carries an owner.** A decision nobody owns is a conversation, which is precisely the
+criticism weekly reviews attract, and the thing that column exists to answer. Decisions come back
+on the reviews screen once their date has passed, whether or not anybody remembered.
+
+**The editor is on the page rather than behind a dialog** -- the one deliberate exception to the
+rule that editing happens in a drawer or a dialog. A review is a document somebody types into
+while the meeting is happening, and making the screen you read and the screen you write into two
+different screens is exactly the friction that stops a ritual being kept.
+
 ## Deliberately not chosen
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the

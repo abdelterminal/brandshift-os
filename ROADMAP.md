@@ -606,14 +606,56 @@ Decisions worth knowing:
 - **Starting a project needs `project.create`, not `template.manage`.** Reading a template and
   running a job from it is not the same privilege as deciding what the template says.
 
-### Next
+### Weekly Reviews  [DONE]
 
-- **Weekly Reviews** -- a recorded ritual rather than a screen you happen to look at. Insights and
-  Objectives already hold everything one would read out; what is missing is the record of what was
-  said and decided.
+- [x] `weekly_reviews` / `review_decisions`. One review per week, enforced by a unique index
+      rather than by hoping
+- [x] **Publishing freezes the numbers.** A draft counts live because the week is still moving;
+      a published review stores the figures it was written against, because it is a document.
+      Opening last quarter's and finding this quarter's numbers would be worse than useless --
+      the room never saw those. The same call as an invoice's totals
+- [x] **Every figure comes from a function that already existed** -- insights, objectives,
+      procedures, leave. Nothing new is counted, so a review and the screens it summarises can
+      never disagree
+- [x] **The screen leads with the weeks nobody wrote up**, and with decisions from earlier
+      reviews whose date has passed. A list of the reviews you did hold is a diary
+- [x] A decision carries an **owner**, because a decision nobody owns is a conversation -- which
+      is precisely the criticism weekly reviews attract
+- [x] A week cannot be reviewed until it has ended, and the current week is never counted as
+      missed
+- [x] 15 unit tests on the missed-week arithmetic, 6 e2e specs, seeded with a deliberate gap and
+      one draft alongside two published records
 
-Still true, and still the largest single gap: **a mail transport**. Invites, notifications,
-invoice sending and password resets all wait on it.
+Decisions worth knowing:
+- **The editor is on the page, not behind a dialog.** The exception to the usual rule here, and
+  deliberate: a review is a document somebody types into while the meeting happens, and making
+  the screen you read and the screen you write two different screens is exactly the friction
+  that stops a ritual being kept.
+- **Never reviewed is not the same as skipped.** An organization that started reviewing in March
+  did not skip January. Nothing before the first review counts as missed, and neither does the
+  week currently in progress.
+- **A published review is edited by reopening it**, which clears the snapshot. Editing a record
+  by typing into it is how a record stops being one.
+
+---
+
+## After this
+
+Every milestone on this roadmap, and every area the Notion hub named, is built.
+
+The one piece of infrastructure standing behind the most gaps is **a mail transport**. Invites,
+notifications, invoice sending, overdue-invoice chasing, review reminders and password resets
+all wait on it, and none of them is hard once it exists.
+
+After that, in rough order of how often the gap is felt:
+
+- **File storage** -- a receipt on an expense, a signed proposal on a deal, a diagram in a
+  procedure, an attachment in a channel. Four features are missing the same thing.
+- **An invoice that can be printed or sent.** It exists as a screen and nothing else.
+- **Joining the project wizard to templates**, so starting from a template still shows the
+  team's real workload while work is assigned.
+
+`KNOWN-GAPS.md` is the full list, and it is honest.
 
 ---
 

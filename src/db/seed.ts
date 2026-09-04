@@ -69,6 +69,8 @@ import {
   sops,
   projectTemplates,
   templateTasks,
+  weeklyReviews,
+  reviewDecisions,
   type NewTask,
 } from "./schema";
 import { withOrg } from "./tenancy";
@@ -1182,6 +1184,107 @@ async function main() {
   console.log(
     `Created ${templateRows.length} templates, ${templateTaskRows.length} template tasks`,
   );
+
+  // -------------------------------------------------------------------------
+  // Weekly reviews
+  // -------------------------------------------------------------------------
+
+  /**
+   * Three weeks, with a deliberate hole in the middle.
+   *
+   * The gap is the point. A reviews screen that only ever shows the weeks you
+   * did write up is a diary; the value is the week you skipped, and it needs
+   * to be visible in development or nobody ever looks at how it renders.
+   *
+   * One is left as a draft, so both states are on screen: live figures and an
+   * editor, next to a frozen record.
+   */
+  const mondayOf = (offsetDays: number) => {
+    const at = new Date(`${addDays(todayInOrg, offsetDays)}T00:00:00Z`);
+    // Monday is 1; Sunday is 0 and belongs to the week that just ended.
+    const shift = (at.getUTCDay() + 6) % 7;
+    return addDays(at.toISOString().slice(0, 10), -shift);
+  };
+
+  const reviewRows = await scope.insert(weeklyReviews, [
+    {
+      weekStart: mondayOf(-28),
+      heldOn: addDays(mondayOf(-28), 7),
+      facilitatorUserId: userId("amina.benali@brandshift.test"),
+      highlights: "Northwind went live a week early, and the client said so in writing.",
+      concerns: "Two projects slipped waiting on client copy. It is the third time this quarter.",
+      snapshot: {
+        completed: 11,
+        created: 9,
+        projectsAtRisk: 2,
+        blocked: 3,
+        objectivesOpen: 3,
+        objectivesBehind: 1,
+        objectivesNotMeasured: 1,
+        proceduresOverdue: 2,
+        peopleAway: 1,
+      },
+      publishedAt: new Date(),
+      publishedByUserId: userId("amina.benali@brandshift.test"),
+      createdByUserId: userId("amina.benali@brandshift.test"),
+    },
+    // The week of -21 is deliberately missing.
+    {
+      weekStart: mondayOf(-14),
+      heldOn: addDays(mondayOf(-14), 8),
+      facilitatorUserId: userId("elena.rossi@brandshift.test"),
+      highlights: "The handover procedure got used for the first time and held up.",
+      concerns: "Nobody has measured the film objective since it was written.",
+      snapshot: {
+        completed: 8,
+        created: 12,
+        projectsAtRisk: 3,
+        blocked: 2,
+        objectivesOpen: 3,
+        objectivesBehind: 1,
+        objectivesNotMeasured: 1,
+        proceduresOverdue: 2,
+        peopleAway: 2,
+      },
+      publishedAt: new Date(),
+      publishedByUserId: userId("elena.rossi@brandshift.test"),
+      createdByUserId: userId("elena.rossi@brandshift.test"),
+    },
+    // Still a draft: live figures, and an editor on screen.
+    {
+      weekStart: mondayOf(-7),
+      heldOn: todayInOrg,
+      facilitatorUserId: userId("elena.rossi@brandshift.test"),
+      createdByUserId: userId("elena.rossi@brandshift.test"),
+    },
+  ]);
+
+  const decisionRows = await scope.insert(reviewDecisions, [
+    {
+      reviewId: reviewRows[0].id,
+      position: 0,
+      decision: "Stop starting a shoot before the copy is signed off",
+      ownerUserId: userId("sofia.laurent@brandshift.test"),
+      // Already past, so it shows up on the reviews screen as still open.
+      dueDate: addDays(todayInOrg, -5),
+    },
+    {
+      reviewId: reviewRows[0].id,
+      position: 1,
+      decision: "Write the client-onboarding procedure down properly",
+      ownerUserId: userId("sofia.laurent@brandshift.test"),
+      dueDate: addDays(todayInOrg, 20),
+    },
+    {
+      reviewId: reviewRows[1].id,
+      position: 0,
+      decision: "Put a number against the film objective before the next review",
+      ownerUserId: userId("sofia.laurent@brandshift.test"),
+      dueDate: addDays(todayInOrg, -2),
+    },
+  ]);
+
+  console.log(`Created ${reviewRows.length} weekly reviews, ${decisionRows.length} decisions`);
 
   await report(scope, insertedTasks);
 }

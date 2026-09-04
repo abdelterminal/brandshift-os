@@ -34,6 +34,7 @@ export const MANAGER_ROUTES = [
   "/en/objectives",
   "/en/sops",
   "/en/templates",
+  "/en/reviews",
   "/en/work/new",
   // A project page, because the board inside it is the app's other horizontal
   // scroller and the sweep is what proves it scrolls inside its own box.

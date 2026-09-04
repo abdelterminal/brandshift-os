@@ -35,7 +35,8 @@ export type NavIconName =
   | "finance"
   | "objectives"
   | "sops"
-  | "templates";
+  | "templates"
+  | "reviews";
 
 export type Destination = {
   /** Key into the `Nav` message catalogue, unless `label` overrides it. */
@@ -214,6 +215,7 @@ export const ALL_DESTINATIONS: Destination[] = [
   // is something you go and look up rather than somewhere you live.
   { id: "sops", href: "/sops", icon: "sops", requires: "sop.view" },
   { id: "templates", href: "/templates", icon: "templates", requires: "template.view" },
+  { id: "reviews", href: "/reviews", icon: "reviews", requires: "review.view" },
   { id: "leave", href: "/leave", icon: "leave", requires: "leave.view" },
   { id: "people", href: "/people", icon: "people", requires: "people.view" },
   {
