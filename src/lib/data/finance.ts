@@ -20,6 +20,7 @@ import { withOrg, type Executor } from "@/db/tenancy";
 
 import type { Actor } from "../authz";
 import { fromDecimalString, lineTotal, toDecimalString, totalsFor, type Cents } from "../money";
+import { isUuid } from "@/lib/uuid";
 
 /**
  * Quotes, invoices and expenses.
@@ -168,6 +169,9 @@ export async function listQuotes(actor: Actor, status?: QuoteStatus): Promise<Qu
 }
 
 export async function getQuote(actor: Actor, quoteId: string): Promise<QuoteRow | null> {
+  // A malformed id is a missing row, not a server error -- see `isUuid`.
+  if (!isUuid(quoteId)) return null;
+
   const rows = await withOrg(actor.organizationId).selectJoined(
     quotes,
     QUOTE_FIELDS,
@@ -392,6 +396,9 @@ export async function listInvoices(actor: Actor, status?: InvoiceStatus): Promis
 }
 
 export async function getInvoice(actor: Actor, invoiceId: string): Promise<InvoiceRow | null> {
+  // A malformed id is a missing row, not a server error -- see `isUuid`.
+  if (!isUuid(invoiceId)) return null;
+
   const rows = await withOrg(actor.organizationId).selectJoined(
     invoices,
     INVOICE_FIELDS,

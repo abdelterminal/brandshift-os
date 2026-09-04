@@ -33,6 +33,15 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    # Chromium cannot create its own Linux namespace sandbox under Docker's
+    # default seccomp profile. Keep the container itself least-privileged
+    # instead of granting SYS_ADMIN or disabling seccomp for the whole service.
+    init: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
     depends_on:
       db:
         condition: service_healthy

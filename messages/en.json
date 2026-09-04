@@ -169,7 +169,9 @@
     "goToSignIn": "Sign in",
     "forbiddenTitle": "You do not have access to this",
     "forbiddenBody": "Your account is still signed in. Ask an administrator if you think you should be able to see this.",
-    "backToToday": "Back to Today"
+    "backToToday": "Back to Today",
+    "notFoundTitle": "That page does not exist",
+    "notFoundBody": "The link may be out of date, or whatever it pointed at may have been deleted. Nothing has gone wrong with your account."
   },
   "Today": {
     "title": "Today",
@@ -1277,6 +1279,7 @@
     "nameDateSignature": "Name, date & signature",
     "dateSignature": "Date & signature",
     "print": "Print",
-    "backToDocument": "Back"
+    "backToDocument": "Back",
+    "download": "Download PDF"
   }
 }

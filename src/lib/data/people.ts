@@ -7,6 +7,7 @@ import { withOrg } from "@/db/tenancy";
 
 import type { Actor } from "../authz";
 import type { ModulePermissions, Role } from "@/db/schema/people";
+import { isUuid } from "@/lib/uuid";
 
 /**
  * People reads.
@@ -115,6 +116,9 @@ export async function listPeople(
 
 /** One person's membership in this organization, or null if they are not in it. */
 export async function getPerson(actor: Actor, userId: string): Promise<PersonRow | null> {
+  // A malformed id is a missing row, not a server error -- see `isUuid`.
+  if (!isUuid(userId)) return null;
+
   const rows = (await withOrg(actor.organizationId).selectJoined(
     memberships,
     PERSON_FIELDS,

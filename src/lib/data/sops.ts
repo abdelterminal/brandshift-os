@@ -6,6 +6,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/db/client";
 import { departments, sopSteps, sops, users } from "@/db/schema";
 import { withOrg } from "@/db/tenancy";
+import { isUuid } from "@/lib/uuid";
 import type { Actor } from "@/lib/authz";
 import { slugify } from "@/lib/slug";
 import { compareByUrgency, reviewDueOn, reviewState, type ReviewState } from "@/lib/sops";
@@ -323,6 +324,9 @@ export async function setSopStatus(
 }
 
 export async function getSopById(actor: Actor, sopId: string) {
+  // A malformed id is a missing row, not a server error -- see `isUuid`.
+  if (!isUuid(sopId)) return null;
+
   const [row] = await withOrg(actor.organizationId).select(sops, eq(sops.id, sopId));
   return row ?? null;
 }

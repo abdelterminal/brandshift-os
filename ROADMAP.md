@@ -762,6 +762,36 @@ Decisions worth knowing:
 
 ---
 
+### A real PDF, and a 404 that is not a 500  [DONE]
+
+- [x] **Quotes and invoices download as PDF files.** A headless Chromium on the server renders
+      the same `/print` route a person sees, so there is still exactly one implementation of
+      the design -- and the file is byte-for-byte what Ctrl+P would have produced
+- [x] Permission is checked **before** the browser starts, and the document is fetched before
+      that, so a bad id costs a database lookup rather than a browser launch
+- [x] The caller's own session cookie is forwarded to the headless browser, so it can never
+      reach anything the person who asked could not
+- [x] Chromium comes from Alpine's package, not Playwright's download -- Playwright ships glibc
+      builds and this image is musl. `playwright-core` is the driver only and downloads nothing
+- [x] **A malformed id is a 404 everywhere, not a 500.** Every id in this schema is a `uuid`
+      column and Postgres refuses to compare one to arbitrary text, so `/finance/quotes/xyz`
+      used to die as a server error. `isUuid()` guards all twelve id-taking getters, which
+      covers pages, Server Actions and the task id that arrives in a query string alike
+- [x] **And a 404 page worth landing on** -- it says explicitly that the account is fine, since
+      the two ways people get here (a stale link, a deleted record) both suggest otherwise
+- [x] 30 e2e specs across the two, plus 6 unit tests on the guard
+
+Decisions worth knowing:
+- **The PDF is rendered, not redrawn.** A PDF library building the letterhead again would be a
+  second design to keep in step -- which is precisely what the original devis tool was, and why
+  its layout could not be reused anywhere.
+- **One browser, many contexts.** Chromium is launched once and reused; each render gets its
+  own context, because the cookie it carries is somebody's session.
+- **No browser is a 503, not a 500.** The document is fine; only this one way of getting it is
+  not, and the message says to use Print instead.
+
+---
+
 ## Backups
 
 One machine, one Postgres volume, and everything anybody has typed into this app lives in it.

@@ -169,7 +169,9 @@
     "goToSignIn": "Se connecter",
     "forbiddenTitle": "Vous n'avez pas accès à cette page",
     "forbiddenBody": "Votre compte reste connecté. Contactez un administrateur si vous pensez devoir y avoir accès.",
-    "backToToday": "Retour à Aujourd'hui"
+    "backToToday": "Retour à Aujourd'hui",
+    "notFoundTitle": "Cette page n'existe pas",
+    "notFoundBody": "Le lien est peut-être périmé, ou ce qu'il désignait a été supprimé. Rien ne s'est mal passé avec votre compte."
   },
   "Today": {
     "title": "Aujourd'hui",
@@ -1277,6 +1279,7 @@
     "nameDateSignature": "Nom, date et signature",
     "dateSignature": "Date et signature",
     "print": "Imprimer",
-    "backToDocument": "Retour"
+    "backToDocument": "Retour",
+    "download": "Télécharger le PDF"
   }
 }

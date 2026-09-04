@@ -6,6 +6,7 @@ import { meetingAttendees, meetings, type MeetingResponse } from "@/db/schema/me
 import { users } from "@/db/schema/people";
 import { projects } from "@/db/schema/projects";
 import { withOrg, type Executor } from "@/db/tenancy";
+import { isUuid } from "@/lib/uuid";
 
 import type { Actor } from "../authz";
 
@@ -191,6 +192,9 @@ export async function getMeeting(
   actor: Actor,
   meetingId: string,
 ): Promise<MeetingWithAttendees | null> {
+  // A malformed id is a missing row, not a server error -- see `isUuid`.
+  if (!isUuid(meetingId)) return null;
+
   const rows = (await withOrg(actor.organizationId).selectJoined(
     meetings,
     MEETING_FIELDS,

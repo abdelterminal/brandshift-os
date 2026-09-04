@@ -6,6 +6,7 @@ import { db } from "@/db/client";
 
 import { departments, keyResultCheckpoints, keyResults, objectives, users } from "@/db/schema";
 import { withOrg } from "@/db/tenancy";
+import { isUuid } from "@/lib/uuid";
 import type { Actor } from "@/lib/authz";
 import {
   elapsedFraction,
@@ -266,6 +267,9 @@ export async function getObjective(
   objectiveId: string,
   today = new Date(),
 ): Promise<ObjectiveView | null> {
+  // A malformed id is a missing row, not a server error -- see `isUuid`.
+  if (!isUuid(objectiveId)) return null;
+
   const rows = await withOrg(actor.organizationId).selectJoined(
     objectives,
     OBJECTIVE_FIELDS,
@@ -302,6 +306,9 @@ export async function listCheckpoints(actor: Actor, keyResultId: string) {
 }
 
 export async function getKeyResult(actor: Actor, keyResultId: string) {
+  // A malformed id is a missing row, not a server error -- see `isUuid`.
+  if (!isUuid(keyResultId)) return null;
+
   const [row] = await withOrg(actor.organizationId).select(
     keyResults,
     eq(keyResults.id, keyResultId),

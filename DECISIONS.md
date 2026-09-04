@@ -521,6 +521,35 @@ columns on `organizations`, all nullable and each printed only when set. Two ten
 machine send out two different letterheads, so it is not a config file; and a quote with no
 tagline should have no gap where a tagline would go.
 
+## Added when the documents became files
+
+**The PDF is a render of the print route, not a second drawing of it.** The obvious
+alternative -- a PDF library building the letterhead from the same data -- is two
+implementations of one design, and they diverge the first time either is touched. That is not
+hypothetical: the devis this design came from lived *only* inside a jsPDF generator, which is
+exactly why it could never be shown on a screen, emailed as HTML, or reused here without being
+read line by line and translated. Driving a headless browser costs an image with Chromium in
+it; the alternative costs a design that is wrong in one of the two places.
+
+**Chromium comes from Alpine, not from Playwright.** `npx playwright install` fetches builds
+linked against glibc, and this image is musl -- they install cleanly and then refuse to start.
+`playwright-core` is the driver alone and downloads no browser, so the runtime dependency is
+`apk add chromium` plus `PDF_CHROMIUM_PATH`. The font packages beside it are not decoration:
+an image with no fonts renders anything the self-hosted faces do not cover as empty boxes, and
+nobody notices until it is in a PDF that has already been sent.
+
+**The headless browser is given the caller's own cookie.** It authenticates as the person who
+pressed the button and nothing more, so it cannot read a document they could not. The route
+checks `finance.view` and fetches the row *before* launching anything, so an unauthorised URL
+costs a query rather than a browser.
+
+**A malformed id is a missing row.** Every id here is a `uuid` column, and Postgres raises
+rather than returning nothing when it is handed arbitrary text -- so a typo in a URL was a 500,
+which tells a browser, a crawler and an uptime check that the application is broken. The guard
+went into the twelve getters rather than the pages because the pages are not the only callers:
+a task id arrives in a query string, and Server Actions read rows by id too. Every one of those
+getters already returned `null` for "no such row", which is exactly what a malformed id means.
+
 ## Deliberately not chosen
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the

@@ -179,7 +179,9 @@ What is built:
 
 Quotes and invoices have a **print view** -- the document as the client receives it, in the
 same devis design BrandShift has been sending since June. It has its own URL outside the app
-shell, stays ink-on-white whatever theme you use, and prints to A4.
+shell, stays ink-on-white whatever theme you use, and prints to A4. **Download PDF** renders
+that same page with a headless Chromium on the server and hands back a file -- so the PDF and
+the printout can never disagree.
 
 Somebody arriving for the first time gets a **five-step tour** of the shell -- the rail, Today,
 how a task opens, the palette, and the avatar menu -- shown once and never again. It rings the

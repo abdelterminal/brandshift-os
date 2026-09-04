@@ -30,7 +30,7 @@ export default async function QuotePrintPage({
   params,
 }: PageProps<"/[locale]/finance/quotes/[quoteId]/print">) {
   const session = await requirePermission("finance.view");
-  const { quoteId } = await params;
+  const { locale, quoteId } = await params;
 
   const quote = await getQuote(session.actor, quoteId);
   if (!quote) notFound();
@@ -46,7 +46,10 @@ export default async function QuotePrintPage({
 
   return (
     <>
-      <PrintBar backHref={`/finance/quotes/${quote.id}`} />
+      <PrintBar
+        backHref={`/finance/quotes/${quote.id}`}
+        pdfHref={`/${locale}/finance/quotes/${quote.id}/pdf`}
+      />
       <div className="sheet-scaler pb-10">
         <DocumentSheet
           kind="quote"

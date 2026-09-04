@@ -110,6 +110,26 @@ test("the way back is a link, not the browser button", async ({ page }) => {
   await expect(page).toHaveURL(url);
 });
 
+test("is set in the fonts the design asks for", async ({ page }) => {
+  await openQuote(page);
+  await page.getByRole("link", { name: "Print" }).click();
+  await expect(sheet(page)).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+
+  // The PDF renderer embeds whatever Chromium actually drew with, so a silent
+  // fallback here becomes a silent fallback in every quote ever sent. Both
+  // faces are self-hosted, which is the only reason a headless browser with no
+  // system fonts can render this at all.
+  const families = await page.evaluate(() =>
+    [...document.fonts].filter((f) => f.status === "loaded").map((f) => f.family),
+  );
+  expect(families).toContain("spaceGrotesk");
+  expect(families).toContain("inter");
+
+  const heading = page.getByRole("heading", { level: 1 });
+  await expect(heading).toHaveCSS("font-family", /spaceGrotesk/);
+});
+
 test("the printed document is accessible", async ({ page }) => {
   await openQuote(page);
   await page.getByRole("link", { name: "Print" }).click();

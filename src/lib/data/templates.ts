@@ -15,6 +15,7 @@ import {
   users,
 } from "@/db/schema";
 import { withOrg } from "@/db/tenancy";
+import { isUuid } from "@/lib/uuid";
 import type { Actor } from "@/lib/authz";
 import { slugify } from "@/lib/slug";
 import {
@@ -126,6 +127,9 @@ export async function getTemplate(actor: Actor, slug: string): Promise<TemplateV
 }
 
 export async function getTemplateById(actor: Actor, templateId: string) {
+  // A malformed id is a missing row, not a server error -- see `isUuid`.
+  if (!isUuid(templateId)) return null;
+
   const [row] = await withOrg(actor.organizationId).select(
     projectTemplates,
     eq(projectTemplates.id, templateId),

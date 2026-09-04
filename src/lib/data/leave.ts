@@ -5,6 +5,7 @@ import { eq, gte, inArray, lte, ne, type SQL } from "drizzle-orm";
 import { leaveRequests } from "@/db/schema/leave";
 import { memberships, users } from "@/db/schema/people";
 import { withOrg, type Executor } from "@/db/tenancy";
+import { isUuid } from "@/lib/uuid";
 
 import type { Actor } from "../authz";
 import { overlaps, workingDays } from "../leave-days";
@@ -109,6 +110,9 @@ export function listPendingLeave(actor: Actor): Promise<LeaveRow[]> {
 
 /** One request, for the actions that have to check who it belongs to. */
 export async function getLeaveRequest(actor: Actor, id: string): Promise<LeaveRow | null> {
+  // A malformed id is a missing row, not a server error -- see `isUuid`.
+  if (!isUuid(id)) return null;
+
   const rows = await read(actor, eq(leaveRequests.id, id));
   return rows[0] ?? null;
 }

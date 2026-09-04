@@ -43,6 +43,26 @@ const envSchema = z.object({
    * own laptop has to resolve from there.
    */
   APP_URL: z.string().default("http://localhost:3000"),
+  /**
+   * The port this server listens on, used to talk to itself.
+   *
+   * Rendering a PDF means driving a headless browser to the document's own
+   * print route, and that request goes to the loopback address rather than to
+   * `APP_URL`: on a LAN, `APP_URL` is the machine's address on the network,
+   * which from inside the container may not resolve back here at all -- and
+   * even where it does, leaving the host and coming back is a round trip for
+   * nothing.
+   */
+  PORT: z.coerce.number().int().min(1).max(65535).default(3000),
+  /**
+   * Where Chromium is, for PDF rendering.
+   *
+   * Set in the image, where it is installed from Alpine's own package rather
+   * than downloaded by Playwright -- the builds Playwright ships are linked
+   * against glibc and will not run on musl. Left unset in development, where
+   * the browser Playwright installed for the e2e suite is found instead.
+   */
+  PDF_CHROMIUM_PATH: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

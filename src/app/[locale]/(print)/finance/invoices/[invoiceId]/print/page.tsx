@@ -30,7 +30,7 @@ export default async function InvoicePrintPage({
   params,
 }: PageProps<"/[locale]/finance/invoices/[invoiceId]/print">) {
   const session = await requirePermission("finance.view");
-  const { invoiceId } = await params;
+  const { locale, invoiceId } = await params;
 
   const invoice = await getInvoice(session.actor, invoiceId);
   if (!invoice) notFound();
@@ -44,7 +44,10 @@ export default async function InvoicePrintPage({
 
   return (
     <>
-      <PrintBar backHref={`/finance/invoices/${invoice.id}`} />
+      <PrintBar
+        backHref={`/finance/invoices/${invoice.id}`}
+        pdfHref={`/${locale}/finance/invoices/${invoice.id}/pdf`}
+      />
       <div className="sheet-scaler pb-10">
         <DocumentSheet
           kind="invoice"

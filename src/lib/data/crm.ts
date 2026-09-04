@@ -8,6 +8,7 @@ import { withOrg, type Executor } from "@/db/tenancy";
 
 import type { Actor } from "../authz";
 import { slugify } from "../slug";
+import { isUuid } from "@/lib/uuid";
 
 /**
  * CRM reads and writes.
@@ -271,6 +272,9 @@ export async function listDeals(actor: Actor, filter: DealFilter = {}): Promise<
 }
 
 export async function getDeal(actor: Actor, dealId: string): Promise<DealRow | null> {
+  // A malformed id is a missing row, not a server error -- see `isUuid`.
+  if (!isUuid(dealId)) return null;
+
   const rows = await withOrg(actor.organizationId).selectJoined(
     deals,
     DEAL_FIELDS,

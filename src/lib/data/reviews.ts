@@ -12,6 +12,7 @@ import {
   type ReviewSnapshot,
 } from "@/db/schema";
 import { withOrg } from "@/db/tenancy";
+import { isUuid } from "@/lib/uuid";
 import type { Actor } from "@/lib/authz";
 import { longestBlocked, projectsAtRisk } from "@/lib/data/insights";
 import { listOpenObjectives } from "@/lib/data/objectives";
@@ -162,6 +163,9 @@ export async function getReview(actor: Actor, weekStart: string): Promise<Review
 }
 
 export async function getReviewById(actor: Actor, reviewId: string) {
+  // A malformed id is a missing row, not a server error -- see `isUuid`.
+  if (!isUuid(reviewId)) return null;
+
   const [row] = await withOrg(actor.organizationId).select(
     weeklyReviews,
     eq(weeklyReviews.id, reviewId),

@@ -6,6 +6,7 @@ import { users } from "@/db/schema/people";
 import { projects } from "@/db/schema/projects";
 import { tasks } from "@/db/schema/tasks";
 import { withOrg } from "@/db/tenancy";
+import { isUuid } from "@/lib/uuid";
 
 import type { Actor } from "../authz";
 import {
@@ -171,6 +172,9 @@ export async function listProjectTasks(actor: Actor, projectId: string): Promise
 }
 
 export async function getTask(actor: Actor, taskId: string): Promise<TaskRow | null> {
+  // A malformed id is a missing row, not a server error -- see `isUuid`.
+  if (!isUuid(taskId)) return null;
+
   const [task] = await selectTasks(actor, eq(tasks.id, taskId));
   return task ?? null;
 }
