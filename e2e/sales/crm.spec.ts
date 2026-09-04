@@ -179,3 +179,35 @@ test.describe("accessible, and never scrolling the page sideways", () => {
     });
   }
 });
+
+test("a deal can be corrected after it was created", async ({ page }) => {
+  await page.goto("/en/crm");
+  await page.locator("#main a[href*='/crm/deals/']").first().click();
+  await expect(page).toHaveURL(/\/en\/crm\/deals\/[0-9a-f-]{36}$/);
+
+  const title = `Corrected ${String(Date.now()).slice(-5)}`;
+
+  // `editDeal` existed from the day CRM shipped with nothing calling it, so a
+  // typo in a figure survived until somebody deleted the deal and made another.
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
+  await page.getByLabel("Deal", { exact: true }).fill(title);
+  await page.getByLabel("Value").fill("41 500");
+  await page.getByRole("button", { name: "Save" }).click();
+
+  await expect(page.locator("#main").getByRole("heading", { name: title })).toBeVisible();
+  // Stored as typed, thousands separator and all -- the same rule as creation.
+  await expect(page.locator("#main").getByText(/41[  ,.]?500/)).toBeVisible();
+});
+
+test("a corrected figure that is not a figure is refused", async ({ page }) => {
+  await page.goto("/en/crm");
+  await page.locator("#main a[href*='/crm/deals/']").first().click();
+
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
+  await page.getByLabel("Value").fill("about forty thousand");
+  await page.getByRole("button", { name: "Save" }).click();
+
+  // Refused rather than rounded to zero, exactly as on creation. Scoped to
+  // the form: a lost deal already carries a status message on this page.
+  await expect(page.locator("form").getByRole("alert")).toBeVisible();
+});

@@ -4,11 +4,13 @@ import { notFound } from "next/navigation";
 
 import { StageControl, type Stage } from "@/components/crm/stage-control";
 import { PersonAvatar } from "@/components/ui/avatar";
+import { DealEdit } from "@/components/crm/deal-edit";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { focusRing, transition } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
 import { requirePermission } from "@/lib/auth/guards";
+import { can } from "@/lib/authz";
 import { listCompanyContacts, type DealStage } from "@/lib/data/crm";
 import { getDeal } from "@/lib/data/crm";
 import { cn } from "@/lib/utils";
@@ -42,6 +44,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/crm/deal
 
 export default async function DealPage({ params }: PageProps<"/[locale]/crm/deals/[dealId]">) {
   const session = await requirePermission("crm.view");
+  const mayManage = can(session.actor, "crm.manage");
   const { dealId } = await params;
 
   const deal = await getDeal(session.actor, dealId);
@@ -93,6 +96,19 @@ export default async function DealPage({ params }: PageProps<"/[locale]/crm/deal
               <MessagesSquare aria-hidden className="size-4" />
               {t("openChannel")}
             </Button>
+
+            {/*
+              `editDeal` shipped with CRM and nothing called it, so a typo in a
+              figure survived until somebody deleted the deal and made another.
+            */}
+            {mayManage ? (
+              <DealEdit
+                dealId={deal.id}
+                title={deal.title}
+                value={deal.value === null ? "" : String(deal.value)}
+                expectedCloseDate={deal.expectedCloseDate}
+              />
+            ) : null}
           </div>
         </div>
 
@@ -178,10 +194,7 @@ export default async function DealPage({ params }: PageProps<"/[locale]/crm/deal
         <div>
           <dt className="text-caption text-fg-muted">{t("source")}</dt>
           <dd
-            className={cn(
-              "text-body mt-0.5",
-              deal.source ? "text-fg-default" : "text-fg-subtle",
-            )}
+            className={cn("text-body mt-0.5", deal.source ? "text-fg-default" : "text-fg-subtle")}
           >
             {deal.source ?? t("noSource")}
           </dd>

@@ -742,7 +742,7 @@
     "industryPlaceholder": "Financial services",
     "titleLabel": "What is it",
     "titlePlaceholder": "Brand refresh, phase two",
-    "valuePlaceholder": "45000",
+    "valuePlaceholder": "12 500",
     "sourcePlaceholder": "Referral from Northwind",
     "create": "Create",
     "creating": "Creating",
@@ -751,7 +751,9 @@
     "reasonRequired": "Say why it was lost.",
     "alreadyThere": "It is already at that stage.",
     "pickCompany": "Pick a company first.",
-    "openValue": "{value} across {count, plural, one {# open deal} other {# open deals}}"
+    "openValue": "{value} across {count, plural, one {# open deal} other {# open deals}}",
+    "editDeal": "Edit",
+    "dealTitle": "Deal"
   },
   "QuoteStatus": {
     "draft": "Draft",
@@ -1128,5 +1130,33 @@
     "errorWeekNotOver": "That week has not finished yet.",
     "errorPublished": "Reopen it before editing.",
     "errorAlreadyThere": "It is already in that state."
+  },
+  "Profile": {
+    "aboutYou": "About you",
+    "name": "Name",
+    "jobTitle": "Job title",
+    "jobTitlePlaceholder": "Engineering Manager",
+    "language": "Language",
+    "languageHelp": "Only changes what the app says to you. Everyone else keeps their own.",
+    "followOrganization": "Follow the organization",
+    "save": "Save",
+    "saved": "Saved.",
+    "errorInvalid": "Check the highlighted fields.",
+    "inThisOrganization": "In this organization",
+    "setByAdmin": "Set by an owner or an admin, not by you.",
+    "role": "Role",
+    "department": "Department",
+    "noDepartment": "No department",
+    "joined": "Joined",
+    "modules": "Modules",
+    "noModules": "None",
+    "finance": "Finance",
+    "people": "People",
+    "crm": "Pipeline",
+    "insights": "Insights",
+    "elsewhere": "Elsewhere",
+    "yourDirectoryPage": "Your page in the directory",
+    "yourTimeOff": "Your time off",
+    "devicesAndPassword": "Signed-in devices and password"
   }
 }

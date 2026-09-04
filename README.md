@@ -163,6 +163,10 @@ What is built:
   because a review is a document. The screen opens with the weeks nobody wrote up, and with
   decisions from earlier reviews whose date has come and gone.
 
+- **Profile** -- who you are here. What you may change about yourself, and, shown rather than
+  hidden, what you may not: your role, your permissions, your department. Those are terms of
+  employment, not preferences. Devices and passwords are next door in Settings.
+
 Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a screen, a project, a person or a department.
 
 ## Design system

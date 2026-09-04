@@ -742,7 +742,7 @@
     "industryPlaceholder": "Services financiers",
     "titleLabel": "De quoi s'agit-il",
     "titlePlaceholder": "Refonte de marque, phase deux",
-    "valuePlaceholder": "45000",
+    "valuePlaceholder": "12 500",
     "sourcePlaceholder": "Recommandation de Northwind",
     "create": "Créer",
     "creating": "Création",
@@ -751,7 +751,9 @@
     "reasonRequired": "Indiquez pourquoi elle a été perdue.",
     "alreadyThere": "Elle est déjà à cette étape.",
     "pickCompany": "Choisissez d'abord une entreprise.",
-    "openValue": "{value} sur {count, plural, one {# affaire ouverte} other {# affaires ouvertes}}"
+    "openValue": "{value} sur {count, plural, one {# affaire ouverte} other {# affaires ouvertes}}",
+    "editDeal": "Modifier",
+    "dealTitle": "Affaire"
   },
   "QuoteStatus": {
     "draft": "Brouillon",
@@ -1128,5 +1130,33 @@
     "errorWeekNotOver": "Cette semaine n'est pas encore terminée.",
     "errorPublished": "Rouvrez-la avant de la modifier.",
     "errorAlreadyThere": "Elle est déjà dans cet état."
+  },
+  "Profile": {
+    "aboutYou": "Vous",
+    "name": "Nom",
+    "jobTitle": "Intitulé de poste",
+    "jobTitlePlaceholder": "Responsable ingénierie",
+    "language": "Langue",
+    "languageHelp": "Ne change que la langue de l'application pour vous. Chacun garde la sienne.",
+    "followOrganization": "Suivre l'organisation",
+    "save": "Enregistrer",
+    "saved": "Enregistré.",
+    "errorInvalid": "Vérifiez les champs signalés.",
+    "inThisOrganization": "Dans cette organisation",
+    "setByAdmin": "Défini par un propriétaire ou un admin, pas par vous.",
+    "role": "Rôle",
+    "department": "Département",
+    "noDepartment": "Sans département",
+    "joined": "Arrivé le",
+    "modules": "Modules",
+    "noModules": "Aucun",
+    "finance": "Finance",
+    "people": "Personnes",
+    "crm": "Pipeline",
+    "insights": "Insights",
+    "elsewhere": "Ailleurs",
+    "yourDirectoryPage": "Votre page dans l'annuaire",
+    "yourTimeOff": "Vos congés",
+    "devicesAndPassword": "Appareils connectés et mot de passe"
   }
 }
