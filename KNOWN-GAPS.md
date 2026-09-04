@@ -11,7 +11,7 @@ written down nowhere is a gap nobody ever fixes.
 delete the row when it is closed — do not leave a struck-through list of things that are actually
 finished. `CLAUDE.md` points here for the same reason.
 
-Last reviewed: after password reset landed.
+Last reviewed: after file storage was put to sleep.
 
 ---
 
@@ -23,8 +23,8 @@ somewhere around the third milestone, and by the fourth it was actively misleadi
 had accumulated was ordinary unfinished work.
 
 - **The mail transport itself** is the handful of rows about the transport rather than about
-  anything using it. **Waiting on file storage** is the one piece of infrastructure still blocking
-  features outright.
+  anything using it. **Asleep: file storage** is a feature deliberately put down rather than a gap
+  waiting to be filled -- see `DECISIONS.md` for why and for what should wake it.
 - **Not done yet** is real work nobody has done. Each row says what it would take, so none of them
   has to be thought through from scratch.
 - **Deliberate, and not planned to change** is the section the old heading described: decisions,
@@ -49,10 +49,16 @@ transport rather than about any feature that uses it.
 
 ---
 
-## Waiting on file storage
+## Asleep: file storage
 
-There is nowhere to put a file. It is now the only piece of infrastructure anything is still
-blocked on, and four features are each missing the same one thing.
+Deferred deliberately, and written up in `DECISIONS.md`. The storage was never the hard
+part -- a directory in the Compose volume needs no hardware. What is missing is a backup
+story, a retention rule and anything bounding disk growth, and holding somebody's only copy
+of a signed contract without those is worse than not holding it.
+
+Each of these keeps an honest shape in the meantime: a reference rather than a receipt, a
+step rather than a diagram. They wake up when somebody asks twice, or when the deployment
+moves somewhere with backups.
 
 | Thing | Why |
 |---|---|

@@ -420,6 +420,33 @@ rule that editing happens in a drawer or a dialog. A review is a document somebo
 while the meeting is happening, and making the screen you read and the screen you write into two
 different screens is exactly the friction that stops a ritual being kept.
 
+## File storage, deliberately deferred
+
+Four features each want somewhere to put a file: a receipt on an expense, a diagram in a
+procedure, an attachment in a channel, a signed proposal on a deal. None of them is built, and
+that is now a decision rather than a backlog item.
+
+**The storage itself was never the hard part.** A directory inside the Compose volume needs no
+new service, no credentials and no hardware -- the same shape as the mail transport, with a
+driver interface and a local-disk implementation, so moving to S3 later would be configuration
+rather than a rewrite. That could be built in an afternoon.
+
+**What is missing is everything around it.** `backup-data.ps1` and the Compose story cover
+Postgres and nothing else, so uploaded files would be the one part of this system with no
+backup. Nothing bounds disk growth on a machine that cannot be added to. There is no retention
+rule, no size limit worth the name, no scanning, and no answer to what happens when the volume
+fills at four o'clock on a Friday.
+
+Holding somebody's only copy of a signed contract without a backup is worse than not holding it
+at all: a receipt reference in a text field is honest about being a note, where a file that
+silently is not backed up looks like safekeeping. So the four features keep their current honest
+shapes -- a reference rather than a receipt, a step rather than a diagram -- until there is an
+operational story to attach them to.
+
+**What should wake this up**, in order: somebody actually asks for it twice; or the deployment
+moves somewhere with a backup story; or an invoice needs to carry a PDF attachment rather than
+being read on screen. The first is the honest trigger and the other two make it cheap.
+
 ## Deliberately not chosen
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the

@@ -688,9 +688,9 @@ Decisions worth knowing:
 Every milestone on this roadmap is built, and so is every area the Notion hub named. What follows
 is not a plan -- it is `KNOWN-GAPS.md` in the order the gaps are actually felt.
 
-- **File storage** -- a receipt on an expense, a signed proposal on a deal, a diagram in a
-  procedure, an attachment in a channel. Four features are missing the same thing, and it is
-  now the largest single blocker.
+- ~~**File storage**~~ -- **asleep on purpose.** Four features want it and none of them gets it
+  yet: the storage is easy, the backup story is not, and a file that silently is not backed up
+  looks like safekeeping. Written up in `DECISIONS.md`, with what should wake it.
 - **Something that drains the queue.** There is no scheduler, so the only things that move a
   message are queueing one and pressing retry.
 - **An invoice that can be printed or sent.** It exists as a screen and nothing else.
