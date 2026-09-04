@@ -173,6 +173,10 @@ What is built:
   it and passes the link on. Set `MAIL_DRIVER=smtp` and the same messages start being
   delivered, including the ones already queued.
 
+- **Forgotten passwords** -- ask at `/forgot` and a one-time link is written to the same
+  outbox. The form says the same sentence whatever the address is, and a stranger asking writes
+  nothing at all, so the outbox cannot be used to find out who has an account.
+
 Press `Cmd+K` (or `Ctrl+K`) anywhere to jump to a screen, a project, a person or a department.
 
 ## Design system

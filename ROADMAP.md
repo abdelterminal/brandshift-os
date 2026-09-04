@@ -658,6 +658,11 @@ Decisions worth knowing:
       form said "you get in by invitation". `auth_tokens`, `/accept/<token>`, single use,
       digest-only storage, and the membership goes `invited` -> `active` on acceptance
 - [x] Messages are written in the **recipient's** locale, not the sender's
+- [x] **Password reset**, completing the same chain: `/forgot` mints a token and
+      `/reset/<token>` spends it. The form answers identically whether the address is a member,
+      a stranger or nonsense, and a stranger's request writes **no row at all** -- otherwise the
+      outbox itself becomes the way to find out which addresses are real. One live token per
+      person, so nobody fills an inbox by holding down a button
 - [x] 14 unit tests on the parts that can be checked without a mail server, 10 e2e covering
       invite -> outbox -> link -> password -> signed in
 
@@ -686,8 +691,6 @@ is not a plan -- it is `KNOWN-GAPS.md` in the order the gaps are actually felt.
 - **File storage** -- a receipt on an expense, a signed proposal on a deal, a diagram in a
   procedure, an attachment in a channel. Four features are missing the same thing, and it is
   now the largest single blocker.
-- **Password reset.** The token, the screen and the transport all exist; what is missing is the
-  "forgot your password" form that mints one. Half a day.
 - **Something that drains the queue.** There is no scheduler, so the only things that move a
   message are queueing one and pressing retry.
 - **An invoice that can be printed or sent.** It exists as a screen and nothing else.

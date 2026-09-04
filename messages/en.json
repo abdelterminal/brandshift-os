@@ -160,7 +160,8 @@
     "revoke": "Sign out",
     "revokeAll": "Sign out everywhere else",
     "unknownDevice": "Unknown device",
-    "sessionRevoked": "That device has been signed out."
+    "sessionRevoked": "That device has been signed out.",
+    "forgotPassword": "Forgotten your password?"
   },
   "Errors": {
     "unauthorizedTitle": "You are signed out",
@@ -1212,5 +1213,12 @@
     "kindNotification": "Notification",
     "show": "Show message",
     "hide": "Hide message"
+  },
+  "Forgot": {
+    "title": "Reset your password",
+    "subtitle": "We will send you a link to choose a new one.",
+    "email": "Email",
+    "submit": "Send the link",
+    "sent": "If that address belongs to an account, a link is on its way. It works once and expires in an hour."
   }
 }

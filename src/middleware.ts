@@ -27,10 +27,11 @@ import { routing } from "@/i18n/routing";
 const intlMiddleware = createMiddleware(routing);
 
 /** Reachable without a session. Everything else is not. */
-// `/accept` and `/reset` are reached from a one-time link by somebody who by
-// definition has no session yet. Leaving them out sent every invitation to the
-// sign-in page, which is exactly where an invited person cannot get in.
-const PUBLIC_PATHS = ["/login", "/signup", "/accept", "/reset"];
+// `/forgot`, `/accept` and `/reset` are all reached by somebody who by
+// definition has no session: the first because they cannot get one, the other
+// two from a one-time link. Leaving them out sends them to the sign-in page,
+// which is exactly where they cannot get in.
+const PUBLIC_PATHS = ["/login", "/signup", "/forgot", "/accept", "/reset"];
 
 /**
  * Public paths a signed-in person is bounced away from.

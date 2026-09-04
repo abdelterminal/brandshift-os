@@ -11,7 +11,7 @@ written down nowhere is a gap nobody ever fixes.
 delete the row when it is closed — do not leave a struck-through list of things that are actually
 finished. `CLAUDE.md` points here for the same reason.
 
-Last reviewed: after the mail transport and working invitations landed.
+Last reviewed: after password reset landed.
 
 ---
 
@@ -22,9 +22,9 @@ claiming everything under it was deliberate and not planned to change. That stop
 somewhere around the third milestone, and by the fourth it was actively misleading: most of what
 had accumulated was ordinary unfinished work.
 
-- **Waiting on a mail transport** and **Waiting on file storage** are the two pieces of
-  infrastructure that between them account for a seventh of this file. Each row is a feature that
-  is finished apart from that one thing.
+- **The mail transport itself** is the handful of rows about the transport rather than about
+  anything using it. **Waiting on file storage** is the one piece of infrastructure still blocking
+  features outright.
 - **Not done yet** is real work nobody has done. Each row says what it would take, so none of them
   has to be thought through from scratch.
 - **Deliberate, and not planned to change** is the section the old heading described: decisions,
@@ -35,34 +35,24 @@ that is the honest default, and the one the old file got wrong by assuming the o
 
 ---
 
-## Waiting on a mail transport
+## The mail transport itself
 
-Nothing in this app can send an email. These are the features that are finished apart from that,
-and they all become small the day it exists -- which is why it is the first thing on the roadmap's
-*After this*.
+It exists now, and delivers nothing by default -- see `ROADMAP.md`. These four are about the
+transport rather than about any feature that uses it.
 
 | Thing | Why |
 |---|---|
-| Nothing reminds anybody to record a figure | A key result nobody measures shows as "not measured" forever, and the only thing that surfaces it is somebody opening the screen. A nudge needs the scheduler and the mail transport this deployment still lacks -- the same two things four other gaps wait on. |
-| Nothing chases an overdue review | The list shows what is stale and that is the whole mechanism: somebody has to open the screen. No email, no inbox notification, no digest. Needs the mail transport, like everything else on this list that wants to reach somebody who is not already looking. |
-| Nothing reminds anybody to hold a review | The screen lists the weeks that were skipped and that is the whole mechanism -- somebody has to open it. A Monday nudge needs the scheduler and the mail transport that five other gaps also wait on. |
 | Nothing drains the mail queue on its own | There is no scheduler, so the only two things that ever move a message are queueing one and pressing retry in the outbox. On the default driver nothing is being delivered anyway, so this only starts to matter the day `MAIL_DRIVER=smtp` is set -- at which point it wants a cron, or a queue worker, or Vercel-style scheduled route. |
-| No password reset form | The token, the `/reset/<token>` screen and the transport all exist and are tested; what is missing is the "forgot your password" form that mints one, and the rate limiting it would need. Half a day, and the pieces are already in place. |
 | Emails are plain text | No HTML, no branding, no logo. Deliberate to begin with -- an HTML email is a rendering project with its own testing problem, and every client interprets it differently -- but it does mean an invitation from this app looks like a note rather than like the studio. |
 | The outbox keeps message bodies forever | Including invite links, which set passwords. They expire, and anybody who can read the outbox can already invite people, so it grants nothing new -- but there is no pruning, and a year of notifications will sit there. Wants a retention rule the day notifications start being emailed. |
 | Nothing knows whether a message actually arrived | `sent` means it left this machine. There is no bounce handling and no delivery receipt, which would need a mailbox to read and a webhook to receive. |
-| An invoice cannot be printed, saved as a PDF or sent | It exists as a screen and nothing else. Sending it means the mail transport this deployment still lacks; a PDF means a rendering step and a decision about who owns the layout. Until then the document is read in the app or the browser's own print dialog is used, which is not a designed output. This is the largest gap in ERP. |
-| Nothing chases an overdue invoice | The invoices list marks what is past its due date and no further. No reminder goes out, to the client or to anybody here, because both would need a mail transport. |
-| No email, no calls, no attachments on a deal | A deal has notes and a channel. There is no logged call, no email thread and nowhere to put a signed proposal. Email needs the mail transport this deployment still lacks; files need somewhere to put them. |
-| No external calendar, and no invitations by email | Nothing exports `.ics` and nothing syncs with Google or Outlook, so a meeting booked here is invisible to anybody's phone. The invitation reaches people through the inbox, in the app. Both halves need a mail transport, which this deployment still does not have. |
-| No reminders | Nothing tells you fifteen minutes beforehand. Today shows what is next when you look at it, which is not the same thing. Needs either a scheduler or push, neither of which exists yet. |
-| Notifications are in-app only | No email, no push. Both need a mail transport, which this deployment does not have. Inbox was the milestone that would have brought one and did not -- it turned out to be a separate piece of infrastructure, not part of the feature. |
 
 ---
 
 ## Waiting on file storage
 
-There is nowhere to put a file. Four features are each missing the same one thing.
+There is nowhere to put a file. It is now the only piece of infrastructure anything is still
+blocked on, and four features are each missing the same one thing.
 
 | Thing | Why |
 |---|---|
@@ -74,13 +64,25 @@ There is nowhere to put a file. Four features are each missing the same one thin
 
 ## Not done yet
 
-Real work that has not been done. Each row says what it would take, so none of them needs to be
-thought through from scratch. Nothing here is deliberate -- if it were, it would be in the section
-below.
+Real work nobody has done. Each row says what it would take, so none of them needs to be
+thought through from scratch. Nothing here is deliberate -- if it were, it would be in the
+section below.
+
+The ten rows at the top were, until recently, waiting on a mail transport. They are not any
+more: the transport landed and none of them has been wired to it yet, which is a different
+and more embarrassing kind of gap.
 
 | Thing | Why |
 |---|---|
-| Thing | Why |
+| Nothing reminds anybody to record a figure | A key result nobody measures shows as "not measured" forever, and the only thing that surfaces it is somebody opening the screen. A nudge needs the scheduler and the mail transport this deployment still lacks -- the same two things four other gaps wait on. |
+| Nothing chases an overdue review | The list shows what is stale and that is the whole mechanism: somebody has to open the screen. No email, no inbox notification, no digest. Needs the mail transport, like everything else on this list that wants to reach somebody who is not already looking. |
+| Nothing reminds anybody to hold a review | The screen lists the weeks that were skipped and that is the whole mechanism -- somebody has to open it. A Monday nudge needs the scheduler and the mail transport that five other gaps also wait on. |
+| An invoice cannot be printed, saved as a PDF or sent | It exists as a screen and nothing else. Sending it means the mail transport this deployment still lacks; a PDF means a rendering step and a decision about who owns the layout. Until then the document is read in the app or the browser's own print dialog is used, which is not a designed output. This is the largest gap in ERP. |
+| Nothing chases an overdue invoice | The invoices list marks what is past its due date and no further. No reminder goes out, to the client or to anybody here, because both would need a mail transport. |
+| No email, no calls, no attachments on a deal | A deal has notes and a channel. There is no logged call, no email thread and nowhere to put a signed proposal. Email needs the mail transport this deployment still lacks; files need somewhere to put them. |
+| No external calendar, and no invitations by email | Nothing exports `.ics` and nothing syncs with Google or Outlook, so a meeting booked here is invisible to anybody's phone. The invitation reaches people through the inbox, in the app. Both halves need a mail transport, which this deployment still does not have. |
+| No reminders | Nothing tells you fifteen minutes beforehand. Today shows what is next when you look at it, which is not the same thing. Needs either a scheduler or push, neither of which exists yet. |
+| Notifications are in-app only | No email, no push. Both need a mail transport, which this deployment does not have. Inbox was the milestone that would have brought one and did not -- it turned out to be a separate piece of infrastructure, not part of the feature. |
 | No rate limiting on sign-in | Single-tenant on a local network. Sign-in already resists account enumeration (one message for both halves, and a dummy hash verified when no user matches), but nothing throttles guesses. Worth adding before this is ever exposed beyond the LAN. |
 | Notifications have read state but no archive | Read and unread cover the core of an inbox. A third state is worth adding when somebody actually wants to keep a read item out of the way, not before. |
 | A won deal does not become a project | Nothing converts one into the other, so the handover from selling the work to doing it is retyping. It is the obvious next thing and it is a decision about what carries across -- the team, the deliverables, the dates -- rather than a button. |
@@ -131,8 +133,8 @@ below.
 
 ## Deliberate, and not planned to change
 
-These are decisions rather than omissions. They are here so nobody rediscovers them and files them
-as bugs, and so the argument does not have to be had twice -- most are set out at length in
+Decisions rather than omissions. They are here so nobody rediscovers them and files them as
+bugs, and so the argument does not have to be had twice -- most are set out at length in
 `DECISIONS.md`.
 
 | Thing | Why |

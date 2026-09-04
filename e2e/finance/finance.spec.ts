@@ -25,9 +25,7 @@ const main = (page: Page) => page.locator("#main");
 test("opens on what is overdue", async ({ page }) => {
   await page.goto("/en/finance");
 
-  await expect(
-    main(page).getByRole("heading", { name: "Finance", level: 1 }),
-  ).toBeVisible();
+  await expect(main(page).getByRole("heading", { name: "Finance", level: 1 })).toBeVisible();
 
   // Exceptions first, as everywhere else in this app.
   const headings = main(page).getByRole("heading", { level: 2 });
@@ -44,9 +42,7 @@ test("the total on the form is the total that is stored", async ({ page }) => {
   const dialog = page.getByRole("dialog", { name: "New quote" });
   const title = `Arithmetic check ${Date.now()}`;
   await dialog.getByRole("textbox", { name: "What it is for" }).fill(title);
-  await dialog
-    .getByLabel("Company", { exact: true })
-    .selectOption({ label: "Kestrel Partners" });
+  await dialog.getByLabel("Company", { exact: true }).selectOption({ label: "Kestrel Partners" });
 
   // 1.5 days at 800, plus 20% -- typed the way people type it.
   await dialog.getByLabel("Description 1").fill("Strategy day");
@@ -67,19 +63,13 @@ test("the total on the form is the total that is stored", async ({ page }) => {
   ).toBeVisible();
 });
 
-test("a figure that is not a figure is refused, not read as zero", async ({
-  page,
-}) => {
+test("a figure that is not a figure is refused, not read as zero", async ({ page }) => {
   await page.goto("/en/finance/quotes");
   await page.getByRole("button", { name: "New quote" }).click();
 
   const dialog = page.getByRole("dialog", { name: "New quote" });
-  await dialog
-    .getByRole("textbox", { name: "What it is for" })
-    .fill("Bad money");
-  await dialog
-    .getByLabel("Company", { exact: true })
-    .selectOption({ label: "Kestrel Partners" });
+  await dialog.getByRole("textbox", { name: "What it is for" }).fill("Bad money");
+  await dialog.getByLabel("Company", { exact: true }).selectOption({ label: "Kestrel Partners" });
   await dialog.getByLabel("Description 1").fill("Something");
   await dialog.getByLabel("Unit price 1").fill("about four thousand");
 
@@ -88,9 +78,7 @@ test("a figure that is not a figure is refused, not read as zero", async ({
   await expect(dialog.getByText(/does not look like an amount/)).toBeVisible();
 });
 
-test("every document gets its own number, and numbers are not reused", async ({
-  page,
-}) => {
+test("every document gets its own number, and numbers are not reused", async ({ page }) => {
   const numbers: string[] = [];
 
   for (const round of [1, 2]) {
@@ -101,9 +89,7 @@ test("every document gets its own number, and numbers are not reused", async ({
     await dialog
       .getByRole("textbox", { name: "What it is for" })
       .fill(`Numbering ${round} ${Date.now()}`);
-    await dialog
-      .getByLabel("Company", { exact: true })
-      .selectOption({ label: "Kestrel Partners" });
+    await dialog.getByLabel("Company", { exact: true }).selectOption({ label: "Kestrel Partners" });
     await dialog.getByLabel("Description 1").fill("A line");
     await dialog.getByLabel("Unit price 1").fill("100");
     await dialog.getByRole("button", { name: "Create" }).click();
@@ -147,9 +133,7 @@ test("a sent invoice is voided, never deleted", async ({ page }) => {
   await voided.click();
 
   await expect(main(page).getByText("Void").first()).toBeVisible();
-  await expect(
-    main(page).getByText(/Issued against the old retainer rate/),
-  ).toBeVisible();
+  await expect(main(page).getByText(/Issued against the old retainer rate/)).toBeVisible();
 });
 
 test("voiding asks why", async ({ page }) => {
@@ -166,14 +150,10 @@ test("voiding asks why", async ({ page }) => {
   await dialog.getByRole("button", { name: "Void it" }).click();
   await expect(dialog).toBeHidden();
 
-  await expect(
-    main(page).getByText("Raised against the wrong project."),
-  ).toBeVisible();
+  await expect(main(page).getByText("Raised against the wrong project.")).toBeVisible();
 });
 
-test("an accepted quote becomes a project, with its lines as tasks", async ({
-  page,
-}) => {
+test("an accepted quote becomes a project, with its lines as tasks", async ({ page }) => {
   await page.goto("/en/finance/quotes");
 
   // The Harbour onboarding quote is seeded as accepted.
@@ -202,14 +182,10 @@ test("an accepted quote becomes a project, with its lines as tasks", async ({
   await expect(main(page).getByText("Handover and training")).toBeVisible();
 });
 
-test("an expense somebody paid for themselves can be reimbursed", async ({
-  page,
-}) => {
+test("an expense somebody paid for themselves can be reimbursed", async ({ page }) => {
   await page.goto("/en/finance/expenses");
 
-  const row = main(page)
-    .getByRole("listitem")
-    .filter({ hasText: "Train to Lyon" });
+  const row = main(page).getByRole("listitem").filter({ hasText: "Train to Lyon" });
   await expect(row).toBeVisible();
   await row.getByRole("button", { name: "Mark reimbursed" }).click();
 
@@ -226,18 +202,14 @@ test("a manager without the module sees none of it", async ({ browser }) => {
 
   // 403, not 401: what the company is owed is the most sensitive data here,
   // and the session survives being refused it.
-  await expect(
-    managerPage.getByRole("heading", { name: "Finance", level: 1 }),
-  ).toHaveCount(0);
+  await expect(managerPage.getByRole("heading", { name: "Finance", level: 1 })).toHaveCount(0);
   await managerPage.goto("/en/today");
   await expect(managerPage.getByRole("heading", { level: 1 })).toBeVisible();
 
   await managerContext.close();
 });
 
-test("the money is on the rail of the person who can see it", async ({
-  page,
-}) => {
+test("the money is on the rail of the person who can see it", async ({ page }) => {
   await page.goto("/en/today");
 
   // The fault this exists to catch: Finance shipped as a route, a permission
@@ -302,13 +274,9 @@ test.describe("accessible, and never scrolling the page sideways", () => {
         await expect(page.locator("#main")).toBeVisible();
 
         const overflow = await page.evaluate(
-          () =>
-            document.documentElement.scrollWidth -
-            document.documentElement.clientWidth,
+          () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
         );
-        expect(overflow, `${route} at ${viewport.width}px`).toBeLessThanOrEqual(
-          1,
-        );
+        expect(overflow, `${route} at ${viewport.width}px`).toBeLessThanOrEqual(1);
       }
     });
   }

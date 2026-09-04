@@ -40,6 +40,9 @@ async function linkFromOutbox(page: Page, email: string): Promise<string> {
 
   const row = main(page).locator("li", { hasText: email }).first();
   await row.getByRole("button", { name: "Show message" }).click();
+  // The body renders on a state change, so reading the row straight after the
+  // click can beat React to it.
+  await expect(row.locator("pre")).toBeVisible();
 
   const body = await row.innerText();
   const match = body.match(/https?:\/\/[^\s]+\/en\/accept\/[A-Za-z0-9_-]+/);

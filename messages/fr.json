@@ -160,7 +160,8 @@
     "revoke": "Déconnecter",
     "revokeAll": "Déconnecter tous les autres appareils",
     "unknownDevice": "Appareil inconnu",
-    "sessionRevoked": "Cet appareil a été déconnecté."
+    "sessionRevoked": "Cet appareil a été déconnecté.",
+    "forgotPassword": "Mot de passe oublié ?"
   },
   "Errors": {
     "unauthorizedTitle": "Vous êtes déconnecté",
@@ -1212,5 +1213,12 @@
     "kindNotification": "Notification",
     "show": "Afficher le message",
     "hide": "Masquer le message"
+  },
+  "Forgot": {
+    "title": "Réinitialiser votre mot de passe",
+    "subtitle": "Nous vous enverrons un lien pour en choisir un nouveau.",
+    "email": "E-mail",
+    "submit": "Envoyer le lien",
+    "sent": "Si cette adresse correspond à un compte, un lien est en route. Il fonctionne une fois et expire dans une heure."
   }
 }
