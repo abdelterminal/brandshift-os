@@ -9,6 +9,7 @@ import {
   overflowFor,
   railFor,
   withChannels,
+  withDepartments,
 } from "./navigation";
 
 /**
@@ -93,7 +94,15 @@ describe("the rail", () => {
 
   it("marks Work as expandable, for the channels Phase 2 nests under it", () => {
     const work = railFor(ADMIN).find((item) => item.id === "work");
-    expect(work?.expandable).toBe(true);
+    expect(work?.expandableChildren).toBe("channels");
+  });
+
+  it("marks People (or Team) as expandable, for the departments it nests", () => {
+    for (const person of EVERYONE) {
+      const rail = railFor(person);
+      const peopleLike = rail.find((item) => item.href === "/people");
+      expect(peopleLike?.expandableChildren, `for ${person.role}`).toBe("departments");
+    }
   });
 });
 
@@ -192,6 +201,70 @@ describe("channels under Work", () => {
     const work = bare.find((item) => item.children)!;
     expect(work.children).toHaveLength(1);
     expect(work.children![0]!.href).toBe("/channels");
+  });
+});
+
+describe("departments under People", () => {
+  const DEPARTMENTS = [
+    { id: "d1", name: "Design" },
+    { id: "d2", name: "Engineering" },
+  ];
+
+  const railWith = (person: Actor) => withDepartments(railFor(person), DEPARTMENTS);
+
+  it("still never exceeds five primary destinations", () => {
+    for (const person of EVERYONE) {
+      expect(railWith(person).length).toBeLessThanOrEqual(MAX_PRIMARY_DESTINATIONS);
+    }
+  });
+
+  it("hangs them under People (or Team), and nowhere else", () => {
+    for (const person of EVERYONE) {
+      const withChildren = railWith(person).filter((item) => item.children?.length);
+      expect(withChildren).toHaveLength(1);
+      expect(withChildren[0]!.href).toBe("/people");
+    }
+  });
+
+  it("names each department from its own data, not from the catalogue", () => {
+    const people = railWith(MEMBER).find((item) => item.children)!;
+    expect(people.children!.map((child) => child.label)).toEqual(["Design", "Engineering"]);
+  });
+
+  it("carries the department as a query param on the one page that reads it", () => {
+    const people = railWith(MEMBER).find((item) => item.children)!;
+    for (const child of people.children!) {
+      expect(child.href).toMatch(/^\/people\?department=/);
+    }
+  });
+
+  it("does not add a trailing link the way channels do", () => {
+    // The parent row already goes to the unfiltered /people; there is
+    // nothing here that needs a route of its own to reach.
+    const people = railWith(MEMBER).find((item) => item.children)!;
+    expect(people.children).toHaveLength(DEPARTMENTS.length);
+  });
+
+  it("leaves a rail with no departments yet showing none, not a broken row", () => {
+    // Every fresh /signup starts here. Sidebar already treats an empty
+    // children array the same as none at all, so nothing should render --
+    // and importantly, nothing should throw either.
+    const bare = withDepartments(railFor(MEMBER), []);
+    const people = bare.find((item) => item.href === "/people")!;
+    expect(people.children).toHaveLength(0);
+  });
+
+  it("does not disturb Work's own channel-shaped children", () => {
+    // Both Work and People can be expandable on the same rail; withDepartments
+    // must only ever touch the one whose expandableChildren is "departments".
+    const withChannelsFirst = withChannels(railFor(ADMIN), [], "All channels");
+    const both = withDepartments(withChannelsFirst, DEPARTMENTS);
+
+    const work = both.find((item) => item.id === "work")!;
+    expect(work.children).toHaveLength(1); // just "All channels"
+
+    const people = both.find((item) => item.id === "people")!;
+    expect(people.children).toHaveLength(2);
   });
 });
 

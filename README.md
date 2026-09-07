@@ -126,6 +126,8 @@ What is built:
   you assign them. Nothing is saved until you publish.
 - **People** -- the directory, server-paginated and filtered through the URL; each person as a
   routed page with their workload, projects and activity; invites; role and module editing.
+  Departments nest under People in the rail, the same way channels nest under Work, and jump
+  straight to that department filtered.
 - **Inbox** -- what involves you: work you were given, a blocker on something you run, a change to
   what you may do. Never your own actions. The unread count on the rail is a real count of rows
   you can go and act on.

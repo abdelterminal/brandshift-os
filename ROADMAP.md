@@ -870,6 +870,26 @@ Decisions worth knowing:
 
 ---
 
+### Departments nest under People in the rail  [DONE]
+
+- [x] **`Destination.expandable: boolean` became `expandableChildren?: "channels" | "departments"`**
+      -- Work and People can now each carry their own kind of child on the same rail without one's
+      `withChannels()` overwriting what the other's `withDepartments()` set
+- [x] `withDepartments()`, mirroring `withChannels()`: departments become nested rows under People
+      (Team, for a member), named from the org's own data rather than the catalogue
+- [x] No trailing "see them all" row -- the parent already goes to the unfiltered `/people`, so
+      there is nothing here that needs a route of its own
+- [x] A department's row does not fight the rail's path-based highlighting into claiming it: it
+      carries the department as a query param on `/people`, the one page that reads it, rather than
+      pretending to be its own destination
+- [x] A fresh organization with none yet shows a plain People row -- `children: []`, which `Sidebar`
+      already renders as nothing, not a chevron pointing at an empty list
+- [x] 8 new unit tests in `navigation.test.ts`, mirroring the channels suite exactly: the cap still
+      holds, departments nest in exactly one place, names come from data, the query-param shape,
+      no trailing link, an empty org stays clean, and Work's own children are untouched by it
+
+---
+
 ### Deployed under a sub-path, next to two other sites  [DONE]
 
 - [x] **The app can be mounted under a sub-path of a domain it does not own**, via

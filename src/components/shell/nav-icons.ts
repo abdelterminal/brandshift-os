@@ -1,4 +1,5 @@
 import {
+  Building2,
   CalendarDays,
   FolderKanban,
   Hash,
@@ -33,6 +34,7 @@ export const NAV_ICONS: Record<NavIconName, LucideIcon> = {
   work: FolderKanban,
   myWork: ListTodo,
   people: Users,
+  department: Building2,
   insights: LayoutGrid,
   inbox: Inbox,
   calendar: CalendarDays,

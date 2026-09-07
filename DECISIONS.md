@@ -586,6 +586,33 @@ arrives as a Tailwind utility and utilities outrank the components layer -- whet
 one page is not a decision a spacing class on a wrapper gets to make.
 
 
+## Added when departments needed a way in from the rail
+
+**Departments nest under People (Team, for a member), the same way channels nest under Work.**
+`Destination.expandable: boolean` became `expandableChildren?: "channels" | "departments"`, so two
+destinations on the same rail can each carry their own kind of child without one's `withChannels()`
+overwriting what the other's `withDepartments()` set. The cap of five still holds -- nesting is
+exactly the mechanism that already let channels exist on a five-slot rail at all, and departments
+spend nothing further from that budget.
+
+**No trailing "see them all" row, unlike channels.** `All channels` exists because Work itself is
+not the unfiltered channel list -- it is a different page. `/people` *is* the unfiltered list, so
+the parent row a department nests under already goes exactly there; a second link to the same place
+would be decoration, not a route to anything.
+
+**A department's row does not light up when you are on it.** A channel is its own path
+(`/channels/<slug>`), so the rail's ordinary path-based highlighting picks it out correctly. A
+department is a query param on `/people`, because that is what the filter already was before this
+-- and query params are exactly what the rail's `isActive()` does not look at. Giving departments a
+real route of their own to fix this would be solving a cosmetic problem by building a second way to
+reach the People directory. The rail says "you are in People", which is true; the page itself, via
+`PeopleFilters`, is what actually shows which department is selected.
+
+**An organization with no departments yet shows nothing, not a dead-end chevron.** `withDepartments`
+sets `children: []` rather than skipping the destination, and `Sidebar` already treats an empty
+array the same as none at all -- so a fresh `/signup` shows a plain People row, and the moment an
+admin creates the first department it appears with no other change anywhere.
+
 ## Added when a fresh organization had nowhere to put its departments
 
 **Departments could be read everywhere and created nowhere.** `/signup` sets an organization's

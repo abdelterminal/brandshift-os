@@ -25,6 +25,7 @@ export type NavIconName =
   | "work"
   | "myWork"
   | "people"
+  | "department"
   | "insights"
   | "inbox"
   | "calendar"
@@ -60,9 +61,15 @@ export type Destination = {
   exact?: boolean;
   /** Hidden unless the actor may do this. */
   requires?: Action;
-  /** Channels nest under Work. Children are never counted against the cap. */
+  /** Channels nest under Work, departments under People. Never counted against the cap. */
   children?: Destination[];
-  expandable?: boolean;
+  /**
+   * What this destination's children are, if it has any -- `withChannels()`
+   * and `withDepartments()` each look for their own kind rather than filling
+   * in whatever is merely `expandable`, so Work and People can both carry
+   * children on the same rail without one overwriting the other's.
+   */
+  expandableChildren?: "channels" | "departments";
 };
 
 /**
@@ -80,9 +87,15 @@ const ADMIN_RAIL: Destination[] = [
     href: "/work",
     icon: "work",
     requires: "work.view",
-    expandable: true,
+    expandableChildren: "channels",
   },
-  { id: "people", href: "/people", icon: "people", requires: "people.view" },
+  {
+    id: "people",
+    href: "/people",
+    icon: "people",
+    requires: "people.view",
+    expandableChildren: "departments",
+  },
   {
     id: "insights",
     href: "/insights",
@@ -113,9 +126,15 @@ const SALES_RAIL: Destination[] = [
     href: "/work",
     icon: "work",
     requires: "work.view",
-    expandable: true,
+    expandableChildren: "channels",
   },
-  { id: "people", href: "/people", icon: "people", requires: "people.view" },
+  {
+    id: "people",
+    href: "/people",
+    icon: "people",
+    requires: "people.view",
+    expandableChildren: "departments",
+  },
   { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" },
 ];
 
@@ -145,9 +164,15 @@ const FINANCE_RAIL: Destination[] = [
     href: "/work",
     icon: "work",
     requires: "work.view",
-    expandable: true,
+    expandableChildren: "channels",
   },
-  { id: "people", href: "/people", icon: "people", requires: "people.view" },
+  {
+    id: "people",
+    href: "/people",
+    icon: "people",
+    requires: "people.view",
+    expandableChildren: "departments",
+  },
   { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" },
 ];
 
@@ -158,7 +183,7 @@ const MEMBER_RAIL: Destination[] = [
     href: "/work",
     icon: "myWork",
     requires: "work.view",
-    expandable: true,
+    expandableChildren: "channels",
   },
   {
     id: "calendar",
@@ -167,7 +192,13 @@ const MEMBER_RAIL: Destination[] = [
     requires: "calendar.view",
   },
   { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" },
-  { id: "team", href: "/people", icon: "people", requires: "people.view" },
+  {
+    id: "team",
+    href: "/people",
+    icon: "people",
+    requires: "people.view",
+    expandableChildren: "departments",
+  },
 ];
 
 /**
@@ -273,7 +304,7 @@ export function withChannels(
   allChannelsLabel: string,
 ): Destination[] {
   return rail.map((destination) => {
-    if (!destination.expandable) return destination;
+    if (destination.expandableChildren !== "channels") return destination;
 
     return {
       ...destination,
@@ -294,6 +325,42 @@ export function withChannels(
           requires: "channel.view" as const,
         },
       ],
+    };
+  });
+}
+
+/**
+ * Hang someone's departments under People (or Team, for a member).
+ *
+ * No trailing "see them all" link the way channels get one: the parent row
+ * already goes to the unfiltered `/people`, so there is nothing a departments
+ * list needs to add a route to reach. A department's own href carries it as a
+ * query param rather than a path -- `/people` is the one page that reads it --
+ * so unlike a channel, a selected department does not light up its own row:
+ * the rail can truthfully say "you are in People" and no more specifically
+ * than that, which is what the query param actually is.
+ *
+ * An organization with none yet -- every fresh `/signup` -- gets an empty
+ * `children` array rather than this being skipped: `Sidebar` already treats
+ * empty the same as absent, so nothing renders until the first department
+ * exists, and it appears the next time this runs with no other change needed.
+ */
+export function withDepartments(
+  rail: Destination[],
+  departments: Array<{ id: string; name: string }>,
+): Destination[] {
+  return rail.map((destination) => {
+    if (destination.expandableChildren !== "departments") return destination;
+
+    return {
+      ...destination,
+      children: departments.map((department) => ({
+        id: department.id,
+        href: `/people?department=${department.id}`,
+        icon: "department" as const,
+        label: department.name,
+        requires: "people.view" as const,
+      })),
     };
   });
 }

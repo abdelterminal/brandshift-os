@@ -31,9 +31,20 @@ test("a department can be created, and shows up where departments are used", asy
   await dialog.getByRole("button", { name: "Create" }).click();
   await expect(dialog).toBeHidden();
 
-  // Listed on the panel that created it, with its description.
-  await expect(page.getByText(name)).toBeVisible();
-  await expect(page.getByText("A department this test made up.")).toBeVisible();
+  // Listed on the panel that created it, with its description. Scoped to
+  // #main rather than the whole page: the rail picks up the same name the
+  // moment this closes (below), so an unscoped getByText is ambiguous the
+  // instant that works.
+  const main = page.locator("#main");
+  await expect(main.getByText(name)).toBeVisible();
+  await expect(main.getByText("A department this test made up.")).toBeVisible();
+
+  // The rail itself, with no navigation and no reload: router.refresh() after
+  // creating one is what makes a department usable the moment it exists,
+  // rather than on the next page you happen to load.
+  await expect(
+    page.locator('nav[data-tour="rail"]').getByRole("link", { name }),
+  ).toBeVisible();
 
   // And where a department is actually used: the People filter and the
   // invite dialog's picker both read the same `listDepartments`, so a

@@ -9,8 +9,9 @@ import { AccountMenu, LocaleSwitcher, OrgSwitcher } from "@/components/shell/swi
 import { ThemeToggle } from "@/components/theme";
 import { ToastProvider, ToastViewport } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { bottomNavFor, overflowFor, railFor, withChannels } from "@/lib/navigation";
+import { bottomNavFor, overflowFor, railFor, withChannels, withDepartments } from "@/lib/navigation";
 import { listJoinedChannels } from "@/lib/data/channels";
+import { listDepartments } from "@/lib/data/people";
 import { unreadCount } from "@/lib/data/notifications";
 import { paletteIndex } from "@/lib/palette";
 import { requireUser } from "@/lib/auth/guards";
@@ -45,10 +46,11 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
   ]);
   const { actor, user, membership, organization, organizations } = session;
 
-  const [entries, inboxUnread, channels] = await Promise.all([
+  const [entries, inboxUnread, channels, departments] = await Promise.all([
     paletteIndex(actor),
     unreadCount(actor),
     listJoinedChannels(actor),
+    listDepartments(actor),
   ]);
 
   // Every number on the rail is a count of rows you can go and act on -- never
@@ -57,7 +59,7 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
   const counts: Record<string, number> = { inbox: inboxUnread };
   for (const channel of channels) counts[channel.id] = channel.unread;
 
-  const rail = withChannels(railFor(actor), channels, nav("allChannels"));
+  const rail = withDepartments(withChannels(railFor(actor), channels, nav("allChannels")), departments);
 
   return (
     <TooltipProvider delay={400}>

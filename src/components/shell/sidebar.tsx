@@ -81,7 +81,7 @@ function RailLink({
         </CountBadge>
       ) : null}
 
-      {destination.expandable && count === 0 && !destination.children?.length ? (
+      {destination.expandableChildren && count === 0 && !destination.children?.length ? (
         <ChevronRight
           aria-hidden
           className="text-fg-subtle ml-auto size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
