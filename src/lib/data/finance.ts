@@ -37,6 +37,10 @@ export type DocumentLine = {
   id: string;
   position: number;
   description: string;
+  /** Bullets printed under the line, one per newline. */
+  details: string | null;
+  /** Bullets printed muted, after `details`. */
+  exclusions: string | null;
   quantityThousandths: number;
   unitPrice: Cents;
   taxRateBasisPoints: number;
@@ -45,6 +49,8 @@ export type DocumentLine = {
 
 export type LineInput = {
   description: string;
+  details: string | null;
+  exclusions: string | null;
   quantityThousandths: number;
   unitPrice: Cents;
   taxRateBasisPoints: number;
@@ -188,6 +194,8 @@ export async function listQuoteLines(actor: Actor, quoteId: string): Promise<Doc
       id: quoteLines.id,
       position: quoteLines.position,
       description: quoteLines.description,
+      details: quoteLines.details,
+      exclusions: quoteLines.exclusions,
       quantityThousandths: quoteLines.quantityThousandths,
       unitPrice: quoteLines.unitPrice,
       taxRateBasisPoints: quoteLines.taxRateBasisPoints,
@@ -255,6 +263,8 @@ export async function createQuote(
           quoteId: created.id,
           position,
           description: line.description,
+          details: line.details,
+          exclusions: line.exclusions,
           quantityThousandths: line.quantityThousandths,
           unitPrice: toDecimalString(line.unitPrice),
           taxRateBasisPoints: line.taxRateBasisPoints,
@@ -415,6 +425,8 @@ export async function listInvoiceLines(actor: Actor, invoiceId: string): Promise
       id: invoiceLines.id,
       position: invoiceLines.position,
       description: invoiceLines.description,
+      details: invoiceLines.details,
+      exclusions: invoiceLines.exclusions,
       quantityThousandths: invoiceLines.quantityThousandths,
       unitPrice: invoiceLines.unitPrice,
       taxRateBasisPoints: invoiceLines.taxRateBasisPoints,
@@ -476,6 +488,8 @@ export async function createInvoice(
           invoiceId: created.id,
           position,
           description: line.description,
+          details: line.details,
+          exclusions: line.exclusions,
           quantityThousandths: line.quantityThousandths,
           unitPrice: toDecimalString(line.unitPrice),
           taxRateBasisPoints: line.taxRateBasisPoints,

@@ -7,35 +7,38 @@ import { cn } from "@/lib/utils";
 
 /**
  * A quote or an invoice as the client receives it -- the letterhead, the
- * lines, the red total, the conditions, the place to sign.
+ * lines and what each one covers, the total, the conditions, the place to
+ * sign.
  *
- * This is a port of the devis renderer that has been sending BrandShift's
- * quotes since June: the same A4 sheet at a 16mm margin, the same grey
- * uppercase column heads over a hairline, the same solid red bar under the
- * totals, the same pale recap block and the same pair of signature boxes.
+ * The layout follows the Mediast devis: wordmark and label in ink across the
+ * top, the city and the date facing each other on the dateline below it, the
+ * services with their inclusions bulleted underneath, an ink totals bar, a
+ * neutral restatement of the figure, the conditions, and two boxes to sign.
  *
- * Three things were translated rather than copied.
+ * Three things it does deliberately.
  *
- * **Colour comes from tokens.** The original wrote `#FD0000` in twelve places;
- * that is `--brand` here, and the codebase forbids the literal. The one
- * deliberate substitution is the filled totals bar, which uses `--accent` (a
- * shade darker) rather than `--brand`: it is the one place white text sits on
- * red, and `--accent` is the fill that carries white at AA. Side by side you
- * cannot tell them apart, and the wordmark and the bullets keep the true red.
+ * **The red signs the document; it does not carry it.** One full stop after
+ * the wordmark, and the bullets. Everything structural -- the label, the
+ * totals bar -- is ink. The bar is the largest filled shape on the page, and
+ * in red it would spend the whole <=5% allowance on a number that is not an
+ * action.
  *
- * **The type is the type it always meant.** The PDF was set in Helvetica
- * because jsPDF ships no fonts -- the tool that generated it declared Space
- * Grotesk and Inter, which are the two fonts this app already loads. Rendering
- * it as HTML is closer to the intended design than the PDF ever was.
+ * **What is not included is set apart.** `details` and `exclusions` are two
+ * fields, not one with a marker character, and an exclusion prints grey with
+ * a grey dot after everything the line does cover. An exclusion in the same
+ * ink as an inclusion is how a scope argument starts.
  *
- * **Nothing is invented.** The original had a deposit percentage typed into a
- * form; there is no such column here, so the recap block states the amount due
- * and any deposit wording arrives through `terms`, where the person writing
- * the quote decides it. *
- * The wordmark is set at display size for a reason beyond looks: the brand red
- * clears 4:1 on white, which is AA for *large* text but not for body, and 18px
- * bold falls a third of a pixel short of what counts as large. At display size
- * it qualifies, so the document keeps the real red instead of the darker one.
+ * **Nothing is invented.** The reference devis states a deposit split in its
+ * recap block; there is no deposit column here, so the block states the
+ * amount due and any such wording arrives through `terms`, where the person
+ * writing the quote decides it. The reference also prints "Validité 30
+ * jours" -- a duration this schema does not hold -- so the dateline gives the
+ * date the document actually expires on.
+ *
+ * Colour comes from tokens throughout: `--brand` is the brand red and the
+ * codebase forbids the literal. Inside `.sheet` the semantic tokens are
+ * re-pointed at their light values, so the component never learns it is
+ * printing.
  */
 
 export type SheetKind = "quote" | "invoice";
@@ -109,10 +112,7 @@ export async function DocumentSheet({
   */
   const client = clientName?.trim() || title;
 
-  const conditions = (terms ?? "")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const conditions = toBullets(terms);
 
   const head =
     "text-caption text-fg-subtle pb-[1.5mm] font-semibold uppercase tracking-wider text-right pl-4";
@@ -120,50 +120,74 @@ export async function DocumentSheet({
   return (
     <article className="sheet font-sans flex flex-col">
       {/* ---- letterhead ---------------------------------------------- */}
-      <header className="border-border mb-[9mm] flex items-start justify-between gap-6 border-b pb-[4mm]">
-        <div className="min-w-0">
-          {letterhead.logoUrl ? (
-            /* eslint-disable-next-line @next/next/no-img-element -- an arbitrary
-               tenant URL printed at a fixed width. next/image would optimise
-               nothing here and needs every tenant's host allow-listed. */
-            <img src={letterhead.logoUrl} alt={letterhead.name} className="h-[10mm] w-auto" />
-          ) : (
-            <p className="font-display text-display text-brand font-bold">{letterhead.name}</p>
-          )}
-          {letterhead.tagline ?? letterhead.city ? (
-            <p className="text-caption text-fg-subtle mt-[3mm]">
-              {[letterhead.tagline, letterhead.city].filter(Boolean).join(" · ")}
+      <header className="border-border mb-[6mm] border-b pb-[3mm]">
+        <div className="flex items-start justify-between gap-6">
+          <div className="min-w-0">
+            {letterhead.logoUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element -- an arbitrary
+                 tenant URL printed at a fixed width. next/image would optimise
+                 nothing here and needs every tenant's host allow-listed. */
+              <img src={letterhead.logoUrl} alt={letterhead.name} className="h-[10mm] w-auto" />
+            ) : (
+              <p className="font-display text-display text-fg-default font-bold">
+                {letterhead.name}
+                {/* The whole of the brand red on this document: one full stop
+                    after the name, and the bullets further down. Ink carries
+                    the document; the red only signs it. */}
+                <span aria-hidden className="text-brand">
+                  .
+                </span>
+              </p>
+            )}
+            {letterhead.tagline ? (
+              <p className="text-caption text-fg-subtle mt-[2mm]">{letterhead.tagline}</p>
+            ) : null}
+          </div>
+
+          <div className="shrink-0 text-right">
+            <p className="font-display text-display text-fg-default font-bold tracking-wide uppercase">
+              {t(kind)}
             </p>
-          ) : null}
+            <p className="text-caption text-fg-muted mt-[2mm] tabular-nums">
+              {t("reference", { number })}
+            </p>
+          </div>
         </div>
 
-        <div className="shrink-0 text-right">
-          <p className="font-display text-display text-brand font-bold tracking-wide uppercase">
-            {t(kind)}
+        {/*
+          Where it was written and when, on one line across the page. The city
+          belongs beside the date rather than under the tagline: together they
+          are the dateline of the document, and a client checking whether a
+          quote is still open reads them as a pair.
+        */}
+        <div className="mt-[4mm] flex items-baseline justify-between gap-6">
+          <p className="text-caption text-fg-muted">{letterhead.city}</p>
+          <p className="text-caption text-fg-muted tabular-nums">
+            {[
+              day(issueDate),
+              untilDate
+                ? t(kind === "quote" ? "validUntil" : "dueOn", {
+                    date: day(untilDate),
+                  })
+                : null,
+            ]
+              .filter(Boolean)
+              .join("  ·  ")}
           </p>
-          <p className="text-caption text-fg-muted mt-1 tabular-nums">{number}</p>
-          <p className="text-caption text-fg-muted tabular-nums">{day(issueDate)}</p>
-          {untilDate ? (
-            <p className="text-caption text-fg-muted tabular-nums">
-              {t(kind === "quote" ? "validUntil" : "dueOn", { date: day(untilDate) })}
-            </p>
-          ) : null}
         </div>
       </header>
 
       {/* ---- who it is for ------------------------------------------- */}
-      <section className="mb-[8mm]">
+      <section className="mb-[6mm]">
         <p className="text-caption text-fg-muted">{t("preparedFor")}</p>
         <h1 className="font-display text-display-lg text-fg-default mt-[2mm] font-bold">
           {client}
         </h1>
-        {client === title ? null : (
-          <p className="text-body text-fg-muted mt-[1mm]">{title}</p>
-        )}
+        {client === title ? null : <p className="text-body text-fg-muted mt-[1mm]">{title}</p>}
       </section>
 
       {/* ---- the lines ----------------------------------------------- */}
-      <table className="mb-[6mm] w-full border-collapse">
+      <table className="mb-[5mm] w-full border-collapse">
         <thead>
           <tr className="border-border border-b">
             <th scope="col" className={cn(head, "pl-0 text-left")}>
@@ -186,56 +210,100 @@ export async function DocumentSheet({
         </thead>
 
         <tbody>
-          {lines.map((line) => (
-            <tr key={line.id} className="border-border/60 border-b">
-              <td className="text-body text-fg-default py-[2.4mm] font-semibold">
-                {line.description}
-              </td>
-              {detailed ? (
-                <>
-                  <td className="text-body text-fg-muted py-[2.4mm] pl-4 text-right tabular-nums">
-                    {quantityToString(line.quantityThousandths)}
-                  </td>
-                  <td className="text-body text-fg-muted py-[2.4mm] pl-4 text-right tabular-nums">
-                    {money(line.unitPrice)}
-                  </td>
-                </>
-              ) : null}
-              <td className="text-body text-fg-default py-[2.4mm] pl-4 text-right font-semibold tabular-nums">
-                {money(line.lineTotal)}
-              </td>
-            </tr>
-          ))}
+          {lines.map((line) => {
+            const included = toBullets(line.details);
+            const excluded = toBullets(line.exclusions);
+
+            return (
+              <tr key={line.id} className="sheet-keep-together align-top">
+                <td className="py-[2.2mm] pr-4">
+                  <p className="text-body text-fg-default font-semibold">{line.description}</p>
+
+                  {/*
+                    What the line covers, and then what it does not. The
+                    exclusions come last and in the quieter colour because
+                    that is the order somebody reads them in -- you find out
+                    what you are buying before you find out what you are not
+                    -- and because an exclusion set in the same ink as an
+                    inclusion is how a scope argument starts.
+                  */}
+                  {included.length > 0 || excluded.length > 0 ? (
+                    <ul className="mt-[1.2mm] space-y-[0.8mm]">
+                      {included.map((bullet, index) => (
+                        <Bullet key={`in-${index}`} text={bullet} />
+                      ))}
+                      {excluded.map((bullet, index) => (
+                        <Bullet key={`ex-${index}`} text={bullet} excluded />
+                      ))}
+                    </ul>
+                  ) : null}
+                </td>
+
+                {detailed ? (
+                  <>
+                    <td className="text-body text-fg-muted py-[2.2mm] pl-4 text-right tabular-nums">
+                      {quantityToString(line.quantityThousandths)}
+                    </td>
+                    <td className="text-body text-fg-muted py-[2.2mm] pl-4 text-right tabular-nums">
+                      {money(line.unitPrice)}
+                    </td>
+                  </>
+                ) : null}
+                <td className="text-body text-fg-default py-[2.2mm] pl-4 text-right font-semibold tabular-nums">
+                  {money(line.lineTotal)}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 
-      {/* ---- totals, in the right-hand column ------------------------ */}
-      <section className="sheet-keep-together mb-[6mm] flex justify-end">
-        <div className="w-[78mm]">
-          <Row label={t("subtotal")} value={money(subtotal)} />
-          <Row
-            label={singleRate === null ? t("tax") : t("taxAt", { rate: singleRate / 100 })}
-            value={money(tax)}
-          />
-
-          <div className="sheet-total-bar bg-accent text-fg-on-accent rounded-control mt-[2mm] flex items-center justify-between gap-4 px-3 py-2">
-            <span className="font-display text-label font-bold tracking-wide uppercase">
-              {t("totalDue")}
-            </span>
-            <span className="font-display text-heading font-bold tabular-nums">{money(total)}</span>
+      {/* ---- totals --------------------------------------------------- */}
+      <section className="sheet-keep-together mb-[5mm]">
+        {/* The way there stays in a narrow right-hand column, where a column
+            of figures belongs. */}
+        <div className="flex justify-end">
+          <div className="w-[78mm]">
+            <Row label={t("subtotal")} value={money(subtotal)} />
+            <Row
+              label={singleRate === null ? t("tax") : t("taxAt", { rate: singleRate / 100 })}
+              value={money(tax)}
+            />
           </div>
+        </div>
 
-          {paid !== undefined && paid > 0 ? (
-            <div className="mt-[2mm]">
+        {/*
+          The answer runs the full width of the sheet, as it does on the devis
+          this follows: it is the line the whole page was written to arrive at,
+          and a client scanning for the number should not have to find it in a
+          column.
+
+          Ink, not red. The bar is the largest filled shape on the page, and a
+          red one spends the whole <=5% allowance on a number that is not an
+          action. In ink it reads as the bottom line of a document; the red
+          stays on the mark and the bullets, where it means "us".
+        */}
+        <div className="sheet-total-bar bg-fg-default text-surface-raised rounded-control mt-[3mm] flex items-center justify-between gap-4 px-[4mm] py-2">
+          <span className="font-display text-label font-bold tracking-wide uppercase">
+            {t("totalDue")}
+          </span>
+          <span className="font-display text-heading font-bold tabular-nums">{money(total)}</span>
+        </div>
+
+        {paid !== undefined && paid > 0 ? (
+          <div className="mt-[2mm] flex justify-end">
+            <div className="w-[78mm]">
               <Row label={t("paid")} value={money(paid)} />
               <Row label={t("owed")} value={money(total - paid)} strong />
             </div>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </section>
 
       {/* ---- what happens next --------------------------------------- */}
-      <section className="bg-accent-subtle rounded-card sheet-keep-together mb-[8mm] px-[4mm] py-[3.5mm]">
+      {/* Neutral, for the same reason the bar is: this is the restatement of
+          a figure, not a warning about one. */}
+      <section className="bg-surface-inset rounded-card sheet-keep-together mb-[6mm] px-[4mm] py-[3mm]">
         <p className="text-body text-fg-default font-semibold">
           {kind === "quote"
             ? t("onSignature", { amount: money(total) })
@@ -248,19 +316,13 @@ export async function DocumentSheet({
 
       {/* ---- conditions ---------------------------------------------- */}
       {conditions.length > 0 ? (
-        <section className="mb-[8mm]">
+        <section className="mb-[6mm]">
           <h2 className="font-display text-label text-fg-default mb-[3mm] font-bold">
             {t("conditions")}
           </h2>
-          <ul className="space-y-[1.5mm]">
+          <ul className="space-y-[1mm]">
             {conditions.map((condition, index) => (
-              <li key={index} className="text-caption text-fg-muted flex gap-[2.5mm]">
-                <span
-                  aria-hidden
-                  className="bg-brand mt-[1.8mm] size-[1.2mm] shrink-0 rounded-full"
-                />
-                <span>{condition}</span>
-              </li>
+              <Bullet key={index} text={condition} />
             ))}
           </ul>
         </section>
@@ -268,13 +330,13 @@ export async function DocumentSheet({
 
       {/* ---- signatures, on a quote only ----------------------------- */}
       {kind === "quote" ? (
-        <section className="sheet-keep-together mb-[8mm] grid grid-cols-2 gap-[8mm]">
+        <section className="sheet-keep-together mb-[6mm] grid grid-cols-2 gap-[8mm]">
           {(["client", "provider"] as const).map((party) => (
             <div key={party}>
               <p className="text-caption text-fg-default font-bold">
                 {party === "client" ? t("agreedClient") : letterhead.name}
               </p>
-              <div className="border-border-control rounded-control mt-[2mm] h-[20mm] border" />
+              <div className="border-border-control rounded-control mt-[2mm] h-[16mm] border" />
               <p className="text-caption text-fg-subtle mt-[1.5mm]">
                 {t(party === "client" ? "nameDateSignature" : "dateSignature")}
               </p>
@@ -289,6 +351,42 @@ export async function DocumentSheet({
         <span>{letterhead.city}</span>
       </footer>
     </article>
+  );
+}
+
+/**
+ * A newline-separated field as the list it is printed as.
+ *
+ * Every bulleted field on this sheet -- the conditions, and what each line
+ * does and does not cover -- is stored as text with one item per line, so
+ * they all arrive here. Blank lines are dropped rather than printed as empty
+ * bullets.
+ */
+function toBullets(value: string | null): string[] {
+  return (value ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+/**
+ * One bullet under a line.
+ *
+ * An exclusion is quieter in both marks: grey text and a grey dot. The red
+ * dot is a small claim that this is part of the offer, so it would be wrong
+ * against something the offer explicitly leaves out.
+ */
+function Bullet({ text, excluded }: { text: string; excluded?: boolean }) {
+  return (
+    <li
+      className={cn("text-caption flex gap-[2.5mm]", excluded ? "text-fg-subtle" : "text-fg-muted")}
+    >
+      {/* The dot stays red on an exclusion. It marks the line as ours -- part
+          of what we are telling you about this service -- and only the words
+          go quiet, which is how the devis this follows does it. */}
+      <span aria-hidden className="bg-brand mt-[1.6mm] size-[1.2mm] shrink-0 rounded-full" />
+      <span>{text}</span>
+    </li>
   );
 }
 

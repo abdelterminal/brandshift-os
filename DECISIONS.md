@@ -550,6 +550,42 @@ went into the twelve getters rather than the pages because the pages are not the
 a task id arrives in a query string, and Server Actions read rows by id too. Every one of those
 getters already returned `null` for "no such row", which is exactly what a malformed id means.
 
+## Added at the Mediast rebrand
+
+**The brand red moved, and the ramp was re-derived rather than re-typed.** `#FD0000` became
+`#FF3B22`. The red ramp is not twelve chosen colours -- each step's lightness was solved so that
+600 carries white text at 4.5:1, 400 clears 4.5:1 on the lightest dark surface, and so on. So the
+new anchor changed only the hue (29.23 -> 30.92); every step kept the lightness it was solved for,
+and chroma is the most the new hue can hold there. All twenty-seven contrast assertions in
+`tokens.test.ts` pass unchanged, which is the point of having had them.
+
+The new red is *weaker* on white than the old one: 3.56:1 against 4.06:1. Both are below the 4.5:1
+that body text needs and above the 3:1 that large text needs, so the rule is unchanged -- red is
+for non-text and for display sizes -- but the margin is thinner, and `--accent` (600) remains the
+only red that may sit under a white label.
+
+**The document is ink; the red only signs it.** The devis this design follows sets the wordmark,
+the DEVIS label and the totals bar in near-black, and spends its red on a full stop after the
+name and on the bullets. That is now what the sheet does. The totals bar is the largest filled
+shape on the page, and filling it with brand red spends the entire <=5% allowance on a figure
+that is not an action -- the earlier port did exactly that.
+
+**A line says what it covers, and what it does not.** `details` and `exclusions` are two text
+columns on `quote_lines` and `invoice_lines`, newline-separated, the same convention `terms`
+already used. Two columns rather than one with a marker character, for two reasons: an exclusion
+is rendered differently and printed last, so it is a different kind of thing rather than a flag on
+a bullet; and any in-band marker -- a leading `-` being the obvious candidate -- is precisely what
+somebody typing a markdown list produces by accident. The editor asks the two questions
+separately, so there is no syntax to learn.
+
+**The scaler's screen padding is removed in print.** `pb-10` under the sheet is breathing room on
+a screen and the first 10mm of a blank second page on paper. It had been there since the print
+route shipped and cost nothing only because the sparser layout never reached 285mm; the moment
+lines grew bullets, every PDF gained a trailing sheet. It needs `!important` because the padding
+arrives as a Tailwind utility and utilities outrank the components layer -- whether a document is
+one page is not a decision a spacing class on a wrapper gets to make.
+
+
 ## Deliberately not chosen
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the

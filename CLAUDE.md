@@ -58,7 +58,7 @@ Derived from the audit of the previous app, which scored 4.8/10 on usability. Th
 because each one is a mistake we already made once.
 
 **Color**
-- `#FD0000` is the brand red. It may occupy **<=5%** of any screen.
+- `#FF3B22` is the brand red. It may occupy **<=5%** of any screen.
 - Red is reserved for: primary action, active nav, destructive action, blocked/overdue.
   It never means anything else.
 - Green = complete. Amber = due soon / needs attention. Blue = active / in progress.

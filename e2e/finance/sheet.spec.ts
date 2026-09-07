@@ -6,9 +6,8 @@ import { VIEWPORTS } from "../routes";
 /**
  * The printed quote and invoice -- the document the client actually receives.
  *
- * These pages are a port of the devis renderer BrandShift has been sending
- * since June, so what is worth protecting is the things that make it *that*
- * document rather than a table on a page:
+ * These pages follow the Mediast devis, so what is worth protecting is the
+ * things that make it *that* document rather than a table on a page:
  *
  * 1. **The letterhead is on it.** A quote with no company name, no contact
  *    line and no total is not a quote, and every one of those comes from a
@@ -32,7 +31,10 @@ const sheet = (page: Page) => page.locator("article.sheet");
  */
 async function openQuote(page: Page) {
   await page.goto("/en/finance/quotes");
-  await page.getByRole("link", { name: /Phase two: internal brand/ }).first().click();
+  await page
+    .getByRole("link", { name: /Phase two: internal brand/ })
+    .first()
+    .click();
   await expect(page).toHaveURL(/\/finance\/quotes\/[0-9a-f-]{36}$/);
 }
 
@@ -48,7 +50,7 @@ test("a quote prints as the document the client receives", async ({ page }) => {
 
   // The letterhead, from the organization row.
   await expect(paper.getByText("Agence de Communication & Marketing Digital")).toBeVisible();
-  await expect(paper.getByText("contact@brandshift.ma")).toBeVisible();
+  await expect(paper.getByText("contact@mediast.ma")).toBeVisible();
 
   // What it is, who it is for, and what it costs.
   await expect(paper.getByText("Quote", { exact: true })).toBeVisible();
@@ -88,7 +90,10 @@ test("an invoice says what is owed, and is not signed", async ({ page }) => {
   // A seeded part-paid invoice, so the rows that only an invoice has -- what
   // has been paid and what is still owed -- are actually on the page.
   await page.goto("/en/finance/invoices");
-  await page.getByRole("link", { name: /Meridian rebrand, stage two/ }).first().click();
+  await page
+    .getByRole("link", { name: /Meridian rebrand, stage two/ })
+    .first()
+    .click();
   await page.getByRole("link", { name: "Print" }).click();
 
   const paper = sheet(page);
@@ -98,6 +103,61 @@ test("an invoice says what is owed, and is not signed", async ({ page }) => {
 
   // Nobody signs an invoice.
   await expect(paper.getByText("Agreed — client")).toHaveCount(0);
+});
+
+test("says what each line covers, and what it does not", async ({ page }) => {
+  await openQuote(page);
+  await page.getByRole("link", { name: "Print" }).click();
+
+  const paper = sheet(page);
+
+  // Inclusions and exclusions are two fields on the line, and both reach the
+  // paper. A document that prints only what it covers is the one that starts
+  // the argument this section exists to prevent.
+  await expect(
+    paper.getByText("Twelve interviews across the four departments, transcribed"),
+  ).toBeVisible();
+  await expect(
+    paper.getByText("Rollout training for line managers, quoted separately"),
+  ).toBeVisible();
+});
+
+test("an exclusion is quieter than what is included", async ({ page }) => {
+  await openQuote(page);
+  await page.getByRole("link", { name: "Print" }).click();
+
+  const paper = sheet(page);
+  const included = paper.getByText("Messaging framework: positioning, pillars, proof points");
+  const excluded = paper.getByText("Rollout training for line managers, quoted separately");
+
+  const colourOf = (locator: ReturnType<typeof paper.getByText>) =>
+    locator.evaluate((node) => getComputedStyle(node).color);
+
+  // Different ink, and the exclusion is the lighter of the two -- otherwise
+  // "not included" reads with exactly the weight of "included".
+  const [a, b] = await Promise.all([colourOf(included), colourOf(excluded)]);
+  expect(b, "an exclusion should not be set in the same colour as an inclusion").not.toBe(a);
+
+  const lightness = (colour: string) =>
+    colour
+      .match(/\d+/g)!
+      .slice(0, 3)
+      .reduce((sum, part) => sum + Number(part), 0);
+  expect(lightness(b)).toBeGreaterThan(lightness(a));
+});
+
+test("the total bar is ink, not brand red", async ({ page }) => {
+  await openQuote(page);
+  await page.getByRole("link", { name: "Print" }).click();
+
+  // The largest filled shape on the page. In red it would spend the whole of
+  // the <=5% brand allowance on a figure that is not an action.
+  const bar = sheet(page).locator(".sheet-total-bar");
+  const background = await bar.evaluate((node) => getComputedStyle(node).backgroundColor);
+  const [r, g, b] = background.match(/\d+/g)!.map(Number);
+
+  expect(r + g + b, `the totals bar should be ink, got ${background}`).toBeLessThan(150);
+  expect(r - b, `the totals bar should not be red, got ${background}`).toBeLessThan(40);
 });
 
 test("the way back is a link, not the browser button", async ({ page }) => {
@@ -144,7 +204,10 @@ test("the printed document is accessible", async ({ page }) => {
 */
 for (const viewport of VIEWPORTS) {
   test(`the page does not scroll sideways at ${viewport.name}px`, async ({ page }) => {
-    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.setViewportSize({
+      width: viewport.width,
+      height: viewport.height,
+    });
     await openQuote(page);
     await page.getByRole("link", { name: "Print" }).click();
     await expect(sheet(page)).toBeVisible();

@@ -895,7 +895,11 @@
     "alreadyConverted": "Ce devis a déjà un projet.",
     "keyTaken": "Un autre projet utilise déjà ce code.",
     "quantityFull": "Quantité",
-    "documentTitle": "Objet"
+    "documentTitle": "Objet",
+    "details": "Ce que la prestation couvre",
+    "detailsHint": "Un par ligne",
+    "exclusions": "Non inclus",
+    "exclusionsHint": "Un par ligne"
   },
   "Objectives": {
     "title": "Objectifs",
@@ -1280,6 +1284,7 @@
     "dateSignature": "Date et signature",
     "print": "Imprimer",
     "backToDocument": "Retour",
-    "download": "Télécharger le PDF"
+    "download": "Télécharger le PDF",
+    "reference": "Réf. {number}"
   }
 }

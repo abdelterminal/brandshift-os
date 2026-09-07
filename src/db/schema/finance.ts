@@ -107,6 +107,19 @@ export const quoteLines = pgTable(
       .references(() => quotes.id, { onDelete: "cascade" }),
     position: integer("position").notNull().default(0),
     description: text("description").notNull(),
+    /**
+     * What the line actually covers, one bullet per line -- the same
+     * newline-separated convention `terms` uses.
+     *
+     * Two columns rather than one with a marker character. An exclusion reads
+     * differently on the page (muted, and last), so it is a different kind of
+     * thing, not a flag on a bullet; and any in-band marker -- a leading `-`
+     * being the obvious candidate -- is exactly what somebody typing a
+     * markdown list would produce by accident.
+     */
+    details: text("details"),
+    /** What it explicitly does not cover. Printed muted, after `details`. */
+    exclusions: text("exclusions"),
     quantityThousandths: integer("quantity_thousandths").notNull().default(1000),
     unitPrice: numeric("unit_price", { precision: 14, scale: 2 }).notNull().default("0"),
     taxRateBasisPoints: integer("tax_rate_basis_points").notNull().default(0),
@@ -178,6 +191,10 @@ export const invoiceLines = pgTable(
       .references(() => invoices.id, { onDelete: "cascade" }),
     position: integer("position").notNull().default(0),
     description: text("description").notNull(),
+    /** As `quoteLines.details`. */
+    details: text("details"),
+    /** As `quoteLines.exclusions`. */
+    exclusions: text("exclusions"),
     quantityThousandths: integer("quantity_thousandths").notNull().default(1000),
     unitPrice: numeric("unit_price", { precision: 14, scale: 2 }).notNull().default("0"),
     taxRateBasisPoints: integer("tax_rate_basis_points").notNull().default(0),

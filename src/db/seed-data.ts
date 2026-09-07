@@ -10,16 +10,17 @@
 import type { ModulePermissions } from "./schema/people";
 
 export const ORGANIZATION = {
-  slug: "brandshift",
-  name: "BrandShift",
+  slug: "mediast",
+  name: "Mediast",
   timezone: "Europe/Paris",
   defaultLocale: "fr" as const,
-  // The letterhead, taken from the devis tool these documents are modelled on
-  // rather than invented -- it is what has been going out on quotes since June.
+  // The letterhead, taken from the devis that goes out to clients rather than
+  // invented. The slug changed with the name: it is only ever seen in seeded
+  // data, so there is nothing to migrate behind it.
   tagline: "Agence de Communication & Marketing Digital",
   city: "Meknès, Maroc",
-  website: "brandshift.ma",
-  contactEmail: "contact@brandshift.ma",
+  website: "mediast.ma",
+  contactEmail: "contact@mediast.ma",
 };
 
 export const DEPARTMENTS = [
@@ -204,7 +205,7 @@ export const PROJECTS: SeedProject[] = [
     key: "ATL",
     name: "Atlas design system",
     description:
-      "The component library and token set behind every BrandShift client build. Ships in light and dark.",
+      "The component library and token set behind every Mediast client build. Ships in light and dark.",
     department: "design",
     status: "active",
     priority: "high",
@@ -386,12 +387,18 @@ export const TASK_TITLES: Record<string, string[]> = {
 
 /** Standalone to-dos with no project, so the personal list has real content. */
 export const PERSONAL_TASKS: Array<{ title: string; assigneeEmail: string }> = [
-  { title: "Book the Q4 all-hands room", assigneeEmail: "tom.decker@brandshift.test" },
+  {
+    title: "Book the Q4 all-hands room",
+    assigneeEmail: "tom.decker@brandshift.test",
+  },
   {
     title: "Review the new starter handbook",
     assigneeEmail: "tom.decker@brandshift.test",
   },
-  { title: "Renew the font licences", assigneeEmail: "yusuf.karim@brandshift.test" },
+  {
+    title: "Renew the font licences",
+    assigneeEmail: "yusuf.karim@brandshift.test",
+  },
   {
     title: "Follow up on the Verdant supplier decision",
     assigneeEmail: "sofia.laurent@brandshift.test",
@@ -1082,10 +1089,14 @@ export type SeedLine = {
   unitPrice: string;
   /** Basis points: 2000 is 20%. */
   tax: number;
+  /** What the line covers, one bullet per entry. */
+  details?: string[];
+  /** What it explicitly does not, printed muted and last. */
+  exclusions?: string[];
 };
 
 /**
- * The conditions block, as it reads on a real BrandShift devis.
+ * The conditions block, as it reads on a real Mediast devis.
  *
  * Boilerplate an agency reuses rather than retypes, which is why it is one
  * constant and not a field on each quote. It is free text and prints one
@@ -1096,7 +1107,7 @@ export type SeedLine = {
 export const QUOTE_TERMS = [
   "Payment: 40% deposit on signature, the balance on delivery.",
   "Revisions: as set out against each line above.",
-  "Ownership: deliverables transfer on final payment. BrandShift keeps the source files and may show the work in its portfolio.",
+  "Ownership: deliverables transfer on final payment. Mediast keeps the source files and may show the work in its portfolio.",
   "This offer stands until the validity date shown above.",
 ].join("\n");
 
@@ -1128,10 +1139,30 @@ export const QUOTES: SeedQuote[] = [
     validForDays: 30,
     ownerEmail: "sofia.laurent@brandshift.test",
     lines: [
-      { description: "Discovery and audit", quantity: "5", unitPrice: "900", tax: 2000 },
-      { description: "Structural design, six SKUs", quantity: "18", unitPrice: "850", tax: 2000 },
-      { description: "Artwork and print liaison", quantity: "12", unitPrice: "750", tax: 2000 },
-      { description: "Print sample production", quantity: "1", unitPrice: "4 200", tax: 550 },
+      {
+        description: "Discovery and audit",
+        quantity: "5",
+        unitPrice: "900",
+        tax: 2000,
+      },
+      {
+        description: "Structural design, six SKUs",
+        quantity: "18",
+        unitPrice: "850",
+        tax: 2000,
+      },
+      {
+        description: "Artwork and print liaison",
+        quantity: "12",
+        unitPrice: "750",
+        tax: 2000,
+      },
+      {
+        description: "Print sample production",
+        quantity: "1",
+        unitPrice: "4 200",
+        tax: 550,
+      },
     ],
   },
   {
@@ -1142,9 +1173,24 @@ export const QUOTES: SeedQuote[] = [
     validForDays: 21,
     ownerEmail: "claire.moreau@brandshift.test",
     lines: [
-      { description: "Editorial and structure", quantity: "8", unitPrice: "950", tax: 2000 },
-      { description: "Layout, 64 pages", quantity: "20", unitPrice: "800", tax: 2000 },
-      { description: "Investor deck, 30 slides", quantity: "10", unitPrice: "850", tax: 2000 },
+      {
+        description: "Editorial and structure",
+        quantity: "8",
+        unitPrice: "950",
+        tax: 2000,
+      },
+      {
+        description: "Layout, 64 pages",
+        quantity: "20",
+        unitPrice: "800",
+        tax: 2000,
+      },
+      {
+        description: "Investor deck, 30 slides",
+        quantity: "10",
+        unitPrice: "850",
+        tax: 2000,
+      },
     ],
   },
   {
@@ -1155,14 +1201,24 @@ export const QUOTES: SeedQuote[] = [
     validForDays: 30,
     ownerEmail: "tom.decker@brandshift.test",
     lines: [
-      { description: "Service design workshops", quantity: "6", unitPrice: "1 100", tax: 2000 },
+      {
+        description: "Service design workshops",
+        quantity: "6",
+        unitPrice: "1 100",
+        tax: 2000,
+      },
       {
         description: "Journey mapping and prototypes",
         quantity: "22",
         unitPrice: "820",
         tax: 2000,
       },
-      { description: "Handover and training", quantity: "4", unitPrice: "900", tax: 2000 },
+      {
+        description: "Handover and training",
+        quantity: "4",
+        unitPrice: "900",
+        tax: 2000,
+      },
     ],
   },
   {
@@ -1174,7 +1230,12 @@ export const QUOTES: SeedQuote[] = [
     ownerEmail: "amina.benali@brandshift.test",
     declineReason: "Their new CMO brought an agency with her. Nothing to do with the price.",
     lines: [
-      { description: "Retainer, three months", quantity: "3", unitPrice: "18 000", tax: 2000 },
+      {
+        description: "Retainer, three months",
+        quantity: "3",
+        unitPrice: "18 000",
+        tax: 2000,
+      },
     ],
   },
   {
@@ -1185,14 +1246,24 @@ export const QUOTES: SeedQuote[] = [
     validForDays: 21,
     ownerEmail: "sofia.laurent@brandshift.test",
     lines: [
-      { description: "Campaign strategy", quantity: "10", unitPrice: "1 000", tax: 2000 },
+      {
+        description: "Campaign strategy",
+        quantity: "10",
+        unitPrice: "1 000",
+        tax: 2000,
+      },
       {
         description: "Film production, five markets",
         quantity: "1",
         unitPrice: "78 000",
         tax: 2000,
       },
-      { description: "Paid media assets", quantity: "15", unitPrice: "700", tax: 2000 },
+      {
+        description: "Paid media assets",
+        quantity: "15",
+        unitPrice: "700",
+        tax: 2000,
+      },
     ],
   },
   {
@@ -1202,9 +1273,32 @@ export const QUOTES: SeedQuote[] = [
     issuedInDays: 0,
     validForDays: 45,
     ownerEmail: "claire.moreau@brandshift.test",
+    // The one seeded document with its scope spelled out, because it is the
+    // one the print and PDF specs render: a sheet with no bullets on it would
+    // let the whole inclusion/exclusion layer rot untested.
     lines: [
-      { description: "Internal audit and interviews", quantity: "8", unitPrice: "950", tax: 2000 },
-      { description: "Toolkit and templates", quantity: "16", unitPrice: "820", tax: 2000 },
+      {
+        description: "Internal audit and interviews",
+        quantity: "8",
+        unitPrice: "950",
+        tax: 2000,
+        details: [
+          "Twelve interviews across the four departments, transcribed",
+          "Findings deck and a half-day readout with the steering group",
+        ],
+        exclusions: ["Travel outside Meknès, billed at cost"],
+      },
+      {
+        description: "Toolkit and templates",
+        quantity: "16",
+        unitPrice: "820",
+        tax: 2000,
+        details: [
+          "Messaging framework: positioning, pillars, proof points",
+          "Slide, document and email templates in the bank's own fonts",
+        ],
+        exclusions: ["Rollout training for line managers, quoted separately"],
+      },
     ],
   },
 ];
@@ -1231,8 +1325,18 @@ export const INVOICES: SeedInvoice[] = [
     issuedInDays: -55,
     dueInDays: -25,
     lines: [
-      { description: "Positioning and strategy", quantity: "20", unitPrice: "950", tax: 2000 },
-      { description: "Identity development", quantity: "30", unitPrice: "880", tax: 2000 },
+      {
+        description: "Positioning and strategy",
+        quantity: "20",
+        unitPrice: "950",
+        tax: 2000,
+      },
+      {
+        description: "Identity development",
+        quantity: "30",
+        unitPrice: "880",
+        tax: 2000,
+      },
     ],
   },
   {
@@ -1244,8 +1348,18 @@ export const INVOICES: SeedInvoice[] = [
     dueInDays: 10,
     paid: "15 000",
     lines: [
-      { description: "Rollout kit, 40 branches", quantity: "35", unitPrice: "860", tax: 2000 },
-      { description: "Signage specification", quantity: "12", unitPrice: "800", tax: 2000 },
+      {
+        description: "Rollout kit, 40 branches",
+        quantity: "35",
+        unitPrice: "860",
+        tax: 2000,
+      },
+      {
+        description: "Signage specification",
+        quantity: "12",
+        unitPrice: "800",
+        tax: 2000,
+      },
     ],
   },
   {
@@ -1257,8 +1371,18 @@ export const INVOICES: SeedInvoice[] = [
     issuedInDays: -50,
     dueInDays: -20,
     lines: [
-      { description: "Catalogue migration", quantity: "28", unitPrice: "820", tax: 2000 },
-      { description: "Checkout rebuild", quantity: "34", unitPrice: "880", tax: 2000 },
+      {
+        description: "Catalogue migration",
+        quantity: "28",
+        unitPrice: "820",
+        tax: 2000,
+      },
+      {
+        description: "Checkout rebuild",
+        quantity: "34",
+        unitPrice: "880",
+        tax: 2000,
+      },
     ],
   },
   {
@@ -1269,7 +1393,12 @@ export const INVOICES: SeedInvoice[] = [
     issuedInDays: -5,
     dueInDays: 25,
     lines: [
-      { description: "Deposit, 40% of agreed fee", quantity: "1", unitPrice: "13 400", tax: 2000 },
+      {
+        description: "Deposit, 40% of agreed fee",
+        quantity: "1",
+        unitPrice: "13 400",
+        tax: 2000,
+      },
     ],
   },
   {
@@ -1280,7 +1409,12 @@ export const INVOICES: SeedInvoice[] = [
     issuedInDays: 0,
     dueInDays: 30,
     lines: [
-      { description: "Social cutdowns, nine formats", quantity: "9", unitPrice: "650", tax: 2000 },
+      {
+        description: "Social cutdowns, nine formats",
+        quantity: "9",
+        unitPrice: "650",
+        tax: 2000,
+      },
     ],
   },
   {
@@ -1291,7 +1425,14 @@ export const INVOICES: SeedInvoice[] = [
     issuedInDays: -35,
     dueInDays: -5,
     voidReason: "Issued against the old retainer rate. Replaced by INV-2026-0007.",
-    lines: [{ description: "Retainer, one month", quantity: "1", unitPrice: "6 000", tax: 2000 }],
+    lines: [
+      {
+        description: "Retainer, one month",
+        quantity: "1",
+        unitPrice: "6 000",
+        tax: 2000,
+      },
+    ],
   },
 ];
 

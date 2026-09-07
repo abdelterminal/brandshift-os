@@ -346,7 +346,23 @@
       box-shadow: none;
     }
 
-    /* Browsers drop background fills when printing unless asked. The red
+    /* The scaler is the thing that lets the sheet breathe on a screen. On
+       paper its padding is measured from the bottom of the document, so it
+       becomes the first 10mm of a second page -- an entirely blank one. This
+       cost every PDF a trailing sheet the moment the document grew past about
+       285mm; it went unnoticed only because the earlier, sparser layout never
+       got that far.
+
+       `!important` for the same reason `.sheet-hide-in-print` above needs it:
+       the padding arrives as a Tailwind utility, and utilities outrank this
+       layer. What is at stake is whether the document is one page, which is
+       not something a spacing class on a wrapper gets to decide. */
+    .sheet-scaler {
+      padding: 0 !important;
+      overflow: visible;
+    }
+
+    /* Browsers drop background fills when printing unless asked. The ink
        totals bar and the pale recap block are not decoration -- they are how
        you find the number you owe. */
     .sheet,

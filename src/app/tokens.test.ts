@@ -98,7 +98,7 @@ const SIDEBAR: Pair[] = [
 
 describe("tokens parse", () => {
   it("finds the primitive and light block", () => {
-    expect(ROOT.get("--red-500")).toBe("#fd0000");
+    expect(ROOT.get("--red-500")).toBe("#ff3b22");
     expect(ROOT.has("--surface-base")).toBe(true);
   });
 
@@ -140,14 +140,14 @@ describe("the two themes are actually two themes", () => {
 });
 
 describe("brand", () => {
-  it("keeps #FD0000 as the anchor of the red ramp", () => {
+  it("keeps #FF3B22 as the anchor of the red ramp", () => {
     // The brand colour is a given, not a design choice this file gets to make.
-    expect(ROOT.get("--red-500")).toBe("#fd0000");
+    expect(ROOT.get("--red-500")).toBe("#ff3b22");
   });
 
   it("keeps --brand pointing at it in both themes", () => {
     for (const theme of THEMES) {
-      expect(resolveToken("--brand", theme), theme).toBe("#fd0000");
+      expect(resolveToken("--brand", theme), theme).toBe("#ff3b22");
     }
   });
 });

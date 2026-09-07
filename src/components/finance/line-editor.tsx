@@ -23,6 +23,10 @@ import { cn } from "@/lib/utils";
 
 export type DraftLine = {
   description: string;
+  /** One bullet per line, as typed. */
+  details: string;
+  /** One bullet per line, printed muted and last. */
+  exclusions: string;
   quantity: string;
   unitPrice: string;
   taxRateBasisPoints: number;
@@ -33,6 +37,8 @@ const TAX_RATES = [0, 550, 1000, 2000] as const;
 
 export const EMPTY_LINE: DraftLine = {
   description: "",
+  details: "",
+  exclusions: "",
   quantity: "1",
   unitPrice: "",
   taxRateBasisPoints: 2000,
@@ -62,7 +68,13 @@ export function LineEditor({
     const quantityThousandths = parseQuantity(line.quantity);
     const unitPrice = parseMoney(line.unitPrice);
     if (quantityThousandths === null || unitPrice === null) return [];
-    return [{ quantityThousandths, unitPrice, taxRateBasisPoints: line.taxRateBasisPoints }];
+    return [
+      {
+        quantityThousandths,
+        unitPrice,
+        taxRateBasisPoints: line.taxRateBasisPoints,
+      },
+    ];
   });
 
   const totals = totalsFor(parsed);
@@ -101,6 +113,28 @@ export function LineEditor({
                 onChange={(event) => update(index, { description: event.target.value })}
                 placeholder={t("description")}
               />
+
+              {/*
+                Two fields rather than one with a marker character. What is
+                included and what is not read differently on the finished
+                document, so they are different questions here too -- and
+                nobody has to be told that a leading dash means something.
+              */}
+              <div className="grid gap-2 sm:grid-cols-2">
+                {(["details", "exclusions"] as const).map((field) => (
+                  <label key={field}>
+                    <span className="text-caption text-fg-muted block">{t(field)}</span>
+                    <textarea
+                      aria-label={`${t(field)} ${index + 1}`}
+                      rows={3}
+                      className={cn(inputClass, "mt-0.5 h-auto py-1.5 leading-snug")}
+                      placeholder={t(`${field}Hint`)}
+                      value={line[field]}
+                      onChange={(event) => update(index, { [field]: event.target.value })}
+                    />
+                  </label>
+                ))}
+              </div>
 
               <div className="flex flex-wrap items-end gap-2">
                 <label className="min-w-16 flex-1">
@@ -148,7 +182,9 @@ export function LineEditor({
                     className={cn(inputClass, "mt-0.5")}
                     value={line.taxRateBasisPoints}
                     onChange={(event) =>
-                      update(index, { taxRateBasisPoints: Number(event.target.value) })
+                      update(index, {
+                        taxRateBasisPoints: Number(event.target.value),
+                      })
                     }
                   >
                     {TAX_RATES.map((rate) => (

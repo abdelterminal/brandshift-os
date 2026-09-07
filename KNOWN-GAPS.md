@@ -11,7 +11,7 @@ written down nowhere is a gap nobody ever fixes.
 delete the row when it is closed — do not leave a struck-through list of things that are actually
 finished. `CLAUDE.md` points here for the same reason.
 
-Last reviewed: after the PDF download and the 404 guard.
+Last reviewed: after the Mediast rebrand and the itemised devis.
 
 ---
 
@@ -94,6 +94,9 @@ section below.
 | The document cannot be emailed from the app | There is now a real PDF to attach, so what is left is the outbox side: messages carry no attachments, and the email work is asleep by decision. Until then you download it and attach it yourself. |
 | The logo is a URL, not an upload | `organizations.logo_url` can display a hosted logo in the interactive print view. Server-generated PDFs deliberately block every network request outside the app origin to prevent a tenant URL from probing the host or LAN, so an externally hosted logo may be absent there until file storage or a controlled image proxy exists. An organization without a usable logo still prints its name in brand red. |
 | The 503 when no browser is installed is untested | The code path is there and returns a plain-text explanation pointing at the Print button, but nothing exercises it -- proving it would mean a test run with Chromium removed, which is a second image rather than a second test. It is the one branch of the PDF route that has only been reasoned about. |
+| A long quote runs to a second page, and nothing says so | The sheet is designed as one sheet and the seeded document clears A4 by about 7mm. Add a third line with bullets, or a wordy set of conditions, and it spills -- correctly, but silently. Nobody writing a quote is told they have just made a two-page document, and no test guards any quote but the seeded one. |
+| The line editor has no preview | The bullets are typed into two textareas and are next seen on the finished sheet. What the reference devis makes obvious -- that this is prose on a page, and that three long bullets cost a line item its place on page one -- is invisible while it is being written. |
+| The seeded cast still has @brandshift.test addresses | Demo data only, and the e2e fixtures hard-code them, so renaming is a mechanical change across `seed-data.ts`, `e2e/people.ts` and every spec that signs in. Recorded so it is read as unfinished renaming rather than a second company. |
 | The outbox keeps message bodies forever | Including invite links, which set passwords. They expire, and anybody who can read the outbox can already invite people, so it grants nothing new -- but there is no pruning, and a year of notifications will sit there. Wants a retention rule the day notifications start being emailed. |
 | No email, no calls, no attachments on a deal | A deal has notes and a channel. There is no logged call, no email thread and nowhere to put a signed proposal. Email needs the mail transport this deployment still lacks; files need somewhere to put them. |
 | No rate limiting on sign-in | Single-tenant on a local network. Sign-in already resists account enumeration (one message for both halves, and a dummy hash verified when no user matches), but nothing throttles guesses. Worth adding before this is ever exposed beyond the LAN. |

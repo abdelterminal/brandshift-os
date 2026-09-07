@@ -300,7 +300,11 @@ async function main() {
     PROJECTS.flatMap((project) => {
       const row = projectByKey.get(project.key)!;
       return [
-        { projectId: row.id, userId: userId(project.ownerEmail), role: "lead" as const },
+        {
+          projectId: row.id,
+          userId: userId(project.ownerEmail),
+          role: "lead" as const,
+        },
         ...project.memberEmails.map((email) => ({
           projectId: row.id,
           userId: userId(email),
@@ -770,6 +774,9 @@ async function main() {
         unitPrice,
         taxRateBasisPoints: line.tax,
         description: line.description,
+        // Stored as the sheet prints it: one bullet per line, or nothing.
+        details: line.details?.join("\n") ?? null,
+        exclusions: line.exclusions?.join("\n") ?? null,
       };
     });
   }
@@ -809,6 +816,8 @@ async function main() {
         quoteId: quoteRows[index]!.id,
         position,
         description: line.description,
+        details: line.details,
+        exclusions: line.exclusions,
         quantityThousandths: line.quantityThousandths,
         unitPrice: toDecimalString(line.unitPrice),
         taxRateBasisPoints: line.taxRateBasisPoints,
@@ -859,6 +868,8 @@ async function main() {
         invoiceId: invoiceRows[index]!.id,
         position,
         description: line.description,
+        details: line.details,
+        exclusions: line.exclusions,
         quantityThousandths: line.quantityThousandths,
         unitPrice: toDecimalString(line.unitPrice),
         taxRateBasisPoints: line.taxRateBasisPoints,
@@ -1102,7 +1113,12 @@ async function main() {
 
   /** A procedure's steps, numbered by their order in the list. */
   const stepsFor = (sopId: string, rows: Array<[string, string | null]>) =>
-    rows.map(([title, detail], index) => ({ sopId, position: index, title, detail }));
+    rows.map(([title, detail], index) => ({
+      sopId,
+      position: index,
+      title,
+      detail,
+    }));
 
   const sopStepRows = await scope.insert(sopSteps, [
     ...stepsFor(sopRows[0].id, [
@@ -1340,7 +1356,11 @@ function planTask(
   const assignee = candidates[index % candidates.length]!;
 
   if (project.status === "completed") {
-    return { status: "done", dueInDays: -randomInt(28, 60), assigneeEmail: assignee };
+    return {
+      status: "done",
+      dueInDays: -randomInt(28, 60),
+      assigneeEmail: assignee,
+    };
   }
 
   if (project.status === "planning") {
@@ -1363,20 +1383,36 @@ function planTask(
 
   // Active projects.
   if (progress < 0.4) {
-    return { status: "done", dueInDays: -randomInt(3, 30), assigneeEmail: assignee };
+    return {
+      status: "done",
+      dueInDays: -randomInt(3, 30),
+      assigneeEmail: assignee,
+    };
   }
 
   if (progress < 0.6) {
     // The overdue band: in flight and already past its date.
-    return { status: "in_progress", dueInDays: -randomInt(1, 6), assigneeEmail: assignee };
+    return {
+      status: "in_progress",
+      dueInDays: -randomInt(1, 6),
+      assigneeEmail: assignee,
+    };
   }
 
   if (progress < 0.75) {
-    return { status: "blocked", dueInDays: randomInt(-4, 8), assigneeEmail: assignee };
+    return {
+      status: "blocked",
+      dueInDays: randomInt(-4, 8),
+      assigneeEmail: assignee,
+    };
   }
 
   if (progress < 0.85) {
-    return { status: "in_progress", dueInDays: randomInt(1, 5), assigneeEmail: assignee };
+    return {
+      status: "in_progress",
+      dueInDays: randomInt(1, 5),
+      assigneeEmail: assignee,
+    };
   }
 
   // The tail: not started. Some are dropped, some are waiting for an owner,

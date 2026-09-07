@@ -49,21 +49,27 @@
   --neutral-950: #1a1615; /* L 0.205 -- the dark canvas */
   --neutral-1000: #120f0d; /* L 0.170 */
 
-  /* Brand red -- hue 29.23, anchored so that step 500 is exactly #FD0000.
+  /* Brand red -- hue 30.92, anchored so that step 500 is exactly #FF3B22.
      500 is the identity colour. 600 is the one that carries white text at AA;
-     see --accent below, and the note in DECISIONS.md. */
-  --red-50: #fdefed;
-  --red-100: #fedbd5;
-  --red-200: #febbb0;
-  --red-300: #fd8c7c;
-  --red-400: #ff5d4c; /* L 0.690 -- 4.5:1 on the lightest dark surface */
-  --red-500: #fd0000; /* THE brand red */
-  --red-550: #e61810;
-  --red-600: #cb0c06;
-  --red-700: #a80805;
-  --red-800: #860a06;
-  --red-900: #670a06;
-  --red-950: #470603;
+     see --accent below, and the note in DECISIONS.md.
+
+     Re-anchored from #FD0000 (hue 29.23) at the Mediast rebrand. Only the hue
+     moved: every other step keeps the lightness it was solved for, because
+     those numbers are what the contrast guarantees below are made of. Chroma
+     is the most the new hue can hold at that lightness, which is why a couple
+     of steps are a shade cleaner than their predecessors. */
+  --red-50: #fdefec;
+  --red-100: #fedbd4;
+  --red-200: #febbaf;
+  --red-300: #fd8d79;
+  --red-400: #ff5e47; /* L 0.690 -- 4.5:1 on the lightest dark surface */
+  --red-500: #ff3b22; /* THE brand red */
+  --red-550: #e51e00;
+  --red-600: #c81901;
+  --red-700: #a61300;
+  --red-800: #860d00;
+  --red-900: #670b02;
+  --red-950: #470602;
 
   /* Green -- complete. Hue 152. */
   --green-50: #eaf8ed;

@@ -250,7 +250,7 @@ export default function DesignSystemPage() {
         <div className="mt-12 space-y-12">
           <Section
             title="The brand red"
-            intro="#FD0000 is the identity. It carries white text at 4.06:1, which is below the 4.5:1 AA needs for a 14px button label -- so the ramp keeps 500 as the identity colour and puts the interactive fill one step down at 600. Both are the brand red; only one of them is legible under a label."
+            intro="#FF3B22 is the identity. It carries white text at 3.56:1, which is below the 4.5:1 AA needs for a 14px button label -- so the ramp keeps 500 as the identity colour and puts the interactive fill one step down at 600. Both are the brand red; only one of them is legible under a label."
           >
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="border-border overflow-hidden rounded-card border">
@@ -260,10 +260,10 @@ export default function DesignSystemPage() {
                 <div className="bg-surface-raised p-3">
                   <div className="text-label text-fg-default">--brand / red-500</div>
                   <div className="text-caption text-fg-muted mt-1">
-                    #FD0000 -- logo, active nav indicator, focus ring
+                    #FF3B22 -- logo, active nav indicator, focus ring
                   </div>
                   <div className="text-caption text-blocked-text mt-1 tabular-nums">
-                    4.06:1 on white -- non-text use only
+                    3.56:1 on white -- non-text use only
                   </div>
                 </div>
               </div>
@@ -309,7 +309,7 @@ export default function DesignSystemPage() {
           >
             <div className="space-y-6">
               <Ramp name="neutral" label="Neutral -- hue 40, chroma <= 0.008. Warm charcoal, never pure black." />
-              <Ramp name="red" label="Red -- hue 29.23, step 500 is exactly #FD0000" />
+              <Ramp name="red" label="Red -- hue 30.92, step 500 is exactly #FF3B22" />
               <Ramp name="green" label="Green -- complete" />
               <Ramp name="amber" label="Amber -- due soon, needs attention" />
               <Ramp name="blue" label="Blue -- active, in progress" />

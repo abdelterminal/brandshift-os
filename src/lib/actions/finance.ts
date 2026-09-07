@@ -35,9 +35,16 @@ import { parseMoney, parseQuantity } from "@/lib/money";
 
 export type ActionResult = { ok: true; id?: string } | { ok: false; error: string };
 
-/** A line as a form can express it: three strings and a rate. */
+/** A line as a form can express it: five strings and a rate. */
 const lineSchema = z.object({
   description: z.string().trim().min(1).max(400),
+  /**
+   * The bullets, as one textarea's worth of text. Capped generously rather
+   * than per bullet: it is prose on a page, and the sheet is one sheet, so
+   * the real limit is how much fits before the document runs to two.
+   */
+  details: z.string().max(2_000),
+  exclusions: z.string().max(2_000),
   quantity: z.string().trim(),
   unitPrice: z.string().trim(),
   taxRateBasisPoints: z.number().int().min(0).max(10_000),
@@ -51,6 +58,19 @@ const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
  * Returns the offending field rather than a boolean: "check the highlighted
  * fields" on a document with fifteen lines is not help.
  */
+/**
+ * Normalise a bullet textarea: drop blank lines and surrounding space, and
+ * return null when nothing survives. Stored the way it is printed, so the
+ * sheet never has to decide what an empty bullet means.
+ */
+function bullets(raw: string): string | null {
+  const kept = raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return kept.length > 0 ? kept.join("\n") : null;
+}
+
 function parseLines(
   raw: z.infer<typeof lineSchema>[],
 ): { ok: true; lines: LineInput[] } | { ok: false; error: string } {
@@ -65,6 +85,10 @@ function parseLines(
 
     lines.push({
       description: line.description,
+      // Empty is absent. A column holding "" would print an empty bullet
+      // list, which is a visible difference from having said nothing.
+      details: bullets(line.details),
+      exclusions: bullets(line.exclusions),
       quantityThousandths: quantity,
       unitPrice,
       taxRateBasisPoints: line.taxRateBasisPoints,
@@ -240,7 +264,10 @@ export async function issueInvoice(invoiceId: string): Promise<ActionResult> {
   return { ok: true };
 }
 
-const paymentSchema = z.object({ invoiceId: z.uuid(), amount: z.string().trim() });
+const paymentSchema = z.object({
+  invoiceId: z.uuid(),
+  amount: z.string().trim(),
+});
 
 /**
  * Record money arriving.
@@ -274,7 +301,10 @@ export async function addPayment(input: z.input<typeof paymentSchema>): Promise<
   return { ok: true };
 }
 
-const voidSchema = z.object({ invoiceId: z.uuid(), reason: z.string().trim().min(1).max(2000) });
+const voidSchema = z.object({
+  invoiceId: z.uuid(),
+  reason: z.string().trim().min(1).max(2000),
+});
 
 export async function cancelInvoice(input: z.input<typeof voidSchema>): Promise<ActionResult> {
   const parsed = voidSchema.safeParse(input);
@@ -404,7 +434,11 @@ export async function quoteToProject(input: z.input<typeof handoverSchema>): Pro
     subjectType: "project",
     subjectId: project.id,
     projectId: project.id,
-    metadata: { name: parsed.data.name, key: project.key, fromQuote: quote.number },
+    metadata: {
+      name: parsed.data.name,
+      key: project.key,
+      fromQuote: quote.number,
+    },
   });
 
   const locale = await getLocale();

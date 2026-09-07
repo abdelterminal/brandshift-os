@@ -816,6 +816,37 @@ Decisions worth knowing:
 
 ---
 
+### The Mediast rebrand, and a devis that itemises its scope  [DONE]
+
+- [x] **The brand red is `#FF3B22`.** The ramp was re-derived, not re-typed: hue moved 29.23 ->
+      30.92, every step kept the lightness it was solved for, and all 27 contrast assertions pass
+      unchanged. `--brand`, `--accent`, `--focus-ring`, the blocked status and the sidebar active
+      fill all follow from the ramp, so nothing else had to be touched
+- [x] The seeded letterhead is Mediast -- name, website and contact address -- and the conditions
+      block names it too
+- [x] **The sheet follows the Mediast devis.** Wordmark and label in ink with a red full stop, the
+      city and the date facing each other on a dateline, an ink totals bar running the full width
+      of the page, a neutral restatement of the figure, and the same conditions and signature blocks
+- [x] **Every line can say what it covers.** `details` and `exclusions` on both line tables, one
+      bullet per line; inclusions in muted ink, exclusions grey and last, both with the red dot
+- [x] The line editor asks the two questions as two fields, so no marker character has to be taught
+- [x] **A blank second page is gone from every PDF.** The scaler's screen padding was being
+      measured from the bottom of the document; in print it is now zero
+- [x] The vertical rhythm was tightened to the reference -- 53mm of section margins came down to
+      38mm -- which is what makes an itemised quote fit one sheet at all
+- [x] 3 new e2e specs on the sheet: that the bullets print, that an exclusion is set quieter than
+      an inclusion, and that the totals bar is ink rather than brand red
+
+Decisions worth knowing:
+- **The ramp is solved, not chosen.** Re-anchoring it meant moving the hue and leaving the
+  lightnesses alone, because the lightnesses *are* the contrast guarantees.
+- **The red signs the document; it does not carry it.** Ink for the label and the bar; red for the
+  full stop and the bullets.
+- **Two columns, not one with a marker.** `- ` in a details box would silently mean "excluded" to
+  anyone who types markdown lists.
+
+---
+
 ## Backups
 
 One machine, one Postgres volume, and everything anybody has typed into this app lives in it.

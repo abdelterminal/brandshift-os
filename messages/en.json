@@ -895,7 +895,11 @@
     "alreadyConverted": "This quote already has a project.",
     "keyTaken": "Another project already uses that key.",
     "quantityFull": "Quantity",
-    "documentTitle": "What it is for"
+    "documentTitle": "What it is for",
+    "details": "What it covers",
+    "detailsHint": "One per line",
+    "exclusions": "Not included",
+    "exclusionsHint": "One per line"
   },
   "Objectives": {
     "title": "Objectives",
@@ -1280,6 +1284,7 @@
     "dateSignature": "Date & signature",
     "print": "Print",
     "backToDocument": "Back",
-    "download": "Download PDF"
+    "download": "Download PDF",
+    "reference": "Ref. {number}"
   }
 }
