@@ -17,6 +17,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx --env-file=.env --conditions=react-server src/db/seed.ts",
+    "db:reset": "tsx --env-file=.env --conditions=react-server src/db/reset.ts",
     "db:migrate:mongo": "tsx --env-file=.env --conditions=react-server src/db/migrate/run.ts"
   },
   "dependencies": {

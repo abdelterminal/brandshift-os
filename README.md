@@ -24,6 +24,25 @@ npm run db:seed
 npm run dev               # http://localhost:3000
 ```
 
+### Starting for real, with no demo data
+
+`npm run db:seed` fills the database with an invented agency so no screen is
+ever empty while building. When an installation stops being a demo, empty it:
+
+```bash
+npm run db:reset          # every table, and nothing put back
+```
+
+Then open `/signup`. It creates an organization and its founding owner in one
+transaction, which is how this is meant to be bootstrapped -- from there every
+person, project and task is one somebody actually meant. The schema is
+untouched, so there is no migration to re-run.
+
+One thing to know: `/signup` sets the organization's **name** and nothing else.
+The rest of the letterhead that prints on a quote -- tagline, city, website and
+contact address -- has no form yet and lives in the `organizations` row, so a
+document sent before those are filled in carries the name alone.
+
 Generate a `JWT_SECRET` with:
 
 ```bash

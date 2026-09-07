@@ -38,6 +38,7 @@ npm run test:e2e:ui      # the same, with the Playwright UI
 npm run db:generate      # drizzle-kit generate  (after editing src/db/schema)
 npm run db:migrate       # apply migrations
 npm run db:seed          # load demo data
+npm run db:reset         # empty every table and put nothing back; /signup rebuilds from there
 npm run db:migrate:mongo # bring the old app's data across (dry run without --commit)
 docker compose up -d --build
 ```
