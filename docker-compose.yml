@@ -45,13 +45,32 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # Everything in .env reaches the container as-is first -- APP_URL,
+    # HTTPS, MAIL_DRIVER and the SMTP_* block all read straight from
+    # process.env, and none of them were reaching it before this file named
+    # them, so setting them in .env silently did nothing. `environment:`
+    # below is what then overrides the handful of keys the container needs
+    # a different answer for than the host does.
+    #
+    # This has to be env_file, not a matching list of `${VAR:-}` entries: an
+    # unset SMTP_PORT would otherwise arrive as the empty string rather than
+    # being genuinely absent, and `env.ts`'s schema treats those two
+    # differently -- `z.coerce.number()` turns "" into 0, which then fails
+    # its own `.min(1)` and crashes the app at boot. env_file only sets a key
+    # that .env actually sets.
+    env_file:
+      - .env
     environment:
       NODE_ENV: production
       HOSTNAME: "0.0.0.0"
+      # The container's own listening port. Always 3000 regardless of
+      # APP_PORT, which only moves where that gets published on the host.
       PORT: "3000"
+      # .env's own DATABASE_URL is written for a process running on the host
+      # (Postgres on loopback); the app container reaches the db service by
+      # its Compose name instead, so this overrides whatever .env says.
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
-      SESSION_TTL: ${SESSION_TTL:-7d}
     # APP_PORT only moves the host-side port; the container always listens on
     # 3000. Bound on all interfaces on purpose -- this is a LAN deployment.
     ports:

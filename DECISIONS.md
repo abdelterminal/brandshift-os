@@ -586,7 +586,31 @@ arrives as a Tailwind utility and utilities outrank the components layer -- whet
 one page is not a decision a spacing class on a wrapper gets to make.
 
 
-## Deliberately not chosen
+## Added while preparing a real deployment
+
+**`docker-compose.yml` now loads `.env` into the app container wholesale, via `env_file`, instead
+of naming a fixed list of keys under `environment:`.** `APP_URL`, `HTTPS` and the mail settings
+are all read straight from `process.env` in code, and none of them were named in the compose
+file -- so setting any of them in `.env` had done nothing, on every deployment of this, ever. It
+went unnoticed because `MAIL_DRIVER` defaults to `outbox` (nothing tries to send, so a wrong
+`APP_URL` never showed up in a real email) and `HTTPS` only matters once something is actually
+served over TLS in front of the container, which nothing had been yet.
+
+`env_file` rather than adding each key as `${VAR:-}` under `environment:`: an env var named that
+way is set to the empty string the moment `.env` doesn't define it, and empty and absent are not
+the same thing to `env.ts`'s schema. `SMTP_PORT` in particular is `z.coerce.number()...`, and
+`Number("")` is `0`, which then fails the schema's own `.min(1)` -- so the naive fix would have
+made the app crash at boot on every install that leaves `MAIL_DRIVER` at its default, which is
+all of them. `env_file` only ever sets a key that `.env` actually sets, so an absent `APP_URL`
+still reaches the code as `undefined` and takes its documented default.
+
+`environment:` still overrides the handful of keys the container genuinely needs a different
+answer for than the host does: `DATABASE_URL` (the app reaches Postgres by the Compose service
+name, not by the loopback address `.env`'s own copy is written for) and `PORT` (the container's
+own listening port is always 3000, regardless of where `APP_PORT` publishes it on the host).
+`environment:` is applied after `env_file`, so these two still win.
+
+
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the
   requirement is that everything runs on the local network.
