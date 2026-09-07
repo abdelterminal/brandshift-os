@@ -32,6 +32,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # Compiled into the bundle -- see next.config.ts and src/lib/base-path.ts.
+      # Empty for the ordinary deployment, where the app owns the whole
+      # origin; a deployment sharing its domain with something else sets
+      # NEXT_PUBLIC_BASE_PATH in .env before the first `docker compose build`.
+      args:
+        NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-}
     restart: unless-stopped
     # Chromium cannot create its own Linux namespace sandbox under Docker's
     # default seccomp profile. Keep the container itself least-privileged
@@ -76,9 +82,13 @@ services:
     ports:
       - "${APP_PORT:-3000}:3000"
     healthcheck:
+      # /api/health sits under the base path too -- Next does not exempt api
+      # routes from it -- so the same NEXT_PUBLIC_BASE_PATH that went into the
+      # build has to go into this string as well, or the healthcheck starts
+      # asking a 404 whether the app is healthy.
       test:
         - CMD-SHELL
-        - "node -e \"fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""
+        - "node -e \"fetch('http://127.0.0.1:3000${NEXT_PUBLIC_BASE_PATH:-}/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""
       interval: 15s
       timeout: 5s
       retries: 5

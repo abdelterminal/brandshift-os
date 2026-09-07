@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { PrintBar } from "@/components/finance/print-bar";
 import { DocumentSheet } from "@/components/finance/sheet";
 import { requirePermission } from "@/lib/auth/guards";
+import { withBasePath } from "@/lib/base-path";
 import { getQuote, listQuoteLines } from "@/lib/data/finance";
 import { getLetterhead } from "@/lib/data/organization";
 
@@ -48,7 +49,7 @@ export default async function QuotePrintPage({
     <>
       <PrintBar
         backHref={`/finance/quotes/${quote.id}`}
-        pdfHref={`/${locale}/finance/quotes/${quote.id}/pdf`}
+        pdfHref={withBasePath(`/${locale}/finance/quotes/${quote.id}/pdf`)}
       />
       <div className="sheet-scaler pb-10">
         <DocumentSheet

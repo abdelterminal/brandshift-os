@@ -68,8 +68,16 @@ export default async function middleware(request: NextRequest) {
   const claims = token ? await verifySessionToken(token) : null;
   const isPublic = PUBLIC_PATHS.some((entry) => path === entry || path.startsWith(`${entry}/`));
 
+  // `new URL("/x", request.url)` replaces the whole path with `/x` -- it does
+  // not know this app might not own the whole origin. `request.nextUrl`
+  // strips the base path before middleware ever sees it (that is why `path`
+  // above can assume `/` is the root), so it has to be added back by hand
+  // here, from the one place guaranteed to have the actual value: the
+  // request itself, rather than a second copy of the build-time constant.
+  const { basePath } = request.nextUrl;
+
   if (!claims && !isPublic) {
-    const url = new URL(`/${locale}/login`, request.url);
+    const url = new URL(`${basePath}/${locale}/login`, request.url);
     // Remember where they were headed, so signing in finishes the journey
     // rather than dumping everyone on Today.
     if (path !== "/") url.searchParams.set("next", path);
@@ -81,7 +89,7 @@ export default async function middleware(request: NextRequest) {
   );
 
   if (claims && bouncesWhenSignedIn) {
-    return NextResponse.redirect(new URL(`/${locale}/today`, request.url));
+    return NextResponse.redirect(new URL(`${basePath}/${locale}/today`, request.url));
   }
 
   return response;

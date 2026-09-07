@@ -21,6 +21,7 @@ import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { Textarea } from "@/components/ui/input";
 import { focusRing, transition } from "@/components/ui/styles";
 import { readChannel, removeMessage, sendMessage, updateMessage } from "@/lib/actions/channels";
+import { withBasePath } from "@/lib/base-path";
 import { cn } from "@/lib/utils";
 
 /**
@@ -94,7 +95,7 @@ export function Conversation({
   // ---------------------------------------------------------------------
 
   useEffect(() => {
-    const source = new EventSource(`/api/channels/stream?channel=${channelId}`);
+    const source = new EventSource(withBasePath(`/api/channels/stream?channel=${channelId}`));
 
     source.addEventListener("change", () => router.refresh());
     source.addEventListener("presence", (event) => {

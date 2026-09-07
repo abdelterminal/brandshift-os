@@ -2,6 +2,7 @@ import "server-only";
 
 import { getTranslations } from "next-intl/server";
 
+import { withBasePath } from "@/lib/base-path";
 import { env } from "@/lib/env";
 
 import type { MailMessage } from "./message";
@@ -26,9 +27,12 @@ import type { MailMessage } from "./message";
  * `localhost` -- a link somebody opens on their own laptop has to resolve from
  * there. `APP_URL` exists for exactly this and defaults to localhost only
  * because a default has to be something.
+ *
+ * `withBasePath` too: this link is read by a mail client, not the router, so
+ * nothing prefixes `path` on its own the way `next/link` would.
  */
 function link(path: string): string {
-  return `${env().APP_URL.replace(/\/$/, "")}${path}`;
+  return `${env().APP_URL.replace(/\/$/, "")}${withBasePath(path)}`;
 }
 
 export async function inviteMessage(input: {

@@ -847,6 +847,44 @@ Decisions worth knowing:
 
 ---
 
+### Deployed under a sub-path, next to two other sites  [DONE]
+
+- [x] **The app can be mounted under a sub-path of a domain it does not own**, via
+      `NEXT_PUBLIC_BASE_PATH` at build time -- `next/link`, every asset, and a Server Action's
+      `redirect()` all pick it up with no code changes; verified against a real build rather than
+      assumed, because this is exactly the kind of thing that works on the first page and breaks
+      on the first click
+- [x] **The one place the framework does not handle it**, Edge Middleware's own
+      `NextResponse.redirect(new URL(...))`, is fixed by reading `request.nextUrl.basePath` -- the
+      framework's own per-request answer, not a second copy of the same fact
+- [x] Three places build a path by hand instead of going through the router -- the channel
+      `EventSource`, an emailed link, a PDF's own `<a download>` -- and all three now go through
+      one helper, `withBasePath()`, rather than three separate guesses
+- [x] The Docker healthcheck lives under the base path too, since `/api/*` is not exempt from it
+- [x] Deployed to a live VPS alongside two other sites already running on it: its own Docker
+      network, its own loopback-only ports, its own nginx vhost, a real Let's Encrypt certificate
+      -- with both of the other sites' own domains re-checked as still serving, before and after
+      every nginx change
+- [x] Found and fixed a bug that predates this session entirely: `docker-compose.yml` never
+      actually passed `APP_URL` or `HTTPS` into the app container, so no deployment of this,
+      anywhere, had ever produced a session cookie that was genuinely `Secure`
+- [x] Migrations run against the deployed database via the project's own documented path
+      (`npm run db:migrate`, on a machine with Node and the full repo) rather than a workaround --
+      the production image deliberately excludes `drizzle/` from its build context, which ruled
+      out running them from inside it
+
+Decisions worth knowing:
+- **Compiled in, not configured at start.** `basePath` is inlined into the bundle; there is no
+  way to point a already-built image at a different sub-path short of rebuilding it.
+- **One helper, not three guesses.** Everywhere a path is built by hand instead of through
+  `next/link` imports `withBasePath()` from `src/lib/base-path.ts`, so the same rule is applied
+  the same way everywhere, rather than each caller inventing its own string concatenation.
+- **Middleware reads the request's own basePath, not the shared constant.** `request.nextUrl.basePath`
+  is already correct for the build that is actually running; importing `base-path.ts` there too
+  would just be the same fact asserted twice.
+
+---
+
 ## Backups
 
 One machine, one Postgres volume, and everything anybody has typed into this app lives in it.

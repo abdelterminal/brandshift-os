@@ -586,6 +586,39 @@ arrives as a Tailwind utility and utilities outrank the components layer -- whet
 one page is not a decision a spacing class on a wrapper gets to make.
 
 
+## Added when this shared a domain with something else
+
+**Mounting the app under a sub-path (`/os`) is a build-time flag, `NEXT_PUBLIC_BASE_PATH`, not a
+runtime one.** Next.js compiles `basePath` into the bundle -- every `next/link`, every asset URL,
+every Server Action redirect -- so it cannot be changed by setting an environment variable on an
+image that already exists, only by rebuilding with a different one. Empty is the default and stays
+the default: local dev, the e2e suite, and an ordinary LAN deployment all still own the whole
+origin, and nothing about them changed. A deployment sharing its domain with something else sets
+`NEXT_PUBLIC_BASE_PATH=/os` before its first build instead.
+
+`NEXT_PUBLIC_`, not a private name: a small number of places build a path by hand rather than
+going through the router at all, because they were never a navigation to begin with -- an
+`EventSource` subscription, a plain `<a download>` for a PDF, a link inside an emailed message,
+the server rendering its own print route to a PDF with a headless Chromium. None of those are
+`next/link`, so none of them are prefixed automatically, and the browser-side ones need the value
+in the browser. `src/lib/base-path.ts` is the one place that reads it; everything else imports
+`withBasePath()` from there rather than reading the environment variable itself.
+
+**Most of the framework already does this correctly, and it was worth actually checking rather
+than assuming.** `next/link`, `next/image`, and a Server Action's `redirect()` all pick up the
+configured base path with no code changes -- verified by building with `NEXT_PUBLIC_BASE_PATH=/os`
+locally and watching a real sign-up, sign-in, and page-to-page click-through, not by reading that
+it should work. The one place that genuinely does not is Edge Middleware: `NextResponse.redirect(new
+URL(path, request.url))` replaces the request's whole path with `path`, and middleware runs before
+Next re-adds the base path to anything, so a raw absolute path there drops it entirely. The fix
+reads `request.nextUrl.basePath` -- the framework's own per-request answer, already correct in
+every build -- rather than importing `src/lib/base-path.ts`'s copy of the same fact a second way.
+
+**The healthcheck lives under the base path too**, because Next does not exempt `/api/*` routes
+from it -- confirmed the same way, not assumed. The healthcheck's own `${NEXT_PUBLIC_BASE_PATH:-}`
+in `docker-compose.yml` has to be kept in step with whatever the image was actually built with, the
+same way the build's own `args:` block is: both read the one value in `.env`.
+
 ## Added while preparing a real deployment
 
 **`docker-compose.yml` now loads `.env` into the app container wholesale, via `env_file`, instead

@@ -87,6 +87,7 @@ section below.
 
 | Thing | Why |
 |---|---|
+| `NEXT_PUBLIC_BASE_PATH` is only verified by hand | A sub-path deployment was built, then walked end to end against a real build -- sign-up, sign-in, page-to-page navigation, a PDF download, the channel stream -- but that walk lives in this session's notes, not in the automated suite. Nothing re-checks it on a change to routing, redirects, or the print/PDF paths. Worth a second Playwright project that runs the same specs against a build with the variable set, if this sees much use. |
 | The tour cannot be replayed | Once it is finished or skipped it is gone, and there is no "show me that again" anywhere. The column is there and clearing it is a one-line action; what is missing is somewhere sensible to put the button, which is Profile rather than Settings and wants a line of copy nobody has written. |
 | The tour describes the shell, not the work | Five steps about where things are. It says nothing about how to run a project, quote a job or close a review -- those would each want their own walkthrough on their own screen, triggered the first time somebody opens it. Worth doing one at a time, if anybody actually gets lost there. |
 | The tour is the same for everyone | A designer and the person who sends the invoices see different rails, and both are told "five places". The steps are not filtered by what that person can actually reach, which is a small lie on the two rails that differ. |

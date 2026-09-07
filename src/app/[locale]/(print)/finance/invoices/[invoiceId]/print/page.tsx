@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { PrintBar } from "@/components/finance/print-bar";
 import { DocumentSheet } from "@/components/finance/sheet";
 import { requirePermission } from "@/lib/auth/guards";
+import { withBasePath } from "@/lib/base-path";
 import { getInvoice, listInvoiceLines } from "@/lib/data/finance";
 import { getLetterhead } from "@/lib/data/organization";
 
@@ -46,7 +47,7 @@ export default async function InvoicePrintPage({
     <>
       <PrintBar
         backHref={`/finance/invoices/${invoice.id}`}
-        pdfHref={`/${locale}/finance/invoices/${invoice.id}/pdf`}
+        pdfHref={withBasePath(`/${locale}/finance/invoices/${invoice.id}/pdf`)}
       />
       <div className="sheet-scaler pb-10">
         <DocumentSheet

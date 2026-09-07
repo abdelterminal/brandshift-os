@@ -67,6 +67,12 @@ Full stack in containers, reachable on the local network:
 docker compose up -d --build
 ```
 
+Sharing a domain with something else instead of owning it outright? Set `NEXT_PUBLIC_BASE_PATH`
+in `.env` (`=/os` to serve at `example.com/os`, say) before the first `docker compose build app` --
+it is compiled into the app, so changing it later needs a rebuild, not a restart. Whatever sits in
+front has to route that same prefix to the app; see `DECISIONS.md` for what that changes and what
+it does not.
+
 ## Verify
 
 ```bash

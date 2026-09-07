@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 import { SESSION_COOKIE } from "@/lib/auth/jwt";
 import { requirePermission } from "@/lib/auth/guards";
+import { withBasePath } from "@/lib/base-path";
 import { getInvoice, getQuote } from "@/lib/data/finance";
 import { pdfFilename, PdfUnavailableError, renderPagePdf } from "@/lib/pdf";
 import { PdfBusyError } from "@/lib/pdf-control";
@@ -41,7 +42,9 @@ export async function financePdfResponse(
   const cookie = (await cookies()).get(SESSION_COOKIE);
   if (!cookie) notFound();
 
-  const path = `/${locale}/finance/${kind}s/${documentId}/print`;
+  // Chromium is driven to this app's own route, not through the router --
+  // `withBasePath` is what stands in for next/link here.
+  const path = withBasePath(`/${locale}/finance/${kind}s/${documentId}/print`);
 
   try {
     const pdf = await renderPagePdf(path, `${cookie.name}=${cookie.value}`);
