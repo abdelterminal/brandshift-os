@@ -323,6 +323,17 @@
     "invalid": "Vérifiez ce champ.",
     "notFound": "Cette personne n'est plus là."
   },
+  "Departments": {
+    "title": "Départements",
+    "new": "Nouveau département",
+    "newTitle": "Nouveau département",
+    "newBody": "Donnez-lui un nom. Les personnes, projets et modèles pourront s'y rattacher une fois qu'il existera.",
+    "name": "Nom",
+    "description": "Description",
+    "create": "Créer",
+    "invalid": "Saisissez un nom de 2 à 80 caractères.",
+    "emptyBody": "Aucun département pour l'instant. Les personnes, projets et modèles pourront s'y rattacher une fois que vous en aurez ajouté un."
+  },
   "NewProject": {
     "title": "Nouveau projet",
     "stepEssentials": "L'essentiel",
@@ -395,7 +406,8 @@
     "invoiceSent": "a envoyé {number}",
     "invoicePartPaid": "a enregistré un acompte sur {number}",
     "invoicePaid": "a été payé sur {number}",
-    "invoiceVoided": "a annulé {number}"
+    "invoiceVoided": "a annulé {number}",
+    "departmentCreated": "a ajouté le département {name}"
   },
   "ProjectStatus": {
     "planning": "En préparation",

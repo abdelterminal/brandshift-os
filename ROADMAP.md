@@ -847,6 +847,29 @@ Decisions worth knowing:
 
 ---
 
+### A fresh organization can build its own departments  [DONE]
+
+- [x] **`createDepartment`**, behind `organization.editSettings` (admin-and-above) -- the
+      permission already existed, unused by anything, since M4
+- [x] A new panel in Settings: what exists, and the one dialog that adds another
+- [x] Slugged the same way `createTemplate` already does -- `uniqueDepartmentSlug` appends `-2`,
+      `-3`, ... on a collision rather than refusing a name two departments happen to share
+- [x] 3 new e2e specs: a department created here shows up in the People filter *and* the invite
+      dialog's own picker, a one-character name is refused without closing the dialog, and a
+      manager without the permission never sees the panel at all
+
+Decisions worth knowing:
+- **Settings, not the People page.** Departments are the org's own shape, the same question as
+  its name or its timezone -- structural configuration, not something that belongs beside inviting
+  one person at a time.
+- **A name can repeat; a slug cannot.** The database only enforces the slug. Refusing a second
+  "Design" would be enforcing a rule about names using a constraint that is actually about slugs.
+- **Create only.** Rename, archive and assigning a lead are a different, smaller problem than a
+  fresh organization having nowhere to put anyone -- recorded in `KNOWN-GAPS.md`, not built ahead
+  of being asked.
+
+---
+
 ### Deployed under a sub-path, next to two other sites  [DONE]
 
 - [x] **The app can be mounted under a sub-path of a domain it does not own**, via

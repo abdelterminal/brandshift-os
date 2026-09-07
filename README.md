@@ -110,7 +110,9 @@ Sign in as any seeded person -- the password is `brandshift` for all of them:
 | client services | `sofia.laurent@brandshift.test` | Today / Pipeline / Work / People / Inbox |
 
 Signing in as a member and opening `/en/insights` directly shows the 403 page -- refused, but
-still signed in. Signed-in devices and password change live under Settings.
+still signed in. Signed-in devices and password change live under Settings, alongside
+departments for an admin -- the one piece of org structure `/signup` does not ask for, and a
+fresh organization otherwise has nowhere to add.
 
 What is built:
 

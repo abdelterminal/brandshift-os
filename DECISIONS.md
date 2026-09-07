@@ -586,6 +586,36 @@ arrives as a Tailwind utility and utilities outrank the components layer -- whet
 one page is not a decision a spacing class on a wrapper gets to make.
 
 
+## Added when a fresh organization had nowhere to put its departments
+
+**Departments could be read everywhere and created nowhere.** `/signup` sets an organization's
+name and nothing else, so a real organization starts with zero -- and until now there was no form,
+no Server Action, no way in at all short of the seed script. Every other screen that depends on one
+existing (the People filter, the invite dialog's picker, a project, a template, an SOP) was already
+built and already correct; the gap was upstream of all of them.
+
+**Behind `organization.editSettings`, not `member.invite`.** The permission already existed,
+admin-and-above, unused by anything -- this is what it was for. A department is the org's own
+shape, the same question as its name or its timezone, not something that belongs beside inviting
+one person at a time, which is open to managers as well as admins.
+
+**In Settings, not on the People page.** People already reads departments -- the filter, the
+invite picker -- but adding one is structural configuration, not a people action, and Settings is
+where this app already puts things gated by role rather than by what a screen happens to be about.
+
+**Two departments may share a name; the DB only enforces the slug.** The uniqueness index is on
+`(organizationId, slug)`, and `uniqueDepartmentSlug` mirrors `uniqueSlug` in `data/templates.ts`
+exactly -- append `-2`, `-3`, ... until one is free -- rather than refusing a duplicate name
+outright. Two departments both reading "Design" is a real, if unusual, org chart; a slug collision
+is not a business rule, it is a database constraint, and the fix for one should not masquerade as
+a rule about the other.
+
+**Naming, editing and archiving a department are not built.** Create was the actual gap -- a fresh
+organization with nothing to assign anyone to -- and the schema already carries `description` and
+an eventual `leadUserId` for later, but a rename/archive screen is a different, smaller problem for
+whenever the first organization actually needs one. Recorded in `KNOWN-GAPS.md` rather than built
+speculatively.
+
 ## Added when this shared a domain with something else
 
 **Mounting the app under a sub-path (`/os`) is a build-time flag, `NEXT_PUBLIC_BASE_PATH`, not a

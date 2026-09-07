@@ -323,6 +323,17 @@
     "invalid": "Check this field.",
     "notFound": "That person is no longer here."
   },
+  "Departments": {
+    "title": "Departments",
+    "new": "New department",
+    "newTitle": "New department",
+    "newBody": "Give it a name. People, projects and templates can all be filed under it once it exists.",
+    "name": "Name",
+    "description": "Description",
+    "create": "Create",
+    "invalid": "Enter a name between 2 and 80 characters.",
+    "emptyBody": "No departments yet. People, projects and templates can be filed under one once you add it."
+  },
   "NewProject": {
     "title": "New project",
     "stepEssentials": "Essentials",
@@ -395,7 +406,8 @@
     "invoiceSent": "sent {number}",
     "invoicePartPaid": "recorded a part payment on {number}",
     "invoicePaid": "was paid on {number}",
-    "invoiceVoided": "voided {number}"
+    "invoiceVoided": "voided {number}",
+    "departmentCreated": "added the {name} department"
   },
   "ProjectStatus": {
     "planning": "Planning",

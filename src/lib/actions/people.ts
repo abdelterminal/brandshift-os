@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { db } from "@/db/client";
-import { memberships, users, type ModulePermissions } from "@/db/schema/people";
+import { departments, memberships, users, type ModulePermissions } from "@/db/schema/people";
 import { withOrg } from "@/db/tenancy";
 import { requirePermissionForAction } from "@/lib/auth/guards";
 import { recordActivity } from "@/lib/data/activity";
@@ -14,6 +14,7 @@ import { createToken } from "@/lib/auth/tokens";
 import { inviteMessage } from "@/lib/mail/templates";
 import { flush, queue } from "@/lib/mail/transport";
 import { hashPassword } from "@/lib/password";
+import { slugify } from "@/lib/slug";
 
 /**
  * People mutations: inviting someone, and changing what they may do.
@@ -222,5 +223,80 @@ export async function updateMemberRole(
   const locale = await getLocale();
   revalidatePath(`/${locale}/people`);
   revalidatePath(`/${locale}/people/${parsed.data.userId}`);
+  return { ok: true };
+}
+
+const departmentSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  description: z.string().trim().max(400).optional(),
+});
+
+/**
+ * A department slug, unique within the org.
+ *
+ * Checked against every row regardless of `archivedAt`: the unique index is
+ * on `(organizationId, slug)` alone, so an archived department's slug is
+ * still taken as far as Postgres is concerned, and a collision here should
+ * read as "already used" rather than surface as a constraint violation.
+ */
+async function uniqueDepartmentSlug(organizationId: string, name: string): Promise<string> {
+  const base = slugify(name, "department");
+  const existing = await withOrg(organizationId).selectFields(departments, {
+    slug: departments.slug,
+  });
+  const taken = new Set(existing.map((row) => row.slug));
+
+  if (!taken.has(base)) return base;
+  for (let suffix = 2; suffix < 500; suffix += 1) {
+    const candidate = `${base}-${suffix}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  throw new Error(`Could not find a free department slug for "${name}"`);
+}
+
+/**
+ * Add a department.
+ *
+ * Behind `organization.editSettings` -- structural, org-wide, the same
+ * question as who may switch the org's own name or timezone -- rather than
+ * `member.invite`, which is about one person at a time and is open to
+ * managers as well as admins.
+ */
+export async function createDepartment(formData: FormData): Promise<PeopleResult> {
+  const session = await requirePermissionForAction("organization.editSettings");
+
+  const parsed = departmentSchema.safeParse({
+    name: formData.get("name"),
+    description: formData.get("description") ?? "",
+  });
+
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of parsed.error.issues) {
+      const field = String(issue.path[0] ?? "");
+      if (field) fieldErrors[field] = "invalid";
+    }
+    return { ok: false, error: "invalid", fieldErrors };
+  }
+
+  const slug = await uniqueDepartmentSlug(session.actor.organizationId, parsed.data.name);
+
+  const [created] = await withOrg(session.actor.organizationId).insert(departments, {
+    slug,
+    name: parsed.data.name,
+    description: parsed.data.description || null,
+  });
+  if (!created) return { ok: false, error: "invalid" };
+
+  await recordActivity(session.actor, {
+    verb: "department.created",
+    subjectType: "department",
+    subjectId: created.id,
+    metadata: { name: parsed.data.name },
+  });
+
+  const locale = await getLocale();
+  revalidatePath(`/${locale}/people`);
+  revalidatePath(`/${locale}/settings`);
   return { ok: true };
 }
