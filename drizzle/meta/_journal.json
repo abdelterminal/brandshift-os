@@ -120,6 +120,13 @@
       "when": 1788776877455,
       "tag": "0016_nappy_cobalt_man",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1788869000600,
+      "tag": "0017_outgoing_whiplash",
+      "breakpoints": true
     }
   ]
 }

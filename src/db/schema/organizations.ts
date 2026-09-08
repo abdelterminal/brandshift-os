@@ -34,11 +34,11 @@ export const organizations = pgTable(
     /** IANA zone, e.g. `Europe/Paris`. Drives "due today" and "overdue". */
     timezone: text("timezone").notNull().default("Europe/Paris"),
     /**
-     * ISO 4217, e.g. `EUR`. One currency per organization: an agency quotes in
+     * ISO 4217, e.g. `MAD`. One currency per organization: an agency quotes in
      * its own, and multi-currency is a decision about exchange rates and the
      * date they were taken on, not a column.
      */
-    currency: text("currency").notNull().default("EUR"),
+    currency: text("currency").notNull().default("MAD"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     /** Soft delete. A tenant is never hard-deleted. */

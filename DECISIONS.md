@@ -727,6 +727,19 @@ default. The console warning is real and stays open, next to the same warning on
 `DialogClose render={<Button>}` in `KNOWN-GAPS.md` -- both are a dev-only nag about a pattern
 that is semantically correct, not a bug to chase.
 
+## The default currency is MAD, not EUR
+
+`organizations.currency` has always been a real per-tenant column -- every quote, invoice, deal
+and expense reads it rather than assuming one -- but the column's own default was `EUR`, left
+over from before the Mediast rebrand. Nothing had ever set it otherwise: `/signup` and the seed
+script both insert an organization without naming a currency, so every organization that has ever
+existed here, including the one actually running at mediast.ma, got `EUR` it never chose. Fixed
+at the schema default (`MAD`), with a migration (`0017_outgoing_whiplash.sql`) that also backfills
+every existing row still standing on the old default -- safe, because nothing has a way to choose
+a currency on purpose yet, so a row on `EUR` is a row that never got asked, not a row that meant
+it. `src/db/migrate/run.ts`'s Mongo migration already defaulted its own `currency` flag to `MAD`,
+which is what made the mismatch obvious rather than assumed.
+
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the
   requirement is that everything runs on the local network.
 - **Restyling the existing Angular app** -- cheaper, but tenancy, permissions and the task schema

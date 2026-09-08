@@ -180,6 +180,7 @@ async function main() {
       name: ORGANIZATION.name,
       timezone: ORGANIZATION.timezone,
       defaultLocale: ORGANIZATION.defaultLocale,
+      currency: ORGANIZATION.currency,
       tagline: ORGANIZATION.tagline,
       city: ORGANIZATION.city,
       website: ORGANIZATION.website,

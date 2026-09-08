@@ -14,6 +14,8 @@ export const ORGANIZATION = {
   name: "Mediast",
   timezone: "Europe/Paris",
   defaultLocale: "fr" as const,
+  // ISO 4217. The agency quotes and invoices in Moroccan dirhams.
+  currency: "MAD",
   // The letterhead, taken from the devis that goes out to clients rather than
   // invented. The slug changed with the name: it is only ever seen in seeded
   // data, so there is nothing to migrate behind it.
