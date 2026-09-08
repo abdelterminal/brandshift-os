@@ -42,13 +42,19 @@ const STEPS = [
   { key: "account", target: "account" },
 ] as const;
 
-export function Tour() {
+export function Tour({ initiallyOpen = true }: { initiallyOpen?: boolean }) {
   const t = useTranslations("Tour");
+  const ui = useTranslations("Ui");
 
   const [step, setStep] = useState(0);
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(initiallyOpen);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const replay = () => { setStep(0); setOpen(true); };
+    window.addEventListener("brandshift:replay-tour", replay);
+    return () => window.removeEventListener("brandshift:replay-tour", replay);
+  }, []);
   const current = STEPS[step];
   const last = step === STEPS.length - 1;
 
@@ -66,7 +72,8 @@ export function Tour() {
   useEffect(() => {
     if (!open) return;
 
-    const element = document.querySelector(`[data-tour="${current.target}"]`);
+    const target = current.target === "rail" && window.matchMedia("(max-width: 767px)").matches ? "mobile-nav" : current.target;
+    const element = document.querySelector(`[data-tour="${target}"]`);
     element?.setAttribute("data-tour-active", "");
 
     return () => element?.removeAttribute("data-tour-active");
@@ -117,7 +124,10 @@ export function Tour() {
       <h2 id="tour-title" className="text-heading font-display text-fg-default">
         {t(`${current.key}Title`)}
       </h2>
-      <p className="text-body text-fg-muted mt-1.5">{t(`${current.key}Body`)}</p>
+      {current.key === "rail" ? <>
+        <p className="text-body text-fg-muted mt-1.5 md:hidden">{ui("mobileRailBody")}</p>
+        <p className="text-body text-fg-muted mt-1.5 hidden md:block">{ui("railBody")}</p>
+      </> : <p className="text-body text-fg-muted mt-1.5">{t(`${current.key}Body`)}</p>}
 
       <div className="mt-4 flex items-center justify-between gap-3">
         <Button variant="ghost" size="sm" onClick={dismiss}>

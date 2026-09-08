@@ -141,6 +141,9 @@ test("a session revoked from another device explains itself", async ({ browser }
   // The second browser signs the first one out.
   const settings = await second.newPage();
   await settings.goto("/en/settings");
+  // Only the current device shows by default; the other device -- what this
+  // test needs to revoke -- is behind "Show all devices".
+  await settings.getByRole("button", { name: /Show all devices/ }).click();
   const other = settings.locator("li").filter({ hasNot: settings.getByText("This device") });
   await other.getByRole("button", { name: "Sign out" }).first().click();
 

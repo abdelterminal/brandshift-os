@@ -70,8 +70,11 @@ test("refuses a key another project already uses", async ({ page }) => {
   // NOR is seeded.
   await page.getByLabel("Key").fill("NOR");
 
+  // Nothing optional gets filled in on the way through, so the advance button
+  // honestly reads "Skip for now" rather than "Continue" once past the first
+  // step (see new-project-wizard.tsx) -- either is the same action here.
   for (let step = 0; step < 4; step += 1) {
-    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByRole("button", { name: /^(Continue|Skip for now)$/ }).click();
   }
   await page.getByRole("button", { name: "Publish project" }).click();
 

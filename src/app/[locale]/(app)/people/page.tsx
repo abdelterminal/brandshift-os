@@ -48,6 +48,7 @@ export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/
     listOpenTasks(session.actor),
   ]);
 
+  const ui = await getTranslations("Ui");
   const workload = workloadFrom(openTasks, organizationToday());
   const filtered = Boolean(query || role || departmentId);
   const mayInvite = can(session.actor, "member.invite");
@@ -75,7 +76,27 @@ export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/
         </div>
       ) : (
         <>
-          <TableContainer className="mt-4">
+          <ul className="border-border divide-border bg-surface-raised mt-4 divide-y rounded-card border md:hidden">
+            {result.rows.map(person => {
+              const load = workload.get(person.userId) ?? { open: 0, overdue: 0 };
+              return <li key={person.userId} className="p-4">
+                <div className="flex items-start gap-3">
+                  <PersonAvatar name={person.name} src={person.avatarUrl} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <Link href={`/people/${person.userId}`} className="text-body text-fg-default focus-visible:outline-focus-ring rounded-control font-medium hover:underline focus-visible:outline-2">{person.name}</Link>
+                    <p className="text-caption text-fg-muted mt-1 break-all">{person.email}</p>
+                    <p className="text-caption text-fg-muted mt-1">{[roles(person.role), person.departmentName, person.jobTitle].filter(Boolean).join(" · ")}</p>
+                    {person.status === "invited" ? <Badge tone="attention" size="sm">{t("pending")}</Badge> : null}
+                  </div>
+                </div>
+                <div className="text-caption text-fg-muted mt-3 flex flex-wrap items-center gap-2">
+                  {ui("openTasks", { count: load.open })}
+                  {load.overdue > 0 ? <Badge tone="attention" size="sm">{ui("overdue", { count: load.overdue })}</Badge> : null}
+                </div>
+              </li>;
+            })}
+          </ul>
+          <TableContainer className="mt-4 hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow>

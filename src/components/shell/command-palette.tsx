@@ -2,7 +2,7 @@
 
 import { Building2, Compass, FolderKanban, Search, Sun, User } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
@@ -60,11 +60,23 @@ function score(entry: PaletteEntry, query: string): number {
   return -1;
 }
 
-export function CommandPalette({ entries }: { entries: PaletteEntry[] }) {
+function subscribeRecent(notify: () => void) {
+  window.addEventListener("brandshift:recent", notify);
+  return () => window.removeEventListener("brandshift:recent", notify);
+}
+export function CommandPalette({ entries, scopeKey }: { entries: PaletteEntry[]; scopeKey: string }) {
   const t = useTranslations("Search");
+  const ui = useTranslations("Ui");
   const actions = useTranslations("Actions");
   const router = useRouter();
 
+  const recentKey = `brandshift:recent:${scopeKey}`;
+  const recentJson = useSyncExternalStore(subscribeRecent, () => {
+    try { return sessionStorage.getItem(recentKey) ?? "[]"; } catch { return "[]"; }
+  }, () => "[]");
+  let recentIds: string[] = [];
+  try { const parsed: unknown = JSON.parse(recentJson); if (Array.isArray(parsed)) recentIds = parsed.filter((id): id is string => typeof id === "string").slice(0, 5); } catch { /* Ignore malformed local preferences. */ }
+  const recent = recentIds.flatMap(id => entries.find(e => e.id === id) ?? []);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -78,8 +90,13 @@ export function CommandPalette({ entries }: { entries: PaletteEntry[] }) {
       }
     }
 
+    const show = () => setOpen(true);
+    window.addEventListener("brandshift:open-search", show);
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("brandshift:open-search", show);
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, []);
 
   const trimmed = normalise(query.trim());
@@ -90,7 +107,7 @@ export function CommandPalette({ entries }: { entries: PaletteEntry[] }) {
         .sort((a, b) => a.rank - b.rank || a.entry.label.localeCompare(b.entry.label))
         .slice(0, 12)
         .map(({ entry }) => entry)
-    : [];
+    : entries.filter(entry => entry.kind === "destination");
 
   // Places first. Somebody who opens this and types three letters is usually
   // trying to get somewhere, not to find a record.
@@ -102,6 +119,11 @@ export function CommandPalette({ entries }: { entries: PaletteEntry[] }) {
   ];
 
   function go(href: string) {
+    const entry = entries.find(e => e.href === href);
+    if (entry) {
+      try { sessionStorage.setItem(recentKey, JSON.stringify([entry.id, ...recentIds.filter(id => id !== entry.id)].slice(0, 5))); } catch { /* Search still works without storage. */ }
+      window.dispatchEvent(new Event("brandshift:recent"));
+    }
     setOpen(false);
     setQuery("");
     router.push(href);
@@ -132,9 +154,7 @@ export function CommandPalette({ entries }: { entries: PaletteEntry[] }) {
       >
         <Search aria-hidden className="size-4 shrink-0" />
         <span className="hidden truncate lg:inline">{t("open")}</span>
-        <kbd className="text-caption border-border bg-surface-raised text-fg-subtle ml-auto hidden rounded-[4px] border px-1.5 py-0.5 lg:block">
-          ⌘K
-        </kbd>
+
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -157,12 +177,11 @@ export function CommandPalette({ entries }: { entries: PaletteEntry[] }) {
           </div>
 
           <div className="max-h-80 overflow-y-auto p-1">
-            {!trimmed ? (
-              <div className="px-3 py-8 text-center">
-                <p className="text-label text-fg-default">{t("hintTitle")}</p>
-                <p className="text-body text-fg-muted mt-1">{t("hintBody")}</p>
-              </div>
-            ) : results.length === 0 ? (
+            {!trimmed && recent.length ? <section className="border-border mb-2 border-b pb-2">
+              <h2 className="text-caption text-fg-muted px-2 py-1.5">{ui("recent")}</h2>
+              {recent.map(entry => <button key={entry.id} type="button" onClick={() => go(entry.href)} className={cn("text-body text-fg-default hover:bg-surface-hover flex w-full rounded-control px-3 py-2 text-left", focusRing)}>{entry.label}</button>)}
+            </section> : null}
+            {results.length === 0 ? (
               <p className="text-body text-fg-muted px-3 py-8 text-center">
                 {t("empty", { query: query.trim() })}
               </p>

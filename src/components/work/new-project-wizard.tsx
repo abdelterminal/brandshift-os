@@ -2,8 +2,9 @@
 
 import { Check } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
+import { departmentLabel } from "@/components/ui/department-label";
 import { TextField } from "@/components/auth/password-field";
 import { PersonAvatar } from "@/components/ui/avatar";
 import { Badge, CountBadge } from "@/components/ui/badge";
@@ -54,6 +55,8 @@ export function NewProjectWizard({
   people: WizardPerson[];
 }) {
   const t = useTranslations("NewProject");
+  const ui = useTranslations("Ui");
+  const stepRef = useRef<HTMLHeadingElement>(null);
   const priorities = useTranslations("Priority");
 
   const [step, setStep] = useState<Step>("essentials");
@@ -72,6 +75,7 @@ export function NewProjectWizard({
     deliverables: "",
   });
 
+  useEffect(() => { stepRef.current?.focus(); }, [step]);
   const index = STEPS.indexOf(step);
   const isLast = step === "review";
 
@@ -126,7 +130,9 @@ export function NewProjectWizard({
     <div>
       {/* The whole path, with the current step marked -- so nobody wonders how
           much is left, which is the main thing a wizard has to answer. */}
-      <ol className="mb-6 flex flex-wrap items-center gap-1.5">
+      <details className="mb-4 rounded-card border border-border p-3">
+      <summary className="text-label text-fg-muted cursor-pointer rounded-control focus-visible:outline-focus-ring focus-visible:outline-2">{ui("stepOverview")}</summary>
+      <ol className="mt-3 flex flex-wrap items-center gap-1.5">
         {STEPS.map((entry, entryIndex) => {
           const done = entryIndex < index;
           const current = entry === step;
@@ -159,11 +165,15 @@ export function NewProjectWizard({
           );
         })}
       </ol>
+      </details>
 
       <p className="text-caption text-fg-muted mb-4">
         {t("stepOf", { step: index + 1, total: STEPS.length })}
       </p>
 
+      <h2 ref={stepRef} tabIndex={-1} className="text-heading font-display text-fg-default mb-3 outline-none">{t(STEP_LABEL[step] as "stepEssentials")}</h2>
+      {index > 0 && !isLast ? <p className="text-body text-fg-muted mb-3">{ui("optionalStep")}</p> : null}
+      {Object.keys(fieldErrors).length ? <p role="alert" className="text-body text-blocked-text mb-3">{ui("formError")}</p> : null}
       <Card>
         <CardContent className="p-5">
           {step === "essentials" ? (
@@ -172,14 +182,20 @@ export function NewProjectWizard({
                 name="name"
                 label={t("name")}
                 placeholder={t("namePlaceholder")}
+                hint={ui("required")}
                 value={form.name}
                 onValueChange={(value) => setForm((previous) => ({ ...previous, name: value }))}
                 error={fieldErrors.name ? t("invalid") : undefined}
               />
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="project-key" className="text-label text-fg-default w-fit">
-                  {t("key")}
-                </label>
+                <div className="flex items-baseline gap-1">
+                  <label htmlFor="project-key" className="text-label text-fg-default w-fit">
+                    {t("key")}
+                  </label>
+                  <span aria-hidden="true" className="text-caption text-fg-muted">
+                    · {ui("required")}
+                  </span>
+                </div>
                 <input
                   id="project-key"
                   value={form.key}
@@ -204,9 +220,14 @@ export function NewProjectWizard({
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="project-description" className="text-label text-fg-default w-fit">
-                  {t("description")}
-                </label>
+                <div className="flex items-baseline gap-1">
+                  <label htmlFor="project-description" className="text-label text-fg-default w-fit">
+                    {t("description")}
+                  </label>
+                  <span aria-hidden="true" className="text-caption text-fg-muted">
+                    · {ui("optional")}
+                  </span>
+                </div>
                 <Textarea
                   id="project-description"
                   value={form.description}
@@ -219,9 +240,14 @@ export function NewProjectWizard({
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="project-due" className="text-label text-fg-default w-fit">
-                    {t("dueDate")}
-                  </label>
+                  <div className="flex items-baseline gap-1">
+                    <label htmlFor="project-due" className="text-label text-fg-default w-fit">
+                      {t("dueDate")}
+                    </label>
+                    <span aria-hidden="true" className="text-caption text-fg-muted">
+                      · {ui("optional")}
+                    </span>
+                  </div>
                   <input
                     id="project-due"
                     type="date"
@@ -275,7 +301,7 @@ export function NewProjectWizard({
                   <option value="">{t("noDepartment")}</option>
                   {departments.map((department) => (
                     <option key={department.id} value={department.id}>
-                      {department.name}
+                      {departmentLabel(department, departments)}
                     </option>
                   ))}
                 </select>
@@ -435,7 +461,8 @@ export function NewProjectWizard({
         </CardContent>
       </Card>
 
-      <div className="mt-4 flex items-center gap-2">
+      <div className="wizard-actions bg-surface-base border-border sticky z-20 mt-4 flex flex-wrap items-center gap-2 rounded-card border p-3">
+        {!canContinue() ? <p className="text-caption text-fg-muted w-full" id="wizard-requirements">{ui("missingEssentials")}</p> : null}
         {index > 0 ? (
           <Button variant="secondary" onClick={() => setStep(STEPS[index - 1]!)}>
             {t("back")}
@@ -449,10 +476,11 @@ export function NewProjectWizard({
         ) : (
           <Button
             variant="primary"
+            aria-describedby={!canContinue() ? "wizard-requirements" : undefined}
             disabled={!canContinue()}
             onClick={() => setStep(STEPS[index + 1]!)}
           >
-            {t("continue")}
+            {index > 0 && !form.departmentId && !form.ownerUserId && !form.memberIds.length && !deliverables.length ? ui("skip") : t("continue")}
           </Button>
         )}
       </div>

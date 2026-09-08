@@ -41,6 +41,7 @@ export function PasswordField({
   defaultValue?: string;
 }) {
   const t = useTranslations("Auth");
+  const ui = useTranslations("Ui");
   const id = useId();
   const hintId = `${id}-hint`;
   const errorId = `${id}-error`;
@@ -50,9 +51,19 @@ export function PasswordField({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-label text-fg-default w-fit">
-        {label}
-      </label>
+      <span className="flex items-baseline gap-1">
+        <label htmlFor={id} className="text-label text-fg-default w-fit">
+          {label}
+        </label>
+        {/* A sibling, not a child of the label: text inside `<label for>` is
+            folded into its accessible name, so "Password" would become
+            "Password · Required" for anything that asks by name -- including
+            every existing test and, worse, a screen reader announcing the
+            field as something other than what it is called. */}
+        <span aria-hidden="true" className="text-caption text-fg-muted">
+          · {ui(required ? "required" : "optional")}
+        </span>
+      </span>
 
       <div
         className={cn(
@@ -142,6 +153,7 @@ export function TextField({
   placeholder?: string;
   autoFocus?: boolean;
 }) {
+  const ui = useTranslations("Ui");
   const id = useId();
   const hintId = `${id}-hint`;
   const errorId = `${id}-error`;
@@ -149,9 +161,15 @@ export function TextField({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-label text-fg-default w-fit">
-        {label}
-      </label>
+      <span className="flex items-baseline gap-1">
+        <label htmlFor={id} className="text-label text-fg-default w-fit">
+          {label}
+        </label>
+        {/* Sibling, not a child: see PasswordField above for why. */}
+        <span aria-hidden="true" className="text-caption text-fg-muted">
+          · {ui(required ? "required" : "optional")}
+        </span>
+      </span>
       <input
         id={id}
         name={name}

@@ -1,3 +1,4 @@
+import { departmentLabel } from "@/components/ui/department-label";
 import { getTranslations } from "next-intl/server";
 
 import { NewTemplateDialog } from "@/components/templates/controls";
@@ -49,7 +50,7 @@ export default async function TemplatesPage() {
           <NewTemplateDialog
             departments={departments.map((department) => ({
               id: department.id,
-              label: department.name,
+              label: departmentLabel(department, departments),
             }))}
           />
         ) : null}

@@ -187,7 +187,7 @@ function TaskBoard({ tasks }: { tasks: TaskRow[] }) {
     // `position: absolute`, and an avatar group's hidden name list would
     // otherwise be laid out against the viewport rather than this box, taking
     // the board's width out with it.
-    <div className="relative overflow-x-auto pb-2">
+    <div role="region" tabIndex={0} aria-label={t("tasks")} className="relative overflow-x-auto pb-2 focus-visible:outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2">
       <div className="flex min-w-[48rem] gap-3">
         {columns.map((column) => (
           <div key={column.status} className="bg-surface-sunken min-w-0 flex-1 rounded-card p-2">

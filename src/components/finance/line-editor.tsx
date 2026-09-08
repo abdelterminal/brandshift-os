@@ -59,6 +59,7 @@ export function LineEditor({
   currency: string;
 }) {
   const t = useTranslations("Finance");
+  const ui = useTranslations("Ui");
   const format = useFormatter();
 
   const money = (cents: number) => format.number(cents / 100, { style: "currency", currency });
@@ -95,6 +96,7 @@ export function LineEditor({
         {t("lines")}
       </p>
 
+      <p className="text-caption text-fg-muted mb-3">{ui("lineGuide")}</p>
       <ul aria-labelledby="lines-label" className="flex flex-col gap-3">
         {lines.map((line, index) => {
           const quantityThousandths = parseQuantity(line.quantity);
@@ -109,6 +111,7 @@ export function LineEditor({
               <input
                 aria-label={`${t("description")} ${index + 1}`}
                 className={inputClass}
+                required
                 value={line.description}
                 onChange={(event) => update(index, { description: event.target.value })}
                 placeholder={t("description")}
@@ -151,6 +154,8 @@ export function LineEditor({
                         quantityThousandths === null &&
                         "border-blocked-solid",
                     )}
+                    required
+                    aria-invalid={line.quantity !== "" && quantityThousandths === null}
                     value={line.quantity}
                     onChange={(event) => update(index, { quantity: event.target.value })}
                   />
@@ -168,6 +173,8 @@ export function LineEditor({
                       "mt-0.5",
                       line.unitPrice !== "" && unitPrice === null && "border-blocked-solid",
                     )}
+                    required
+                    aria-invalid={line.unitPrice !== "" && unitPrice === null}
                     value={line.unitPrice}
                     onChange={(event) => update(index, { unitPrice: event.target.value })}
                   />

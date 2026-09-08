@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { LineEditor, useLines } from "@/components/finance/line-editor";
+import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,15 +18,14 @@ import {
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { focusRing, transition } from "@/components/ui/styles";
-import { addExpense, addInvoice, addQuote, quoteToProject } from "@/lib/actions/finance";
+import { addExpense, quoteToProject } from "@/lib/actions/finance";
 import { cn } from "@/lib/utils";
 
 /**
  * Drafting the documents.
  *
- * Bigger than the other dialogs in this app because a document has lines, and
- * still a dialog rather than a page: it is one screen with no steps, and the
- * running total has to be visible while the lines are being typed.
+ * Quotes and invoices start on routed composer pages. The small expense and
+ * conversion decisions remain dialogs and reuse their existing actions.
  *
  * Every error the server can return has its own message. "Check the fields" on
  * a document with fifteen lines is not help.
@@ -60,281 +59,20 @@ function useErrorText() {
 
 // ---------------------------------------------------------------------------
 
-export function NewQuoteDialog({
-  companies,
-  currency,
-  today,
-  defaultCompanyId,
-}: {
-  companies: Option[];
-  currency: string;
-  today: string;
-  defaultCompanyId?: string;
+export function NewQuoteDialog(props: {
+  companies: Option[]; currency: string; today: string; defaultCompanyId?: string;
 }) {
   const t = useTranslations("Finance");
-  const errorText = useErrorText();
-
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [companyId, setCompanyId] = useState(defaultCompanyId ?? "");
-  const [issueDate, setIssueDate] = useState(today);
-  const [validUntil, setValidUntil] = useState("");
-  const { lines, setLines } = useLines();
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
-
-  return (
-    <>
-      <Button variant="primary" onClick={() => setOpen(true)}>
-        {t("newQuote")}
-      </Button>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-[min(48rem,calc(100vw-2rem))]">
-          <DialogHeader>
-            <DialogTitle>{t("newQuote")}</DialogTitle>
-            <DialogDescription>{t("quotesSubtitle")}</DialogDescription>
-          </DialogHeader>
-
-          <form
-            className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto"
-            onSubmit={(event) => {
-              event.preventDefault();
-              setError(null);
-              startTransition(async () => {
-                const result = await addQuote({
-                  companyId,
-                  title,
-                  issueDate,
-                  validUntil: validUntil || undefined,
-                  lines,
-                });
-                if (result && !result.ok) setError(errorText(result.error));
-              });
-            }}
-          >
-            <Field>
-              <FieldLabel>{t("documentTitle")}</FieldLabel>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
-            </Field>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Field>
-                <FieldLabel htmlFor="quote-company">{t("company")}</FieldLabel>
-                <select
-                  id="quote-company"
-                  className={selectClass}
-                  value={companyId}
-                  onChange={(e) => setCompanyId(e.target.value)}
-                  required
-                >
-                  <option value="">—</option>
-                  {companies.map((company) => (
-                    <option key={company.id} value={company.id}>
-                      {company.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field>
-                <FieldLabel>{t("issued")}</FieldLabel>
-                <Input
-                  type="date"
-                  value={issueDate}
-                  onChange={(e) => setIssueDate(e.target.value)}
-                  required
-                />
-              </Field>
-
-              <Field>
-                <FieldLabel>{t("validUntil")}</FieldLabel>
-                <Input
-                  type="date"
-                  value={validUntil}
-                  onChange={(e) => setValidUntil(e.target.value)}
-                />
-              </Field>
-            </div>
-
-            <LineEditor lines={lines} setLines={setLines} currency={currency} />
-
-            {error ? (
-              <p role="alert" className="text-body text-blocked-text">
-                {error}
-              </p>
-            ) : null}
-
-            <DialogFooter>
-              <DialogClose render={<Button type="button">{t("cancel")}</Button>} />
-              <Button
-                type="submit"
-                variant="primary"
-                loading={pending}
-                disabled={!companyId || title.trim().length === 0}
-              >
-                {pending ? t("creating") : t("create")}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+  const href = props.defaultCompanyId ? `/finance/quotes/new?company=${encodeURIComponent(props.defaultCompanyId)}` : "/finance/quotes/new";
+  return <Button variant="primary" render={<Link href={href} />}>{t("newQuote")}</Button>;
 }
 
-// ---------------------------------------------------------------------------
-
-export function NewInvoiceDialog({
-  companies,
-  projects,
-  currency,
-  today,
-  dueDefault,
-}: {
-  companies: Option[];
-  projects: Option[];
-  currency: string;
-  today: string;
-  /** Thirty days out, which is what most terms say. */
-  dueDefault: string;
+export function NewInvoiceDialog(_props: {
+  companies: Option[]; projects: Option[]; currency: string; today: string; dueDefault: string;
 }) {
   const t = useTranslations("Finance");
-  const errorText = useErrorText();
-
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [companyId, setCompanyId] = useState("");
-  const [projectId, setProjectId] = useState("");
-  const [issueDate, setIssueDate] = useState(today);
-  const [dueDate, setDueDate] = useState(dueDefault);
-  const { lines, setLines } = useLines();
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
-
-  return (
-    <>
-      <Button variant="primary" onClick={() => setOpen(true)}>
-        {t("newInvoice")}
-      </Button>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-[min(48rem,calc(100vw-2rem))]">
-          <DialogHeader>
-            <DialogTitle>{t("newInvoice")}</DialogTitle>
-            <DialogDescription>{t("invoicesSubtitle")}</DialogDescription>
-          </DialogHeader>
-
-          <form
-            className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto"
-            onSubmit={(event) => {
-              event.preventDefault();
-              setError(null);
-              startTransition(async () => {
-                const result = await addInvoice({
-                  companyId,
-                  projectId: projectId || null,
-                  title,
-                  issueDate,
-                  dueDate,
-                  lines,
-                });
-                if (result && !result.ok) setError(errorText(result.error));
-              });
-            }}
-          >
-            <Field>
-              <FieldLabel>{t("documentTitle")}</FieldLabel>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
-            </Field>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field>
-                <FieldLabel htmlFor="invoice-company">{t("company")}</FieldLabel>
-                <select
-                  id="invoice-company"
-                  className={selectClass}
-                  value={companyId}
-                  onChange={(e) => setCompanyId(e.target.value)}
-                  required
-                >
-                  <option value="">—</option>
-                  {companies.map((company) => (
-                    <option key={company.id} value={company.id}>
-                      {company.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field>
-                <FieldLabel htmlFor="invoice-project">{t("project")}</FieldLabel>
-                <select
-                  id="invoice-project"
-                  className={selectClass}
-                  value={projectId}
-                  onChange={(e) => setProjectId(e.target.value)}
-                >
-                  <option value="">{t("noProject")}</option>
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field>
-                <FieldLabel>{t("issued")}</FieldLabel>
-                <Input
-                  type="date"
-                  value={issueDate}
-                  onChange={(e) => setIssueDate(e.target.value)}
-                  required
-                />
-              </Field>
-
-              <Field>
-                <FieldLabel>{t("due")}</FieldLabel>
-                <Input
-                  type="date"
-                  min={issueDate}
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  required
-                />
-              </Field>
-            </div>
-
-            <LineEditor lines={lines} setLines={setLines} currency={currency} />
-
-            {error ? (
-              <p role="alert" className="text-body text-blocked-text">
-                {error}
-              </p>
-            ) : null}
-
-            <DialogFooter>
-              <DialogClose render={<Button type="button">{t("cancel")}</Button>} />
-              <Button
-                type="submit"
-                variant="primary"
-                loading={pending}
-                disabled={!companyId || title.trim().length === 0}
-              >
-                {pending ? t("creating") : t("create")}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+  return <Button variant="primary" render={<Link href="/finance/invoices/new" />}>{t("newInvoice")}</Button>;
 }
-
-// ---------------------------------------------------------------------------
 
 const CATEGORIES = [
   "subcontractor",

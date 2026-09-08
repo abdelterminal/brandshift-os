@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { SectionNav } from "@/components/ui/section-nav";
 import { ChangePasswordForm } from "@/components/auth/change-password-form";
 import { OutboxPanel } from "@/components/auth/outbox-panel";
 import { SessionsPanel } from "@/components/auth/sessions-panel";
@@ -27,15 +28,24 @@ export default async function SettingsPage() {
     mayManageDepartments ? listDepartments(session.actor) : Promise.resolve([]),
   ]);
 
+  const ui = await getTranslations("Ui");
+
   return (
     <div className="mx-auto max-w-3xl px-5 py-8 sm:px-8">
       <h1 className="text-display font-display text-fg-default">{t("settings")}</h1>
 
-      <div className="mt-6 flex flex-col gap-4">
+      <SectionNav sections={[
+        { id: "security", label: ui("security") },
+        ...(maySeeOutbox ? [{ id: "outbox", label: ui("outbox") }] : []),
+        ...(mayManageDepartments ? [{ id: "organization", label: ui("organization") }] : []),
+      ]} />
+      <div className="mt-6 flex flex-col gap-8">
+        <section id="security" aria-label={ui("security")} className="ui-section flex flex-col gap-4">
         <SessionsPanel devices={devices} />
         <ChangePasswordForm />
-        {maySeeOutbox ? <OutboxPanel rows={outbox} sending={env().MAIL_DRIVER === "smtp"} /> : null}
-        {mayManageDepartments ? <DepartmentsPanel departments={departments} /> : null}
+        </section>
+        {maySeeOutbox ? <section id="outbox" aria-label={ui("outbox")} className="ui-section"><OutboxPanel rows={outbox} sending={env().MAIL_DRIVER === "smtp"} /></section> : null}
+        {mayManageDepartments ? <section id="organization" aria-label={ui("organization")} className="ui-section"><DepartmentsPanel departments={departments} /></section> : null}
       </div>
     </div>
   );

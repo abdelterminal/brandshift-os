@@ -1,3 +1,4 @@
+import { departmentLabel } from "@/components/ui/department-label";
 import { getFormatter, getTranslations } from "next-intl/server";
 
 import { NewSopDialog } from "@/components/sops/controls";
@@ -126,7 +127,7 @@ export default async function SopsPage() {
             people={people.rows.map((person) => ({ id: person.userId, label: person.name }))}
             departments={departments.map((department) => ({
               id: department.id,
-              label: department.name,
+              label: departmentLabel(department, departments),
             }))}
           />
         ) : null}

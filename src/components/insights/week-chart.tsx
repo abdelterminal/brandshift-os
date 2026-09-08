@@ -1,5 +1,6 @@
 import { getFormatter, getTranslations } from "next-intl/server";
 
+import { TableContainer } from "@/components/ui/table";
 import type { WeekPoint } from "@/lib/data/insights";
 import { cn } from "@/lib/utils";
 
@@ -57,7 +58,7 @@ export async function WeekChart({ points }: { points: WeekPoint[] }) {
     // `relative` because `sr-only` is `position: absolute`: without a positioned
     // ancestor those spans lay out against the viewport and escape this box,
     // taking the page width with them. Caught twice already on other screens.
-    <div className="border-border bg-surface-raised relative overflow-x-auto rounded-card border">
+    <TableContainer aria-label={t("throughputCaption")} className="bg-surface-raised">
       <table className="w-full min-w-[36rem] border-collapse">
         <caption className="sr-only">{t("throughputCaption")}</caption>
 
@@ -102,7 +103,7 @@ export async function WeekChart({ points }: { points: WeekPoint[] }) {
           })}
         </tbody>
       </table>
-    </div>
+    </TableContainer>
   );
 }
 

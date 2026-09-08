@@ -140,7 +140,7 @@ export async function DealBoard({
   return (
     // `relative` because `sr-only` is `position: absolute` and would otherwise
     // escape this scroll box and widen the page.
-    <div className="relative overflow-x-auto pb-2">
+    <div role="region" tabIndex={0} aria-label={t("title")} className="relative overflow-x-auto pb-2 focus-visible:outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2">
       <div className="flex min-w-max gap-3">
         {summaries.map((summary) => (
           <section key={summary.stage} className="w-64 shrink-0">

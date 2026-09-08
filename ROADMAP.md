@@ -5,29 +5,41 @@ milestone before starting the next.
 
 Anything deferred rather than done goes in `KNOWN-GAPS.md`, in the same commit.
 
-## Current handoff — 2026-09-05
+## Current handoff — 2026-09-08
 
-The PDF-download and clean-404 milestone is complete, independently reviewed, committed, and
-pushed to `origin/main` as `63a0aa8d6b334c0285fef7eed9ddce3695c045ec`.
+The frontend UI/UX audit (`BrandShift-OS-UI-UX-Audit.md`) has been implemented and remediated
+against the real build and the full test suite, not just read against the diff.
 
-What happened after the initial implementation:
+The audit's own implementation shipped with one build-breaking regression and several test-suite
+regressions that its own verification (`frontend-review.config.ts` / `e2e/frontend/audit.spec.ts`)
+could not have caught, because that harness runs against an already-live dev server and never
+visits `/design`. This pass fixed each of the following against a real production build:
 
-- Production-style Docker runtime testing exposed a missing Playwright runtime file:
-  Next.js standalone output did not include `playwright-core/browsers.json`. `Dockerfile` now
-  copies the complete `playwright-core` package into the runtime image.
-- The rebuilt container launches Alpine Chromium successfully as the non-root `nextjs` user.
-  Quote and invoice downloads were exercised through a real authenticated session; English and
-  French quote PDFs returned valid one-page PDFs, as did the invoice PDF.
-- Malformed document ids return 404, anonymous PDF requests go to sign-in, the PDF response is
-  non-cacheable and marked `nosniff`, and concurrent renders leave the app healthy.
-- The final gate passed: TypeScript, ESLint, **299/299 unit tests**, production build, and
-  **319/319 end-to-end tests**. `npm audit --omit=dev --audit-level=high` found no vulnerabilities.
-- Independent security/correctness review found no remaining blockers. The working tree was clean
-  after the commit, and local `main` matched `origin/main` when this handoff was written.
+- `/design` crashed the production build: `ThemeToggle`, `Field` and `TableContainer` now call
+  `useTranslations("Ui")` unconditionally, and `/design` deliberately carries no i18n provider.
+  Fixed with a scoped `NextIntlClientProvider` in `src/app/design/layout.tsx`.
+- The "· Required" / "· Optional" annotation the audit added next to field labels was nested
+  *inside* the `<label>` in five files, polluting every affected control's accessible name (e.g.
+  "Password" became "Password · Required") and breaking `getByLabel(..., { exact: true })`
+  app-wide -- every sign-in test timed out. Fixed by moving the annotation to a sibling of the
+  label in all five: `password-field.tsx`, `field.tsx`, `composer.tsx`, `new-project-wizard.tsx`,
+  `departments-panel.tsx`.
+- `button.tsx`'s H5 fix inferred `nativeButton={false}` for any `render={<Link>}`, to quiet a Base
+  UI dev warning. That inference is backwards: it makes Base UI inject `role="button"` onto real
+  `<a href>` elements, corrupting their accessible role. Reverted -- see `DECISIONS.md`.
+- H2's loading-skeleton addition (`(app)/loading.tsx`) silently turned every `notFound()` into a
+  200, and a narrower per-folder version still silently turned a revoked session's 401 into a 200,
+  because `(app)/layout.tsx` -- an ancestor of every route -- decides both status codes by
+  throwing, and Next commits to 200 the moment any descendant Suspense boundary streams. No route
+  under `(app)` gets a `loading.tsx`; see `DECISIONS.md` and `KNOWN-GAPS.md`.
+- Stale e2e assumptions once sign-in worked again: `finance.spec.ts` still targeted the dialog-based
+  "New quote" flow M2 replaced with a routed composer, and one duplicate-key and one wide-table
+  test assumed button labels and layouts the audit had deliberately changed. Rewritten to match.
 
-Do not redo this milestone. Continue from `KNOWN-GAPS.md`; the remaining PDF caveats are already
-recorded there (external logos are blocked from server rendering, and the no-browser 503 branch is
-not covered by an automated image test).
+The final gate passed clean: TypeScript, ESLint, **309/309 unit tests**, a real production build,
+and **325/325 end-to-end tests**.
+
+Do not redo this milestone. Continue from `KNOWN-GAPS.md`.
 
 ---
 

@@ -1,4 +1,4 @@
-import { getFormatter, getTranslations } from "next-intl/server";
+import { useFormatter, useTranslations } from "next-intl";
 
 import type { DocumentLine } from "@/lib/data/finance";
 import type { Letterhead } from "@/lib/data/organization";
@@ -45,6 +45,7 @@ export type SheetKind = "quote" | "invoice";
 
 export type SheetProps = {
   kind: SheetKind;
+  preview?: boolean;
   letterhead: Letterhead;
   /** `BS-2026-014` and the like. */
   number: string;
@@ -64,8 +65,9 @@ export type SheetProps = {
   terms: string | null;
 };
 
-export async function DocumentSheet({
+export function DocumentSheet({
   kind,
+  preview = false,
   letterhead,
   number,
   title,
@@ -80,8 +82,10 @@ export async function DocumentSheet({
   paid,
   terms,
 }: SheetProps) {
-  const [t, format] = await Promise.all([getTranslations("Sheet"), getFormatter()]);
+  const t = useTranslations("Sheet");
+  const format = useFormatter();
 
+  const Heading = preview ? "h2" : "h1";
   const money = (cents: number) => format.number(cents / 100, { style: "currency", currency });
   const day = (value: Date) => format.dateTime(value, { dateStyle: "long" });
 
@@ -180,9 +184,9 @@ export async function DocumentSheet({
       {/* ---- who it is for ------------------------------------------- */}
       <section className="mb-[6mm]">
         <p className="text-caption text-fg-muted">{t("preparedFor")}</p>
-        <h1 className="font-display text-display-lg text-fg-default mt-[2mm] font-bold">
+        <Heading className="font-display text-display-lg text-fg-default mt-[2mm] font-bold">
           {client}
-        </h1>
+        </Heading>
         {client === title ? null : <p className="text-body text-fg-muted mt-[1mm]">{title}</p>}
       </section>
 

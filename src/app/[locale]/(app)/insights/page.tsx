@@ -1,5 +1,7 @@
 import { getFormatter, getTranslations } from "next-intl/server";
 
+import { SectionNav } from "@/components/ui/section-nav";
+import { TableContainer } from "@/components/ui/table";
 import { WeekChart } from "@/components/insights/week-chart";
 import { PersonAvatar } from "@/components/ui/avatar";
 import { Badge, CountBadge } from "@/components/ui/badge";
@@ -85,10 +87,11 @@ export default async function InsightsPage() {
         <h1 className="text-display font-display text-fg-default">{t("title")}</h1>
         <p className="text-body text-fg-muted mt-1.5">{t("subtitle")}</p>
       </header>
+      <SectionNav sections={["atRisk", "stuck", "objectives", ...(money ? ["money"] : []), "throughput", "load"].map(id => ({ id, label: t(id) }))} />
 
       {/* What has gone wrong, first, because it is the only part anybody has
           to act on today. */}
-      <section className="mb-8">
+      <section id="atRisk" className="ui-section mb-8">
         <h2 className="text-heading font-display text-fg-default mb-1">{t("atRisk")}</h2>
         <p className="text-caption text-fg-muted mb-2">{t("atRiskBody")}</p>
 
@@ -134,7 +137,7 @@ export default async function InsightsPage() {
         )}
       </section>
 
-      <section className="mb-8">
+      <section id="stuck" className="ui-section mb-8">
         <h2 className="text-heading font-display text-fg-default mb-1">{t("stuck")}</h2>
         <p className="text-caption text-fg-muted mb-2">{t("stuckBody")}</p>
 
@@ -177,7 +180,7 @@ export default async function InsightsPage() {
         number mixing unrelated goals is the invented metric the design rules
         forbid.
       */}
-      <section className="mb-8">
+      <section id="objectives" className="ui-section mb-8">
         <h2 className="text-heading font-display text-fg-default mb-1">{t("objectives")}</h2>
         <p className="text-caption text-fg-muted mb-3">{t("objectivesBody")}</p>
 
@@ -210,7 +213,7 @@ export default async function InsightsPage() {
       </section>
 
       {money ? (
-        <section className="mb-8">
+        <section id="money" className="ui-section mb-8">
           <h2 className="text-heading font-display text-fg-default mb-1">{t("money")}</h2>
           <p className="text-caption text-fg-muted mb-3">{t("moneyBody")}</p>
 
@@ -259,18 +262,18 @@ export default async function InsightsPage() {
           </Link>
         </section>
       ) : null}
-      <section className="mb-8">
+      <section id="throughput" className="ui-section mb-8">
         <h2 className="text-heading font-display text-fg-default mb-1">{t("throughput")}</h2>
         <p className="text-caption text-fg-muted mb-2">{t("throughputBody")}</p>
         <WeekChart points={throughput} />
       </section>
 
-      <section>
+      <section id="load" className="ui-section mb-8">
         <h2 className="text-heading font-display text-fg-default mb-1">{t("load")}</h2>
         <p className="text-caption text-fg-muted mb-2">{t("loadBody")}</p>
 
         {/* `relative` for the same reason the week chart needs it. */}
-        <div className="border-border bg-surface-raised relative overflow-x-auto rounded-card border">
+        <TableContainer aria-label={t("load")} className="bg-surface-raised">
           <table className="w-full min-w-[42rem] border-collapse">
             <thead>
               <tr className="border-border border-b">
@@ -320,7 +323,7 @@ export default async function InsightsPage() {
               ))}
             </tbody>
           </table>
-        </div>
+        </TableContainer>
       </section>
     </div>
   );

@@ -700,7 +700,32 @@ name, not by the loopback address `.env`'s own copy is written for) and `PORT` (
 own listening port is always 3000, regardless of where `APP_PORT` publishes it on the host).
 `environment:` is applied after `env_file`, so these two still win.
 
+## Added while closing out the UI/UX audit
 
+**No route under `(app)` gets a `loading.tsx`, even a scoped one.** The audit asked for loading
+skeletons; one was added app-wide, then narrowed to five route folders that seemed to have no
+`notFound()` call anywhere beneath them. Both versions were wrong for the same reason: the
+`(app)/layout.tsx` that calls `requireUser()` is an *ancestor* of every one of those folders, and
+Next commits the HTTP status to 200 the instant any descendant Suspense boundary starts
+streaming -- so a `loading.tsx` five levels down silently took away the 401 a revoked session is
+supposed to get, not just the 404s it was screened for. `e2e/anonymous/auth.spec.ts`'s "a session
+revoked from another device explains itself" caught it once the folder-by-folder check missed it.
+A route-level skeleton and a layout that decides the status code by throwing cannot coexist; see
+the `KNOWN-GAPS.md` row next to the one about the digest check running in the page. Fixing this
+properly means moving the auth check into middleware first, which is its own decision, not a
+side effect of adding a spinner.
+
+**`Button`'s `nativeButton` prop is never inferred from `render`.** The audit's fix for a Base UI
+console warning ("expected a native `<button>`") set `nativeButton={false}` automatically whenever
+`render` was a `Link`. `nativeButton: false` does not change what tag gets rendered -- that is
+`render`'s job -- it tells Base UI the element is not already interactive, which makes it inject
+`role="button"` to compensate. On a `<Button render={<Link href=...}>}>` that overwrites the
+anchor's real `role="link"` with `role="button"`, which is wrong (a link is not a button dressed
+as one) and broke every `getByRole("link", ...)` assertion aimed at one -- `sheet.spec.ts` in
+full, and the "New quote" and Print controls in `finance.spec.ts`. Reverted to Base UI's own
+default. The console warning is real and stays open, next to the same warning on
+`DialogClose render={<Button>}` in `KNOWN-GAPS.md` -- both are a dev-only nag about a pattern
+that is semantically correct, not a bug to chase.
 
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the
   requirement is that everything runs on the local network.

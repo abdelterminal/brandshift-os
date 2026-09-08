@@ -59,7 +59,7 @@ export async function MonthGrid({
     // viewport instead of this box -- they escape the horizontal clip and
     // stretch the whole document sideways, which is the one thing this
     // container exists to prevent.
-    <div className="border-border relative overflow-x-auto rounded-card border">
+    <div role="region" tabIndex={0} aria-label={t("title")} className="border-border relative overflow-x-auto rounded-card border focus-visible:outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2">
       <div className="min-w-[40rem]">
         <div className="border-border bg-surface-sunken grid grid-cols-7 border-b" aria-hidden>
           {weekdays.map((weekday) => (

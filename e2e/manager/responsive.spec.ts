@@ -71,6 +71,13 @@ test.describe("at 375px", () => {
     await page.getByRole("button", { name: "More" }).click();
     await expect(page.getByRole("dialog").getByRole("link", { name: "Inbox" })).toBeVisible();
   });
+});
+
+// Below `md` the table gives way to a card list (see work/page.tsx) -- there is
+// no wide table on screen to test at 375px. This checks the table itself, so
+// it runs at a width where the table is actually the one rendered.
+test.describe("at 1024px", () => {
+  test.use({ viewport: { width: 1024, height: 768 } });
 
   test("keeps a wide table inside its own scroller", async ({ page }) => {
     await page.goto("/en/work");

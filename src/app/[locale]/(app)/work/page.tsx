@@ -70,6 +70,7 @@ export default async function WorkPage({ searchParams }: PageProps<"/[locale]/wo
     projects.map((project) => listProjectMembers(session.actor, project.id)),
   );
 
+  const ui = await getTranslations("Ui");
   const filtered = Boolean(query || status || departmentId);
   const mayCreate = can(session.actor, "project.create");
 
@@ -108,7 +109,25 @@ export default async function WorkPage({ searchParams }: PageProps<"/[locale]/wo
           />
         </div>
       ) : (
-        <TableContainer className="mt-4">
+        <>
+        <ul className="border-border divide-border bg-surface-raised mt-4 divide-y rounded-card border md:hidden">
+          {projects.map((project, index) => <li key={project.id} className="p-4">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <Link href={`/work/${project.key}`} className="text-body text-fg-default focus-visible:outline-focus-ring min-w-0 rounded-control font-medium hover:underline focus-visible:outline-2">{project.name}</Link>
+              <StatusPill tone={STATUS_TONE[project.status]} size="sm">{statusLabels(project.status)}</StatusPill>
+            </div>
+            <p className="text-caption text-fg-muted mt-2">{[project.key, project.departmentName].filter(Boolean).join(" · ")}</p>
+            <p className="text-caption text-fg-muted mt-1">{t("due")}: {project.dueDate ? format.dateTime(new Date(`${project.dueDate}T00:00:00`), { day: "numeric", month: "short", year: "numeric" }) : t("noDueDate")}</p>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-caption text-fg-muted">{ui("openTasks", { count: openByProject.get(project.id) ?? 0 })}</span>
+                {(blockedByProject.get(project.id) ?? 0) > 0 ? <StatusPill tone="blocked" size="sm">{ui("blocked", { count: blockedByProject.get(project.id)! })}</StatusPill> : null}
+              </div>
+              <AvatarGroup people={teams[index]!.map(member => ({ name: member.name, src: member.avatarUrl }))} size="sm" max={3} />
+            </div>
+          </li>)}
+        </ul>
+        <TableContainer className="mt-4 hidden md:block">
           <Table>
             <TableHeader>
               <TableRow>
@@ -182,6 +201,7 @@ export default async function WorkPage({ searchParams }: PageProps<"/[locale]/wo
             </TableBody>
           </Table>
         </TableContainer>
+        </>
       )}
     </div>
   );

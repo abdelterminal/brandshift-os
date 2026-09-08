@@ -1,5 +1,6 @@
 import { getFormatter, getTranslations } from "next-intl/server";
 
+import { TableContainer } from "@/components/ui/table";
 import type { DocumentLine } from "@/lib/data/finance";
 import { quantityToString } from "@/lib/money";
 import { cn } from "@/lib/utils";
@@ -35,7 +36,25 @@ export async function DocumentLines({
   const money = (cents: number) => format.number(cents / 100, { style: "currency", currency });
 
   return (
-    <div className="border-border bg-surface-raised relative overflow-x-auto rounded-card border">
+    <>
+      <div className="border-border bg-surface-raised divide-border divide-y rounded-card border sm:hidden">
+        {lines.map(line => <div key={line.id} className="p-4">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <p className="text-body text-fg-default min-w-0 break-words font-medium">{line.description}</p>
+            <p className="text-body text-fg-default font-semibold tabular-nums">{money(line.lineTotal)}</p>
+          </div>
+          <dl className="text-caption text-fg-muted mt-3 grid grid-cols-2 gap-2">
+            <div><dt>{t("quantity")}</dt><dd>{quantityToString(line.quantityThousandths)}</dd></div>
+            <div><dt>{t("unitPrice")}</dt><dd>{money(line.unitPrice)}</dd></div>
+            <div><dt>{t("taxRate")}</dt><dd>{line.taxRateBasisPoints / 100}%</dd></div>
+          </dl>
+        </div>)}
+        <dl className="p-4">
+          {([["subtotal", subtotal], ["tax", tax], ["total", total], ...(paid !== undefined && paid > 0 ? [["paid", paid], ["owed", total - paid]] : [])] as Array<[string, number]>).map(([key, value]) =>
+            <div key={key} className={cn("text-body flex flex-wrap justify-between gap-2 py-1", key === "total" || key === "owed" ? "text-fg-default font-semibold" : "text-fg-muted")}><dt>{t(key)}</dt><dd className="tabular-nums">{money(value)}</dd></div>)}
+        </dl>
+      </div>
+      <TableContainer aria-label={t("lines")} className="bg-surface-raised hidden sm:block">
       <table className="w-full min-w-[34rem] border-collapse">
         <thead>
           <tr className="border-border border-b">
@@ -116,6 +135,7 @@ export async function DocumentLines({
           ))}
         </tfoot>
       </table>
-    </div>
+    </TableContainer>
+    </>
   );
 }

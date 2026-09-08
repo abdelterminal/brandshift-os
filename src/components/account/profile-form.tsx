@@ -65,14 +65,13 @@ export function ProfileForm({
   return (
     <form action={onSubmit} className="flex flex-col gap-4">
       <Field>
-        <FieldLabel htmlFor="name">{t("name")}</FieldLabel>
-        <Input id="name" name="name" required maxLength={120} defaultValue={name} />
+        <FieldLabel>{t("name")}</FieldLabel>
+        <Input name="name" required maxLength={120} defaultValue={name} />
       </Field>
 
       <Field>
-        <FieldLabel htmlFor="jobTitle">{t("jobTitle")}</FieldLabel>
+        <FieldLabel>{t("jobTitle")}</FieldLabel>
         <Input
-          id="jobTitle"
           name="jobTitle"
           maxLength={120}
           defaultValue={jobTitle ?? ""}

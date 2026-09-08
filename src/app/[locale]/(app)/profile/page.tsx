@@ -1,6 +1,7 @@
 import { getFormatter, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
+import { TourReplay } from "@/components/shell/tour-replay";
 import { ProfileForm } from "@/components/account/profile-form";
 import { PersonAvatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -155,6 +156,7 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+      <TourReplay />
     </div>
   );
 }

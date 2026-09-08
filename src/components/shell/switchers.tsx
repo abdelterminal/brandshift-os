@@ -9,6 +9,7 @@ import { routing, type Locale } from "@/i18n/routing";
 import { signOut, switchOrganization } from "@/lib/auth/actions";
 import { cn } from "@/lib/utils";
 
+import { ThemeToggle } from "../theme";
 import { PersonAvatar } from "../ui/avatar";
 import {
   Menu,
@@ -103,7 +104,7 @@ export function OrgSwitcher({
 
   return (
     <Menu>
-      <MenuTrigger className={cn(triggerClass, "max-w-48")} aria-label={t("switch")}>
+      <MenuTrigger className={cn(triggerClass, "max-w-full md:max-w-48")} aria-label={t("switch")}>
         <Building2 aria-hidden className="size-4 shrink-0" />
         <span className="truncate">{current?.name ?? t("label")}</span>
         <ChevronsUpDown aria-hidden className="text-fg-subtle size-3.5 shrink-0" />
@@ -161,6 +162,7 @@ export function AccountMenu({
 }) {
   const t = useTranslations("Account");
   const roles = useTranslations("Roles");
+  const ui = useTranslations("Ui");
 
   return (
     <Menu>
@@ -195,6 +197,10 @@ export function AccountMenu({
           <Settings aria-hidden />
           {t("settings")}
         </MenuLinkItem>
+        <div className="border-border my-2 border-y px-2 py-3 md:hidden">
+          <p className="text-caption text-fg-muted mb-2">{ui("preferences")}</p>
+          <div className="flex flex-wrap items-center gap-2"><LocaleSwitcher /><ThemeToggle /></div>
+        </div>
         <MenuSeparator />
         {/* Revokes the session row as well as clearing the cookie, so the
             token cannot be replayed even if it was captured. */}

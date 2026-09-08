@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl";
+
 import { cn } from "@/lib/utils";
 
 import { focusRingInset, transition } from "./styles";
@@ -15,11 +17,15 @@ import { focusRingInset, transition } from "./styles";
  */
 
 function TableContainer({ className, ...props }: React.ComponentProps<"div">) {
+  const t = useTranslations("Ui");
   return (
     <div
+      role="region"
+      tabIndex={0}
+      aria-label={t("dataTable")}
       data-slot="table-container"
       className={cn(
-        "border-border rounded-card relative w-full overflow-x-auto border",
+        "border-border rounded-card relative w-full overflow-x-auto border focus-visible:outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2",
         className,
       )}
       {...props}

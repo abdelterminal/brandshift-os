@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -72,7 +73,16 @@ const COMMON_SEGMENTS = new Set(["new"]);
  */
 const ID_SEGMENT = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export function Breadcrumbs({ trailingLabel }: { trailingLabel?: string }) {
+function subscribeHeading(notify: () => void) {
+  const observer = new MutationObserver(notify);
+  observer.observe(document.getElementById("main") ?? document.body, { childList: true, subtree: true, characterData: true });
+  return () => observer.disconnect();
+}
+const headingSnapshot = () => document.querySelector("#main h1")?.textContent ?? "";
+const serverHeading = () => "";
+
+export function Breadcrumbs({ trailingLabel, mobile = false }: { trailingLabel?: string; mobile?: boolean }) {
+  const heading = useSyncExternalStore(subscribeHeading, headingSnapshot, serverHeading);
   const t = useTranslations("Nav");
   const account = useTranslations("Account");
   const common = useTranslations("Common");
@@ -80,7 +90,7 @@ export function Breadcrumbs({ trailingLabel }: { trailingLabel?: string }) {
   const pathname = usePathname();
 
   const segments = pathname.split("/").filter(Boolean);
-  if (segments.length === 0) return null;
+  if (segments.length === 0 || (mobile && segments.length < 2)) return null;
 
   // Hrefs are built from the full path, so dropping a crumb never changes
   // where the ones above it point.
@@ -101,12 +111,12 @@ export function Breadcrumbs({ trailingLabel }: { trailingLabel?: string }) {
         ? account(crumb.segment as "profile" | "settings")
         : COMMON_SEGMENTS.has(crumb.segment)
           ? common(crumb.segment as "new")
-          : crumb.segment,
+          : (heading || crumb.segment.replaceAll("-", " ")),
     last: index === named.length - 1,
   }));
 
   return (
-    <nav aria-label={shell("breadcrumb")} className="min-w-0">
+    <nav aria-label={shell("breadcrumb")} className={cn("min-w-0", mobile && "border-border border-t px-3 py-2 md:hidden")}>
       <ol className="flex min-w-0 items-center gap-1">
         {crumbs.map((crumb) => (
           <li key={crumb.href} className="flex min-w-0 items-center gap-1">

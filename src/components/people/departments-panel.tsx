@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useId, useState, useTransition } from "react";
 
+import { departmentLabel } from "@/components/ui/department-label";
 import { TextField } from "@/components/auth/password-field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +36,8 @@ import { cn } from "@/lib/utils";
  */
 export function DepartmentsPanel({ departments }: { departments: DepartmentRow[] }) {
   const t = useTranslations("Departments");
+  const ui = useTranslations("Ui");
+  const [name, setName] = useState("");
   const common = useTranslations("Common");
   const router = useRouter();
 
@@ -89,13 +92,22 @@ export function DepartmentsPanel({ departments }: { departments: DepartmentRow[]
                 name="name"
                 label={t("name")}
                 autoFocus
+                value={name}
+                onValueChange={setName}
+                hint={ui("required")}
                 error={fieldErrors.name ? t("invalid") : undefined}
               />
 
+              {departments.some(d => d.name.trim().toLocaleLowerCase() === name.trim().toLocaleLowerCase()) ? <p className="text-caption text-fg-muted" role="status">{ui("duplicateDepartment")}</p> : null}
               <div className="flex flex-col gap-1.5">
-                <label htmlFor={descriptionId} className="text-label text-fg-default w-fit">
-                  {t("description")}
-                </label>
+                <div className="flex items-baseline gap-1">
+                  <label htmlFor={descriptionId} className="text-label text-fg-default w-fit">
+                    {t("description")}
+                  </label>
+                  <span aria-hidden="true" className="text-caption text-fg-muted">
+                    · {ui("optional")}
+                  </span>
+                </div>
                 <textarea id={descriptionId} name="description" className={textareaClass} />
               </div>
 
@@ -127,7 +139,7 @@ export function DepartmentsPanel({ departments }: { departments: DepartmentRow[]
           <ul className="border-border divide-border rounded-card divide-y border">
             {departments.map((department) => (
               <li key={department.id} className="px-4 py-3">
-                <p className="text-body text-fg-default font-medium">{department.name}</p>
+                <p className="text-body text-fg-default font-medium">{departmentLabel(department, departments)}</p>
                 {department.description ? (
                   <p className="text-caption text-fg-muted mt-0.5">{department.description}</p>
                 ) : null}

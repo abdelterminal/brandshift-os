@@ -37,22 +37,29 @@ test("opens on what is overdue", async ({ page }) => {
 
 test("the total on the form is the total that is stored", async ({ page }) => {
   await page.goto("/en/finance/quotes");
-  await page.getByRole("button", { name: "New quote" }).click();
+  // A routed composer now, not a dialog -- and rendered as a link (it goes
+  // to /finance/quotes/new), which is also why it is found by its link role
+  // rather than a button role.
+  await page.getByRole("link", { name: "New quote" }).click();
+  await expect(page).toHaveURL(/\/en\/finance\/quotes\/new$/);
 
-  const dialog = page.getByRole("dialog", { name: "New quote" });
   const title = `Arithmetic check ${Date.now()}`;
-  await dialog.getByRole("textbox", { name: "What it is for" }).fill(title);
-  await dialog.getByLabel("Company", { exact: true }).selectOption({ label: "Kestrel Partners" });
+  await page.getByRole("textbox", { name: "What it is for" }).fill(title);
+  await page.getByLabel("Company", { exact: true }).selectOption({ label: "Kestrel Partners" });
 
   // 1.5 days at 800, plus 20% -- typed the way people type it.
-  await dialog.getByLabel("Description 1").fill("Strategy day");
-  await dialog.getByLabel("Quantity 1").fill("1.5");
-  await dialog.getByLabel("Unit price 1").fill("800");
+  await page.getByLabel("Description 1").fill("Strategy day");
+  await page.getByLabel("Quantity 1").fill("1.5");
+  await page.getByLabel("Unit price 1").fill("800");
 
-  // 1,200.00 net and 240.00 tax: 1,440.00. Shown before it is saved.
-  await expect(dialog.getByText(/1,440\.00|1 440,00/)).toBeVisible();
+  // 1,200.00 net and 240.00 tax: 1,440.00. Shown in the live preview, which
+  // renders the same DocumentSheet the saved document does -- before this is
+  // saved, not just after. It also appears in the totals block and in the
+  // "Due on signature" summary line, so match the first occurrence rather
+  // than requiring the text to be unique on the page.
+  await expect(page.getByText(/1,440\.00|1 440,00/).first()).toBeVisible();
 
-  await dialog.getByRole("button", { name: "Create" }).click();
+  await page.getByRole("button", { name: "Create" }).click();
   await expect(page).toHaveURL(/\/en\/finance\/quotes\/[0-9a-f-]{36}$/);
 
   // And the same figure on the saved document, from the database.
@@ -65,17 +72,18 @@ test("the total on the form is the total that is stored", async ({ page }) => {
 
 test("a figure that is not a figure is refused, not read as zero", async ({ page }) => {
   await page.goto("/en/finance/quotes");
-  await page.getByRole("button", { name: "New quote" }).click();
+  await page.getByRole("link", { name: "New quote" }).click();
 
-  const dialog = page.getByRole("dialog", { name: "New quote" });
-  await dialog.getByRole("textbox", { name: "What it is for" }).fill("Bad money");
-  await dialog.getByLabel("Company", { exact: true }).selectOption({ label: "Kestrel Partners" });
-  await dialog.getByLabel("Description 1").fill("Something");
-  await dialog.getByLabel("Unit price 1").fill("about four thousand");
+  await page.getByRole("textbox", { name: "What it is for" }).fill("Bad money");
+  await page.getByLabel("Company", { exact: true }).selectOption({ label: "Kestrel Partners" });
+  await page.getByLabel("Description 1").fill("Something");
+  await page.getByLabel("Unit price 1").fill("about four thousand");
 
-  // The running total refuses to guess, and the server refuses to store it.
-  await dialog.getByRole("button", { name: "Create" }).click();
-  await expect(dialog.getByText(/does not look like an amount/)).toBeVisible();
+  // The running total refuses to guess -- a line whose price does not parse
+  // is left out of the preview entirely, which is what keeps Create disabled
+  // rather than lets the server catch it after a round trip.
+  await expect(page.getByRole("button", { name: "Create" })).toBeDisabled();
+  await expect(page.getByText(/Complete the required fields/)).toBeVisible();
 });
 
 test("every document gets its own number, and numbers are not reused", async ({ page }) => {
@@ -83,16 +91,15 @@ test("every document gets its own number, and numbers are not reused", async ({ 
 
   for (const round of [1, 2]) {
     await page.goto("/en/finance/quotes");
-    await page.getByRole("button", { name: "New quote" }).click();
+    await page.getByRole("link", { name: "New quote" }).click();
 
-    const dialog = page.getByRole("dialog", { name: "New quote" });
-    await dialog
+    await page
       .getByRole("textbox", { name: "What it is for" })
       .fill(`Numbering ${round} ${Date.now()}`);
-    await dialog.getByLabel("Company", { exact: true }).selectOption({ label: "Kestrel Partners" });
-    await dialog.getByLabel("Description 1").fill("A line");
-    await dialog.getByLabel("Unit price 1").fill("100");
-    await dialog.getByRole("button", { name: "Create" }).click();
+    await page.getByLabel("Company", { exact: true }).selectOption({ label: "Kestrel Partners" });
+    await page.getByLabel("Description 1").fill("A line");
+    await page.getByLabel("Unit price 1").fill("100");
+    await page.getByRole("button", { name: "Create" }).click();
 
     await expect(page).toHaveURL(/\/en\/finance\/quotes\/[0-9a-f-]{36}$/);
     const number = await main(page).locator("p").first().textContent();
@@ -142,12 +149,12 @@ test("voiding asks why", async ({ page }) => {
     .getByRole("link", { name: /Campaign assets, first batch/ })
     .click();
 
-  await page.getByRole("button", { name: "Void it" }).click();
+  await page.getByRole("button", { name: "Void invoice…" }).click();
   const dialog = page.getByRole("dialog", { name: "Void this invoice?" });
 
-  await expect(dialog.getByRole("button", { name: "Void it" })).toBeDisabled();
+  await expect(dialog.getByRole("button", { name: "Void invoice…" })).toBeDisabled();
   await dialog.getByLabel("Why").fill("Raised against the wrong project.");
-  await dialog.getByRole("button", { name: "Void it" }).click();
+  await dialog.getByRole("button", { name: "Void invoice…" }).click();
   await expect(dialog).toBeHidden();
 
   await expect(main(page).getByText("Raised against the wrong project.")).toBeVisible();

@@ -1,3 +1,4 @@
+import { departmentLabel } from "@/components/ui/department-label";
 import { getFormatter, getTranslations } from "next-intl/server";
 
 import { NewObjectiveDialog } from "@/components/objectives/dialogs";
@@ -144,7 +145,7 @@ export default async function ObjectivesPage() {
             people={people.rows.map((person) => ({ id: person.userId, label: person.name }))}
             departments={departments.map((department) => ({
               id: department.id,
-              label: department.name,
+              label: departmentLabel(department, departments),
             }))}
             periodStart={periodStart}
             periodEnd={periodEnd}

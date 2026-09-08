@@ -15,10 +15,7 @@ import { focusRing, transition } from "./styles";
  * losing your place. A modal over the same list would hide the context that
  * makes the next decision obvious.
  *
- * The slide is a deliberate exception to "opacity and colour only". A panel
- * that simply appears at the edge reads as a layout glitch; the movement is
- * what says "this came from the side and will go back there". It still
- * collapses to nothing under `prefers-reduced-motion`.
+ * The panel fades in place, following the shared opacity-and-colour motion rule.
  */
 
 const Drawer = DrawerPrimitive.Root;
@@ -45,13 +42,10 @@ function DrawerContent({
         <DrawerPrimitive.Popup
           data-slot="drawer-content"
           className={cn(
-            "bg-surface-overlay border-border flex h-full w-[min(30rem,100vw)] flex-col border-l shadow-overlay",
+            "bg-surface-overlay border-border relative flex h-dvh max-h-dvh w-[min(30rem,100vw)] flex-col border-l shadow-overlay",
             "outline-none",
-            // Follows the finger while swiping, springs back or leaves after.
-            "translate-x-[var(--drawer-swipe-movement-x)]",
-            "transition-transform duration-[var(--duration-slow)] ease-[var(--ease-out)]",
-            "data-swiping:transition-none data-swiping:select-none",
-            "data-starting-style:translate-x-full data-ending-style:translate-x-full",
+            "transition-opacity duration-[var(--duration-slow)] ease-[var(--ease-out)]",
+            "data-starting-style:opacity-0 data-ending-style:opacity-0",
             className,
           )}
           {...props}
@@ -111,7 +105,7 @@ function DrawerBody({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="drawer-body"
-      className={cn("flex-1 overflow-y-auto overscroll-contain px-5 py-4", className)}
+      className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4", className)}
       {...props}
     />
   );
@@ -122,7 +116,7 @@ function DrawerFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="drawer-footer"
       className={cn(
-        "border-border flex flex-wrap items-center gap-2 border-t px-5 py-3",
+        "border-border flex flex-wrap items-center gap-2 border-t px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]",
         className,
       )}
       {...props}

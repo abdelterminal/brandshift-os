@@ -3,8 +3,9 @@
 import { Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
+import { departmentLabel } from "@/components/ui/department-label";
 import { Button } from "@/components/ui/button";
 import { focusRing, transition } from "@/components/ui/styles";
 import type { DepartmentRow } from "@/lib/data/people";
@@ -14,6 +15,8 @@ import { cn } from "@/lib/utils";
 export function PeopleFilters({ departments }: { departments: DepartmentRow[] }) {
   const t = useTranslations("People");
   const roles = useTranslations("Roles");
+  const ui = useTranslations("Ui");
+  const [expanded, setExpanded] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -38,7 +41,7 @@ export function PeopleFilters({ departments }: { departments: DepartmentRow[] })
   }
 
   const selectClass = cn(
-    "h-9 rounded-control border px-2.5 text-body",
+    "h-9 min-w-0 max-w-full rounded-control border px-2.5 text-body",
     "bg-surface-raised text-fg-default border-border-control hover:border-border-hover",
     focusRing,
     transition,
@@ -48,9 +51,11 @@ export function PeopleFilters({ departments }: { departments: DepartmentRow[] })
 
   return (
     <div className="flex flex-wrap items-center gap-2" data-pending={pending || undefined}>
+      <Button className="md:hidden" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>{ui("filters")} ({Object.values(current).filter(Boolean).length})</Button>
+      <div className={cn("w-full flex-wrap items-center gap-2 md:flex", expanded ? "flex" : "hidden")}>
       <form
         action={(formData) => apply({ q: String(formData.get("q") ?? "") })}
-        className="flex min-w-0 flex-1 items-center sm:max-w-72"
+        className="flex w-full min-w-0 items-center sm:w-auto sm:flex-1 sm:max-w-72"
       >
         <label htmlFor="people-search" className="sr-only">
           {t("search")}
@@ -103,7 +108,7 @@ export function PeopleFilters({ departments }: { departments: DepartmentRow[] })
         <option value="">{t("allDepartments")}</option>
         {departments.map((department) => (
           <option key={department.id} value={department.id}>
-            {department.name}
+            {departmentLabel(department, departments)}
           </option>
         ))}
       </select>
@@ -111,9 +116,10 @@ export function PeopleFilters({ departments }: { departments: DepartmentRow[] })
       {hasFilters ? (
         <Button variant="ghost" size="sm" onClick={() => apply({ q: "", role: "", department: "" })}>
           <X aria-hidden className="size-4" />
-          {t("allRoles")}
+          {ui("clearFilters")}
         </Button>
       ) : null}
+      </div>
     </div>
   );
 }

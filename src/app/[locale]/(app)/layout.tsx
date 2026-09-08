@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { departmentLabel } from "@/components/ui/department-label";
 import { Breadcrumbs } from "@/components/shell/breadcrumbs";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { CommandPalette } from "@/components/shell/command-palette";
@@ -9,7 +10,7 @@ import { AccountMenu, LocaleSwitcher, OrgSwitcher } from "@/components/shell/swi
 import { ThemeToggle } from "@/components/theme";
 import { ToastProvider, ToastViewport } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { bottomNavFor, overflowFor, railFor, withChannels, withDepartments } from "@/lib/navigation";
+import { bottomNavFor, destinationsFor, railFor, withChannels, withDepartments } from "@/lib/navigation";
 import { listJoinedChannels } from "@/lib/data/channels";
 import { listDepartments } from "@/lib/data/people";
 import { unreadCount } from "@/lib/data/notifications";
@@ -59,7 +60,7 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
   const counts: Record<string, number> = { inbox: inboxUnread };
   for (const channel of channels) counts[channel.id] = channel.unread;
 
-  const rail = withDepartments(withChannels(railFor(actor), channels, nav("allChannels")), departments);
+  const rail = withDepartments(withChannels(railFor(actor), channels, nav("allChannels")), departments.map(d => ({ ...d, name: departmentLabel(d, departments) })));
 
   return (
     <TooltipProvider delay={400}>
@@ -87,12 +88,14 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
                 </div>
 
                 <div className="flex shrink-0 items-center gap-1">
-                  <CommandPalette entries={entries} />
+                  <CommandPalette entries={entries} scopeKey={`${actor.organizationId}:${actor.userId}`} />
                   <div className="hidden md:block">
                     <OrgSwitcher organizations={organizations} currentId={organization.id} />
                   </div>
-                  <LocaleSwitcher />
-                  <ThemeToggle />
+                  <div className="hidden md:flex md:items-center md:gap-1">
+                    <LocaleSwitcher />
+                    <ThemeToggle />
+                  </div>
                   <AccountMenu
                     name={user.name}
                     email={user.email}
@@ -104,9 +107,7 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
 
               {/* Breadcrumbs move under the bar on small screens, where the
                   bar itself has no room for them. */}
-              <div className="border-border border-t px-3 py-2 md:hidden">
-                <Breadcrumbs />
-              </div>
+              <Breadcrumbs mobile />
             </header>
 
             <div className="flex min-h-0 flex-1">
@@ -126,7 +127,7 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
 
         <BottomNav
           destinations={bottomNavFor(actor)}
-          overflow={overflowFor(actor)}
+          overflow={destinationsFor(actor)}
           counts={counts}
         />
 
@@ -136,7 +137,7 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
           now the first thing a new person met was a shell full of words
           nobody had explained.
         */}
-        {user.tourCompletedAt === null ? <Tour /> : null}
+        <Tour initiallyOpen={user.tourCompletedAt === null} />
         <ToastViewport />
       </ToastProvider>
     </TooltipProvider>

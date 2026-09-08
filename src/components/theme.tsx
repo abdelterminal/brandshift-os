@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useSyncExternalStore } from "react";
 
@@ -82,15 +83,16 @@ const OPTIONS: Array<{ value: ThemeChoice; label: string; Icon: typeof Sun }> = 
 ];
 
 export function ThemeToggle() {
+  const t = useTranslations("Ui");
   const choice = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   return (
     <div
       role="radiogroup"
-      aria-label="Colour theme"
+      aria-label={t("theme")}
       className="border-border bg-surface-raised inline-flex items-center gap-0.5 rounded-control border p-0.5"
     >
-      {OPTIONS.map(({ value, label, Icon }) => {
+      {OPTIONS.map(({ value, Icon }) => {
         const selected = choice === value;
         return (
           <button
@@ -98,7 +100,7 @@ export function ThemeToggle() {
             type="button"
             role="radio"
             aria-checked={selected}
-            title={label}
+            title={t(value)}
             onClick={() => setTheme(value)}
             className={[
               "ease-out inline-flex size-7 items-center justify-center rounded-[6px]",
@@ -110,7 +112,7 @@ export function ThemeToggle() {
             ].join(" ")}
           >
             <Icon aria-hidden className="size-4" />
-            <span className="sr-only">{label}</span>
+            <span className="sr-only">{t(value)}</span>
           </button>
         );
       })}

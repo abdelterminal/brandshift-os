@@ -81,6 +81,8 @@ function Button({
   loading = false,
   disabled: isDisabled,
   children,
+  render,
+  nativeButton,
   ...props
 }: ButtonProps) {
   const iconOnly = typeof size === "string" && size.startsWith("icon");
@@ -88,6 +90,27 @@ function Button({
   return (
     <ButtonPrimitive
       data-slot="button"
+      render={render}
+      // `nativeButton: false` is not "this isn't a <button> tag" -- it tells
+      // Base UI's own useButton to *inject* `role="button"`. For a Button
+      // rendered as a Link, that overwrites the anchor's real `role="link"`
+      // with the wrong one: it still navigates, but every test, and every
+      // screen reader, is now told it is a button. Confirmed by reading
+      // Base UI's useButton source, not assumed -- `nativeButton` only ever
+      // controls whether Base UI treats the underlying element as already
+      // interactive (true) or adds button-like ARIA/keyboard handling on top
+      // of it (false); it does not change, and cannot detect, which HTML tag
+      // `render` actually produces.
+      //
+      // A `<Link href>` already is a real, natively focusable, natively
+      // activatable element, so `true` -- Base UI's own default -- is what
+      // keeps its semantics correct. That still leaves the dev-only "expected
+      // a native <button>" warning printing for a Button rendered as a link,
+      // since Base UI's check only ever asks "is the tag literally BUTTON",
+      // with no way to say "not a <button>, but already just as
+      // interactive". Recorded in KNOWN-GAPS.md rather than traded for a
+      // wrong ARIA role a second time.
+      nativeButton={nativeButton}
       // Announce the wait; a spinner alone says nothing to a screen reader.
       aria-busy={loading || undefined}
       // Loading blocks clicks the same way disabled does, but must not *look*

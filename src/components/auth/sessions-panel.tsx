@@ -55,6 +55,8 @@ function describeDevice(userAgent: string | null): { label: string | null; mobil
 export function SessionsPanel({ devices }: { devices: DeviceSession[] }) {
   const t = useTranslations("Auth");
   const format = useFormatter();
+  const ui = useTranslations("Ui");
+  const [showAll, setShowAll] = useState(false);
 
   const [message, setMessage] = useState<string | null>(null);
   const [needsReauth, setNeedsReauth] = useState(false);
@@ -86,7 +88,7 @@ export function SessionsPanel({ devices }: { devices: DeviceSession[] }) {
 
       <CardContent className="pt-2">
         <ul className="divide-border divide-y">
-          {devices.map((device) => {
+          {[...devices].sort((a, b) => Number(b.current) - Number(a.current)).filter(device => showAll || device.current).map((device) => {
             const { label, mobile } = describeDevice(device.userAgent);
             const Icon = mobile ? Smartphone : Laptop;
 
@@ -103,7 +105,7 @@ export function SessionsPanel({ devices }: { devices: DeviceSession[] }) {
                       </span>
                     ) : null}
                   </p>
-                  <p className="text-caption text-fg-muted">
+                  <p className="text-caption text-fg-muted break-words">
                     {t("lastSeen", {
                       when: format.relativeTime(device.lastSeenAt),
                     })}
@@ -126,6 +128,9 @@ export function SessionsPanel({ devices }: { devices: DeviceSession[] }) {
           })}
         </ul>
 
+        {others.length > 0 ? <Button className="mt-3 max-w-full" size="sm" onClick={() => setShowAll(!showAll)} aria-expanded={showAll}>
+          {ui(showAll ? "hideDevices" : "showDevices", { count: devices.length })}
+        </Button> : null}
         <div aria-live="polite" className="empty:hidden">
           {message ? <p className="text-caption text-fg-muted mt-3">{message}</p> : null}
         </div>

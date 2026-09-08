@@ -32,7 +32,6 @@ function TabsList({ className, ...props }: TabsPrimitive.List.Props) {
         className={cn(
           "bg-brand absolute bottom-0 left-0 h-0.5 w-[var(--active-tab-width)]",
           "translate-x-[var(--active-tab-left)]",
-          "transition-[translate,width] duration-[var(--duration-base)] ease-[var(--ease-out)]",
         )}
       />
     </TabsPrimitive.List>

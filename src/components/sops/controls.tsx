@@ -72,6 +72,12 @@ function StepFields({
 }) {
   const t = useTranslations("Sops");
 
+  const ui = useTranslations("Ui");
+  const move = (index: number, offset: number) => setSteps(current => {
+    const next = [...current];
+    [next[index], next[index + offset]] = [next[index + offset]!, next[index]!];
+    return next;
+  });
   const update = (index: number, patch: Partial<DraftStep>) =>
     setSteps((current) => current.map((step, i) => (i === index ? { ...step, ...patch } : step)));
 
@@ -96,6 +102,10 @@ function StepFields({
             maxLength={4000}
           />
 
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" size="sm" disabled={index === 0} onClick={() => move(index, -1)} aria-label={ui("moveUp") + " " + (index + 1)}>{ui("moveUp")}</Button>
+            <Button type="button" size="sm" disabled={index === steps.length - 1} onClick={() => move(index, 1)} aria-label={ui("moveDown") + " " + (index + 1)}>{ui("moveDown")}</Button>
+          </div>
           {steps.length > 1 ? (
             <Button
               type="button"

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { departmentLabel } from "@/components/ui/department-label";
 import { TextField } from "@/components/auth/password-field";
 import { Button } from "@/components/ui/button";
 import {
@@ -120,7 +121,7 @@ export function InviteDialog({ departments }: { departments: DepartmentRow[] }) 
                 <option value="">--</option>
                 {departments.map((department) => (
                   <option key={department.id} value={department.id}>
-                    {department.name}
+                    {departmentLabel(department, departments)}
                   </option>
                 ))}
               </select>
