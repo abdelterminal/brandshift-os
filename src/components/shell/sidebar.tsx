@@ -1,15 +1,55 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useSyncExternalStore, useTransition } from "react";
 
 import { CountBadge } from "@/components/ui/badge";
 import { Link, usePathname } from "@/i18n/navigation";
+import { setChannelPinnedAction } from "@/lib/actions/channels";
 import type { Destination } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 import { focusRing, transition } from "../ui/styles";
 import { NAV_ICONS } from "./nav-icons";
+
+/**
+ * Which parent rows are collapsed, kept per browser rather than per person:
+ * this is a convenience for a screen with limited room, not a preference
+ * worth a round trip.
+ *
+ * Read through `useSyncExternalStore`, the same pattern the command palette
+ * uses for its recent-searches list -- the server has no opinion on this, and
+ * a plain `useState` seeded in an effect is what the `react-hooks` lint rule
+ * flags as a cascading render.
+ */
+const COLLAPSE_KEY = "brandshift.sidebar.collapsed";
+const COLLAPSE_EVENT = "brandshift:sidebar-collapse";
+
+function subscribeCollapsed(notify: () => void) {
+  window.addEventListener(COLLAPSE_EVENT, notify);
+  return () => window.removeEventListener(COLLAPSE_EVENT, notify);
+}
+
+function readCollapsedJson(): string {
+  try {
+    return window.localStorage.getItem(COLLAPSE_KEY) ?? "{}";
+  } catch {
+    // Private browsing, or a browser that blocks storage. A section that
+    // cannot remember being collapsed is not worth failing the rail over.
+    return "{}";
+  }
+}
+
+function parseCollapsed(json: string): Record<string, boolean> {
+  try {
+    const parsed: unknown = JSON.parse(json);
+    return parsed && typeof parsed === "object" ? (parsed as Record<string, boolean>) : {};
+  } catch {
+    return {};
+  }
+}
 
 /**
  * The left rail.
@@ -38,56 +78,103 @@ function RailLink({
   destination,
   counts,
   nested = false,
+  pinnable = false,
 }: {
   destination: Destination;
   counts?: Partial<Record<string, number>>;
   nested?: boolean;
+  /** Only a channel row gets a pin toggle -- a department is not a thing you pin. */
+  pinnable?: boolean;
 }) {
   const t = useTranslations("Nav");
   const pathname = usePathname();
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
 
   const active = isActive(pathname, destination.href, destination.exact);
   const Icon = NAV_ICONS[destination.icon];
   const count = counts?.[destination.id] ?? 0;
+  // Unread is its own visual weight, distinct from "this is where you are":
+  // Slack bolds an unread channel's name for the same reason -- a badge alone
+  // is easy to miss in a list of a dozen rows, bold text is not.
+  const unread = !active && count > 0;
+
+  const pinned = destination.pinned ?? false;
+
+  function togglePin() {
+    startTransition(async () => {
+      await setChannelPinnedAction(destination.id, !pinned);
+      router.refresh();
+    });
+  }
 
   return (
-    <Link
-      href={destination.href}
-      aria-current={active ? "page" : undefined}
+    <span
       className={cn(
-        "group relative flex items-center gap-2.5 rounded-control py-2 pr-2 text-label",
-        nested ? "pl-8" : "pl-3",
-        focusRing,
-        transition,
+        "group relative flex items-center rounded-control",
         active
-          ? "bg-sidebar-active-bg text-accent-text font-semibold"
-          : "text-sidebar-fg hover:bg-sidebar-hover hover:text-sidebar-fg-active",
+          ? "bg-sidebar-active-bg"
+          : "hover:bg-sidebar-hover",
       )}
     >
-      {/* The red bar. Most of the rail's share of the 5% budget. */}
-      <span
-        aria-hidden
+      <Link
+        href={destination.href}
+        aria-current={active ? "page" : undefined}
         className={cn(
-          "absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-pill",
-          active ? "bg-brand" : "bg-transparent",
+          "relative flex min-w-0 flex-1 items-center gap-2.5 py-2 pr-2 text-label",
+          nested ? "pl-8" : "pl-3",
+          focusRing,
+          transition,
+          active
+            ? "text-accent-text font-semibold"
+            : unread
+              ? "text-sidebar-fg-active font-semibold"
+              : "text-sidebar-fg group-hover:text-sidebar-fg-active",
         )}
-      />
-      <Icon aria-hidden className={cn("shrink-0", nested ? "size-3.5" : "size-4")} />
-      <span className="truncate">{destination.label ?? t(destination.id)}</span>
-
-      {count > 0 ? (
-        <CountBadge tone="accent" className="ml-auto">
-          {count}
-        </CountBadge>
-      ) : null}
-
-      {destination.expandableChildren && count === 0 && !destination.children?.length ? (
-        <ChevronRight
+      >
+        {/* The red bar. Most of the rail's share of the 5% budget. */}
+        <span
           aria-hidden
-          className="text-fg-subtle ml-auto size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+          className={cn(
+            "absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-pill",
+            active ? "bg-brand" : "bg-transparent",
+          )}
         />
+        <Icon aria-hidden className={cn("shrink-0", nested ? "size-3.5" : "size-4")} />
+        <span className="truncate">{destination.label ?? t(destination.id)}</span>
+
+        {count > 0 ? (
+          <CountBadge tone="accent" className="ml-auto">
+            {count}
+          </CountBadge>
+        ) : null}
+
+        {destination.expandableChildren && count === 0 && !destination.children?.length ? (
+          <ChevronRight
+            aria-hidden
+            className="text-fg-subtle ml-auto size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+          />
+        ) : null}
+      </Link>
+
+      {pinnable ? (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={togglePin}
+          aria-pressed={pinned}
+          aria-label={pinned ? t("unpinChannel") : t("pinChannel")}
+          className={cn(
+            "mr-1.5 shrink-0 rounded-control p-1 text-fg-subtle hover:text-sidebar-fg-active",
+            pinned ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+            focusRing,
+            transition,
+          )}
+        >
+          <Star aria-hidden className={cn("size-3.5", pinned && "fill-current")} />
+        </button>
       ) : null}
-    </Link>
+    </span>
   );
 }
 
@@ -102,6 +189,22 @@ export function Sidebar({
   counts?: Partial<Record<string, number>>;
 }) {
   const t = useTranslations("Nav");
+
+  // Every collapsed section on this device, never on the server: it renders
+  // fully expanded there, which is also the correct empty state for a
+  // browser with storage blocked entirely.
+  const collapsedJson = useSyncExternalStore(subscribeCollapsed, readCollapsedJson, () => "{}");
+  const collapsed = parseCollapsed(collapsedJson);
+
+  function toggleSection(id: string) {
+    const next = { ...collapsed, [id]: !collapsed[id] };
+    try {
+      window.localStorage.setItem(COLLAPSE_KEY, JSON.stringify(next));
+    } catch {
+      // Nothing to persist to. The event still fires, so this render updates.
+    }
+    window.dispatchEvent(new Event(COLLAPSE_EVENT));
+  }
 
   return (
     <nav
@@ -119,27 +222,65 @@ export function Sidebar({
       </div>
 
       <ul className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-2">
-        {destinations.map((destination) => (
-          <li key={destination.id}>
-            <RailLink destination={destination} counts={counts} />
+        {destinations.map((destination) => {
+          const hasChildren = (destination.children?.length ?? 0) > 0;
+          const isCollapsed = hasChildren && collapsed[destination.id];
+          // A channel's own row is pinnable; the trailing "All channels" link
+          // is not a channel to pin, it is the way to the rest of them.
+          const isChannelSection = destination.expandableChildren === "channels";
 
-            {/*
-              Channels, nested. They are children rather than a sixth
-              destination because the cap of five is what keeps this rail
-              scannable -- and because a project's channel belongs to that
-              work, not beside it.
-            */}
-            {destination.children && destination.children.length > 0 ? (
-              <ul className="mt-0.5 flex flex-col gap-0.5">
-                {destination.children.map((child) => (
-                  <li key={child.id}>
-                    <RailLink destination={child} counts={counts} nested />
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </li>
-        ))}
+          return (
+            <li key={destination.id}>
+              <div className="flex items-center">
+                <RailLink destination={destination} counts={counts} />
+
+                {hasChildren ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleSection(destination.id)}
+                    aria-expanded={!isCollapsed}
+                    aria-label={
+                      isCollapsed
+                        ? t("expandSection", { name: destination.label ?? t(destination.id) })
+                        : t("collapseSection", { name: destination.label ?? t(destination.id) })
+                    }
+                    className={cn(
+                      "text-fg-subtle hover:text-sidebar-fg-active mr-1 shrink-0 rounded-control p-1",
+                      focusRing,
+                      transition,
+                    )}
+                  >
+                    <ChevronDown
+                      aria-hidden
+                      className={cn("size-3.5 transition-transform", isCollapsed && "-rotate-90")}
+                    />
+                  </button>
+                ) : null}
+              </div>
+
+              {/*
+                Channels and departments, nested. They are children rather
+                than a sixth destination because the cap of five is what
+                keeps this rail scannable -- and because a project's channel
+                belongs to that work, not beside it.
+              */}
+              {hasChildren && !isCollapsed ? (
+                <ul className="mt-0.5 flex flex-col gap-0.5">
+                  {destination.children!.map((child) => (
+                    <li key={child.id}>
+                      <RailLink
+                        destination={child}
+                        counts={counts}
+                        nested
+                        pinnable={isChannelSection && child.href !== "/channels"}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );

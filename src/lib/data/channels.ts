@@ -95,6 +95,8 @@ export type ChannelListRow = ChannelRow & {
   lastReadAt: Date | null;
   /** Whether you are in it, which is what puts it on your rail. */
   joined: boolean;
+  /** Pinned to the top of your own rail. Nobody else's is affected. */
+  pinned: boolean;
 };
 
 const CHANNEL_FIELDS = {
@@ -163,24 +165,33 @@ export async function listChannels(actor: Actor): Promise<ChannelListRow[]> {
       {
         channelId: channelMembers.channelId,
         lastReadAt: channelMembers.lastReadAt,
+        pinned: channelMembers.pinned,
       },
       eq(channelMembers.userId, actor.userId),
     ),
     unreadByChannel(actor),
   ]);
 
-  const mine = new Map(memberships.map((row) => [row.channelId, row.lastReadAt]));
+  const mine = new Map(memberships.map((row) => [row.channelId, row]));
 
   return rows
-    .map((row) => ({
-      ...row,
-      unread: unread.get(row.id) ?? 0,
-      lastReadAt: mine.get(row.id) ?? null,
-      joined: mine.has(row.id),
-    }))
+    .map((row) => {
+      const membership = mine.get(row.id);
+      return {
+        ...row,
+        unread: unread.get(row.id) ?? 0,
+        lastReadAt: membership?.lastReadAt ?? null,
+        joined: mine.has(row.id),
+        pinned: membership?.pinned ?? false,
+      };
+    })
     .sort(
       (a, b) =>
-        Number(b.joined) - Number(a.joined) || b.unread - a.unread || a.name.localeCompare(b.name),
+        Number(b.joined) - Number(a.joined) ||
+        // Pinned is a choice about your own rail, so it outranks even unread.
+        Number(b.pinned) - Number(a.pinned) ||
+        b.unread - a.unread ||
+        a.name.localeCompare(b.name),
     );
 }
 
@@ -333,6 +344,26 @@ export async function markChannelRead(actor: Actor, channelId: string): Promise<
   await withOrg(actor.organizationId).update(
     channelMembers,
     { lastReadAt: new Date() },
+    eq(channelMembers.channelId, channelId),
+    eq(channelMembers.userId, actor.userId),
+  );
+}
+
+/**
+ * Pin or unpin a channel on your own rail.
+ *
+ * Scoped to the caller's own membership row, the same way `markChannelRead`
+ * is: nobody pins a channel to somebody else's rail, and pinning one you are
+ * not in does nothing rather than joining you to it as a side effect.
+ */
+export async function setChannelPinned(
+  actor: Actor,
+  channelId: string,
+  pinned: boolean,
+): Promise<void> {
+  await withOrg(actor.organizationId).update(
+    channelMembers,
+    { pinned },
     eq(channelMembers.channelId, channelId),
     eq(channelMembers.userId, actor.userId),
   );

@@ -1,0 +1,1 @@
+ALTER TABLE "channel_members" ADD COLUMN "pinned" boolean DEFAULT false NOT NULL;

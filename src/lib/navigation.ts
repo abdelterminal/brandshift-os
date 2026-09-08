@@ -63,6 +63,8 @@ export type Destination = {
   requires?: Action;
   /** Channels nest under Work, departments under People. Never counted against the cap. */
   children?: Destination[];
+  /** A channel pinned to this person's own rail. Nothing else sets this. */
+  pinned?: boolean;
   /**
    * What this destination's children are, if it has any -- `withChannels()`
    * and `withDepartments()` each look for their own kind rather than filling
@@ -300,7 +302,7 @@ export function railFor(actor: Actor): Destination[] {
  */
 export function withChannels(
   rail: Destination[],
-  channels: Array<{ id: string; slug: string; name: string }>,
+  channels: Array<{ id: string; slug: string; name: string; pinned?: boolean }>,
   allChannelsLabel: string,
 ): Destination[] {
   return rail.map((destination) => {
@@ -315,6 +317,7 @@ export function withChannels(
           icon: "channel" as const,
           label: channel.name,
           requires: "channel.view" as const,
+          pinned: channel.pinned ?? false,
         })),
         {
           id: "channels",

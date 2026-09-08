@@ -12,6 +12,7 @@ import {
   leaveChannel,
   markChannelRead,
   postMessage,
+  setChannelPinned,
 } from "@/lib/data/channels";
 import { publishChannelChange } from "@/lib/realtime/channel-events";
 
@@ -130,6 +131,26 @@ export async function leaveChannelAction(channelId: string): Promise<ActionResul
 
   const session = await requirePermissionForAction("channel.view");
   await leaveChannel(session.actor, id.data);
+
+  await revalidateChannelViews();
+  return { ok: true };
+}
+
+/**
+ * Pin or unpin a channel on your own rail.
+ *
+ * Whether you may pin at all is the same question as whether you may see
+ * channels -- there is no separate permission for arranging your own rail.
+ */
+export async function setChannelPinnedAction(
+  channelId: string,
+  pinned: boolean,
+): Promise<ActionResult> {
+  const id = idSchema.safeParse(channelId);
+  if (!id.success) return { ok: false, error: "notFound" };
+
+  const session = await requirePermissionForAction("channel.view");
+  await setChannelPinned(session.actor, id.data, pinned);
 
   await revalidateChannelViews();
   return { ok: true };

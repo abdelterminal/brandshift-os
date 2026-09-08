@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 import { deals } from "./crm";
 import { organizations } from "./organizations";
@@ -84,6 +84,8 @@ export const channelMembers = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     /** Null means they have never opened it, so everything counts as unread. */
     lastReadAt: timestamp("last_read_at", { withTimezone: true }),
+    /** Pinned to the top of your own rail. Nobody else's rail is affected. */
+    pinned: boolean("pinned").notNull().default(false),
     joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
