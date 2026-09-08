@@ -16,7 +16,7 @@ import { InviteDialog } from "@/components/people/invite-dialog";
 import { PeopleFilters } from "@/components/people/people-filters";
 import { PeoplePagination } from "@/components/people/people-pagination";
 import { Link } from "@/i18n/navigation";
-import { can } from "@/lib/authz";
+import { atLeast, can } from "@/lib/authz";
 import { requireUser } from "@/lib/auth/guards";
 import { listDepartments, listPeople } from "@/lib/data/people";
 import { listOpenTasks, organizationToday, workloadFrom } from "@/lib/data/tasks";
@@ -26,26 +26,48 @@ import type { Role } from "@/db/schema/people";
  * The directory.
  *
  * Server-paginated and filtered through the URL, so a filtered view can be
- * shared and the screen behaves the same at twelve people as at four hundred.
+ * shared and the screen behaves the same at twelve people as at four hundred
+ * -- for a coordinator. A plain member gets a simpler version of the same
+ * screen: filtering, paging and workload all exist to help someone *manage*
+ * a directory, and a member has no such job. They see a roster instead --
+ * who's on the team, their role, their department, how to reach them -- with
+ * nothing that only makes sense from the other side of an assignment.
  *
- * Workload is shown here because it is the thing a coordinator scanning this
- * list actually wants: not who exists, but who has room.
+ * Workload stays for a coordinator because it is the thing they are actually
+ * scanning for: not who exists, but who has room.
  */
 export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/people">) {
   const session = await requireUser();
   const params = await searchParams;
 
-  const query = typeof params.q === "string" ? params.q : undefined;
-  const role = typeof params.role === "string" ? (params.role as Role) : undefined;
-  const departmentId = typeof params.department === "string" ? params.department : undefined;
-  const page = Number(typeof params.page === "string" ? params.page : "1") || 1;
+  // A manager and up coordinates work, which is the only reason to filter,
+  // page through, or see anyone else's workload. A member is just looking
+  // for a colleague.
+  const isCoordinator = atLeast(session.actor, "manager");
+
+  const query = isCoordinator && typeof params.q === "string" ? params.q : undefined;
+  const role = isCoordinator && typeof params.role === "string" ? (params.role as Role) : undefined;
+  const departmentId =
+    isCoordinator && typeof params.department === "string" ? params.department : undefined;
+  const page = isCoordinator ? Number(typeof params.page === "string" ? params.page : "1") || 1 : 1;
 
   const [t, roles, departments, result, openTasks] = await Promise.all([
     getTranslations("People"),
     getTranslations("Roles"),
     listDepartments(session.actor),
-    listPeople(session.actor, { query, role, departmentId, page }),
-    listOpenTasks(session.actor),
+    // A member sees the whole roster in one page rather than a pagination
+    // control they never get, since that control is coordinator-shaped too --
+    // 100 is `listPeople`'s own ceiling, generous for a roster nobody is
+    // managing.
+    listPeople(session.actor, {
+      query,
+      role,
+      departmentId,
+      page,
+      pageSize: isCoordinator ? undefined : 100,
+    }),
+    // Nobody who cannot see workload should pay for computing it either.
+    isCoordinator ? listOpenTasks(session.actor) : Promise.resolve([]),
   ]);
 
   const ui = await getTranslations("Ui");
@@ -63,9 +85,11 @@ export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/
         {mayInvite ? <InviteDialog departments={departments} /> : null}
       </header>
 
-      <div className="mt-6">
-        <PeopleFilters departments={departments} />
-      </div>
+      {isCoordinator ? (
+        <div className="mt-6">
+          <PeopleFilters departments={departments} />
+        </div>
+      ) : null}
 
       {result.rows.length === 0 ? (
         <div className="border-border rounded-card mt-4 border">
@@ -89,10 +113,12 @@ export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/
                     {person.status === "invited" ? <Badge tone="attention" size="sm">{t("pending")}</Badge> : null}
                   </div>
                 </div>
-                <div className="text-caption text-fg-muted mt-3 flex flex-wrap items-center gap-2">
-                  {ui("openTasks", { count: load.open })}
-                  {load.overdue > 0 ? <Badge tone="attention" size="sm">{ui("overdue", { count: load.overdue })}</Badge> : null}
-                </div>
+                {isCoordinator ? (
+                  <div className="text-caption text-fg-muted mt-3 flex flex-wrap items-center gap-2">
+                    {ui("openTasks", { count: load.open })}
+                    {load.overdue > 0 ? <Badge tone="attention" size="sm">{ui("overdue", { count: load.overdue })}</Badge> : null}
+                  </div>
+                ) : null}
               </li>;
             })}
           </ul>
@@ -104,7 +130,7 @@ export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/
                   <TableHead className="hidden sm:table-cell">{t("role")}</TableHead>
                   <TableHead className="hidden md:table-cell">{t("department")}</TableHead>
                   <TableHead className="hidden lg:table-cell">{t("jobTitle")}</TableHead>
-                  <TableHead>{t("workload")}</TableHead>
+                  {isCoordinator ? <TableHead>{t("workload")}</TableHead> : null}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -154,14 +180,16 @@ export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/
                         {person.jobTitle ?? "--"}
                       </TableCell>
 
-                      <TableCell>
-                        <span className="flex items-center gap-2">
-                          <span className="text-fg-muted tabular-nums">{load.open}</span>
-                          {load.overdue > 0 ? (
-                            <CountBadge tone="attention">{load.overdue}</CountBadge>
-                          ) : null}
-                        </span>
-                      </TableCell>
+                      {isCoordinator ? (
+                        <TableCell>
+                          <span className="flex items-center gap-2">
+                            <span className="text-fg-muted tabular-nums">{load.open}</span>
+                            {load.overdue > 0 ? (
+                              <CountBadge tone="attention">{load.overdue}</CountBadge>
+                            ) : null}
+                          </span>
+                        </TableCell>
+                      ) : null}
                     </TableRow>
                   );
                 })}
@@ -169,12 +197,14 @@ export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/
             </Table>
           </TableContainer>
 
-          <PeoplePagination
-            page={result.page}
-            pageSize={result.pageSize}
-            total={result.total}
-            shown={result.rows.length}
-          />
+          {isCoordinator ? (
+            <PeoplePagination
+              page={result.page}
+              pageSize={result.pageSize}
+              total={result.total}
+              shown={result.rows.length}
+            />
+          ) : null}
         </>
       )}
     </div>
