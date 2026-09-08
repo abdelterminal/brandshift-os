@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { organizations } from "@/db/schema";
 import type { Actor } from "@/lib/authz";
+import { withBasePath } from "@/lib/base-path";
 
 /**
  * What the organization calls itself on a document it sends out.
@@ -26,6 +27,20 @@ export type Letterhead = {
   contactEmail: string | null;
 };
 
+/**
+ * `organizations.logo_url` holds a root-relative path for a logo the app
+ * itself serves out of `public/` -- the only kind there is a way to set today
+ * -- or, in principle, a full external URL. Only the former needs the base
+ * path: a root-relative `<img src>` resolves against the domain root, not
+ * against `NEXT_PUBLIC_BASE_PATH`, so a sub-path deployment would otherwise
+ * ask the host for a file one level too high. An absolute URL already names
+ * its own host and is left untouched.
+ */
+function resolveLogoUrl(logoUrl: string | null): string | null {
+  if (!logoUrl || !logoUrl.startsWith("/") || logoUrl.startsWith("//")) return logoUrl;
+  return withBasePath(logoUrl);
+}
+
 export async function getLetterhead(actor: Actor): Promise<Letterhead> {
   const [row] = await db
     .select({
@@ -43,7 +58,7 @@ export async function getLetterhead(actor: Actor): Promise<Letterhead> {
   // The actor's own organization always exists -- they are holding a session
   // scoped to it -- but the type should not depend on that being true forever.
   return (
-    row ?? {
+    (row && { ...row, logoUrl: resolveLogoUrl(row.logoUrl) }) ?? {
       name: "",
       logoUrl: null,
       tagline: null,

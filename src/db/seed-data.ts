@@ -23,6 +23,10 @@ export const ORGANIZATION = {
   city: "Meknès, Maroc",
   website: "mediast.ma",
   contactEmail: "contact@mediast.ma",
+  // Root-relative: served from public/brand/, not fetched from anywhere else.
+  // getLetterhead() is what turns this into a real path under a sub-path
+  // deployment -- see resolveLogoUrl() there.
+  logoUrl: "/brand/mediast-wordmark.svg",
 };
 
 export const DEPARTMENTS = [

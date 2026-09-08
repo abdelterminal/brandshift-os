@@ -185,6 +185,7 @@ async function main() {
       city: ORGANIZATION.city,
       website: ORGANIZATION.website,
       contactEmail: ORGANIZATION.contactEmail,
+      logoUrl: ORGANIZATION.logoUrl,
     })
     .returning();
 
