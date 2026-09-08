@@ -72,7 +72,16 @@ export function Tour({ initiallyOpen = true }: { initiallyOpen?: boolean }) {
   useEffect(() => {
     if (!open) return;
 
-    const target = current.target === "rail" && window.matchMedia("(max-width: 767px)").matches ? "mobile-nav" : current.target;
+    const isMobile = window.matchMedia("(max-width: 767px)").matches;
+    // "rail" moves to the bottom nav below md; "account" moves to the
+    // header's own copy, since the sidebar (and the copy anchored to its
+    // foot) is what disappears there -- see switchers.tsx's AccountMenu.
+    const target =
+      current.target === "rail" && isMobile
+        ? "mobile-nav"
+        : current.target === "account" && isMobile
+          ? "account-mobile"
+          : current.target;
     const element = document.querySelector(`[data-tour="${target}"]`);
     element?.setAttribute("data-tour-active", "");
 

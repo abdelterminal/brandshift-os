@@ -12,6 +12,8 @@ import { setChannelPinnedAction } from "@/lib/actions/channels";
 import type { Destination } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
+import { AccountMenu } from "./switchers";
+
 import { disabled, focusRing, transition, transitionOpacity } from "../ui/styles";
 import { NAV_ICONS } from "./nav-icons";
 
@@ -210,11 +212,24 @@ export function Sidebar({
   destinations,
   organizationName,
   counts,
+  account,
 }: {
   destinations: Destination[];
   organizationName: string;
   /** Unread counts by destination id. Only real, actionable numbers belong here. */
   counts?: Partial<Record<string, number>>;
+  /**
+   * Anchors the account menu to the foot of the rail -- the one place it
+   * lives on a screen wide enough to have a rail at all, so the header does
+   * not carry it too. `undefined` on the rare render with nobody signed in
+   * yet leaves the rail exactly as tall as its destinations.
+   */
+  account?: {
+    name: string;
+    email: string;
+    role: "owner" | "admin" | "manager" | "member";
+    avatarUrl?: string | null;
+  };
 }) {
   const t = useTranslations("Nav");
 
@@ -310,6 +325,26 @@ export function Sidebar({
           );
         })}
       </ul>
+
+      {/*
+        The floor of the rail. A short destination list -- a role with one
+        channel and a handful of departments -- otherwise trails off into
+        empty space with nothing at the bottom to say the rail is finished,
+        not broken. This is the same account menu the header used to carry
+        alone; moving it here means the header no longer needs it, not a
+        second way to reach it.
+      */}
+      {account ? (
+        <div className="border-sidebar-border border-t p-2">
+          <AccountMenu
+            name={account.name}
+            email={account.email}
+            role={account.role}
+            avatarUrl={account.avatarUrl}
+            expanded
+          />
+        </div>
+      ) : null}
     </nav>
   );
 }

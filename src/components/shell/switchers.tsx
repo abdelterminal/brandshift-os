@@ -154,11 +154,19 @@ export function AccountMenu({
   email,
   role,
   avatarUrl,
+  expanded = false,
 }: {
   name: string;
   email: string;
   role: "owner" | "admin" | "manager" | "member";
   avatarUrl?: string | null;
+  /**
+   * The row anchored to the bottom of the sidebar, name and role on show,
+   * rather than the compact avatar-only trigger the header uses. Same menu
+   * either way -- one account, one way in, just a different door on a screen
+   * with room for one.
+   */
+  expanded?: boolean;
 }) {
   const t = useTranslations("Account");
   const roles = useTranslations("Roles");
@@ -168,18 +176,43 @@ export function AccountMenu({
     <Menu>
       <MenuTrigger
         aria-label={t("menu")}
-        data-tour="account"
-        // A ring, not `hover:opacity-85`. Dimming the trigger dimmed the
-        // initials inside it to 4.19:1 -- fading a control that contains text
-        // is a contrast failure wearing a hover state.
-        className={cn(
-          "rounded-pill ring-offset-2 ring-offset-surface-base",
-          "hover:ring-border-hover hover:ring-2",
-          focusRing,
-          transition,
-        )}
+        // Two of these exist at once -- one hidden by CSS at any given
+        // width, per the header/sidebar split above -- so the tour needs a
+        // name for each rather than finding whichever happens to be first in
+        // the document. See tour.tsx's own "rail" -> "mobile-nav" remap for
+        // the same reasoning applied to the same problem.
+        data-tour={expanded ? "account" : "account-mobile"}
+        className={
+          expanded
+            ? cn(
+                "flex w-full items-center gap-2.5 rounded-control px-3 py-2 text-left",
+                "text-sidebar-fg hover:bg-sidebar-hover hover:text-sidebar-fg-active",
+                focusRing,
+                transition,
+              )
+            : cn(
+                // A ring, not `hover:opacity-85`. Dimming the trigger dimmed
+                // the initials inside it to 4.19:1 -- fading a control that
+                // contains text is a contrast failure wearing a hover state.
+                "rounded-pill ring-offset-2 ring-offset-surface-base",
+                "hover:ring-border-hover hover:ring-2",
+                focusRing,
+                transition,
+              )
+        }
       >
-        <PersonAvatar name={name} src={avatarUrl} size="md" />
+        <PersonAvatar name={name} src={avatarUrl} size={expanded ? "sm" : "md"} />
+        {expanded ? (
+          <>
+            <span className="min-w-0 flex-1">
+              <span className="text-label text-sidebar-fg-active block truncate font-medium">
+                {name}
+              </span>
+              <span className="text-caption block truncate">{roles(role)}</span>
+            </span>
+            <ChevronsUpDown aria-hidden className="size-3.5 shrink-0 opacity-70" />
+          </>
+        ) : null}
       </MenuTrigger>
       <MenuContent>
         <div className="px-2 py-1.5">

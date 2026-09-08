@@ -73,7 +73,17 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
         </a>
 
         <div className="flex min-h-dvh">
-          <Sidebar destinations={rail} organizationName={organization.name} counts={counts} />
+          <Sidebar
+            destinations={rail}
+            organizationName={organization.name}
+            counts={counts}
+            account={{
+              name: user.name,
+              email: user.email,
+              role: membership.role,
+              avatarUrl: user.avatarUrl,
+            }}
+          />
 
           <div className="flex min-w-0 flex-1 flex-col">
             <header className="border-border bg-surface-base/90 sticky top-0 z-30 border-b backdrop-blur">
@@ -96,12 +106,16 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
                     <LocaleSwitcher />
                     <ThemeToggle />
                   </div>
-                  <AccountMenu
-                    name={user.name}
-                    email={user.email}
-                    role={membership.role}
-                    avatarUrl={user.avatarUrl}
-                  />
+                  {/* md+ has it at the foot of the sidebar instead -- one
+                      account menu, not two. */}
+                  <div className="md:hidden">
+                    <AccountMenu
+                      name={user.name}
+                      email={user.email}
+                      role={membership.role}
+                      avatarUrl={user.avatarUrl}
+                    />
+                  </div>
                 </div>
               </div>
 
