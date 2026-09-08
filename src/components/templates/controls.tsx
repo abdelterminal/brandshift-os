@@ -90,11 +90,19 @@ function TaskFields({
   const t = useTranslations("Templates");
 
   const ui = useTranslations("Ui");
-  const move = (index: number, offset: number) => setTasks(current => {
-    const next = [...current];
-    [next[index], next[index + offset]] = [next[index + offset]!, next[index]!];
-    return next;
-  });
+  // The two rows that just swapped, tinted for one beat so a reorder reads as
+  // a move rather than a silent re-render -- colour only, per CLAUDE.md's
+  // transition rule, cleared on its own so nothing has to remember to reset it.
+  const [justMoved, setJustMoved] = useState<[number, number] | null>(null);
+  const move = (index: number, offset: number) => {
+    setTasks((current) => {
+      const next = [...current];
+      [next[index], next[index + offset]] = [next[index + offset]!, next[index]!];
+      return next;
+    });
+    setJustMoved([index, index + offset]);
+    setTimeout(() => setJustMoved(null), 400);
+  };
   const update = (index: number, patch: Partial<DraftTask>) =>
     setTasks((current) => current.map((task, i) => (i === index ? { ...task, ...patch } : task)));
 
@@ -103,7 +111,17 @@ function TaskFields({
       <legend className="text-label text-fg-default px-1 font-semibold">{t("tasks")}</legend>
 
       {tasks.map((task, index) => (
-        <div key={index} className="space-y-2">
+        <div
+          key={index}
+          className={cn(
+            "space-y-2 rounded-control p-1.5 -m-1.5",
+            "transition-colors duration-[var(--duration-slow)] ease-[var(--ease-out)]",
+            // Neutral, not accent: a reorder is not a primary action, an
+            // active destination, nor destructive -- the only things red is
+            // reserved for -- so this stays on the plain surface scale.
+            justMoved?.includes(index) ? "bg-surface-active" : "bg-transparent",
+          )}
+        >
           <Input
             aria-label={`${t("taskTitle")} ${index + 1}`}
             value={task.title}

@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown, ChevronRight, Star } from "lucide-react";
+import { useLinkStatus } from "next/link";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useSyncExternalStore, useTransition } from "react";
@@ -11,7 +12,7 @@ import { setChannelPinnedAction } from "@/lib/actions/channels";
 import type { Destination } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
-import { focusRing, transition } from "../ui/styles";
+import { disabled, focusRing, transition, transitionOpacity } from "../ui/styles";
 import { NAV_ICONS } from "./nav-icons";
 
 /**
@@ -64,6 +65,29 @@ function parseCollapsed(json: string): Record<string, boolean> {
 function isActive(pathname: string, href: string, exact = false): boolean {
   if (exact) return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/**
+ * A quiet "this is loading" on the one row that was actually clicked.
+ *
+ * `useLinkStatus` only answers for the nearest ancestor `Link`, so this has to
+ * be a real descendant component rather than a value read in `RailLink`
+ * itself, which is the component doing the rendering, not a child of it. Most
+ * of the time this will never visibly fire -- Next prefetches a rail link the
+ * moment it is in view, and a prefetched navigation skips the pending phase
+ * entirely. It earns its keep on the destinations that are not fully
+ * prefetched yet, or on a slow connection, which is exactly when a "nothing
+ * happened" pause is worth a word.
+ */
+function NavigationDim({ children }: { children: React.ReactNode }) {
+  const { pending } = useLinkStatus();
+  return (
+    <span
+      className={cn("flex min-w-0 items-center gap-2.5", transitionOpacity, pending && "opacity-60")}
+    >
+      {children}
+    </span>
+  );
 }
 
 /**
@@ -140,8 +164,10 @@ function RailLink({
             active ? "bg-brand" : "bg-transparent",
           )}
         />
-        <Icon aria-hidden className={cn("shrink-0", nested ? "size-3.5" : "size-4")} />
-        <span className="truncate">{destination.label ?? t(destination.id)}</span>
+        <NavigationDim>
+          <Icon aria-hidden className={cn("shrink-0", nested ? "size-3.5" : "size-4")} />
+          <span className="truncate">{destination.label ?? t(destination.id)}</span>
+        </NavigationDim>
 
         {count > 0 ? (
           <CountBadge tone="accent" className="ml-auto">
@@ -161,6 +187,7 @@ function RailLink({
         <button
           type="button"
           disabled={pending}
+          aria-busy={pending || undefined}
           onClick={togglePin}
           aria-pressed={pinned}
           aria-label={pinned ? t("unpinChannel") : t("pinChannel")}
@@ -169,6 +196,7 @@ function RailLink({
             pinned ? "opacity-100" : "opacity-0 group-hover:opacity-100",
             focusRing,
             transition,
+            disabled,
           )}
         >
           <Star aria-hidden className={cn("size-3.5", pinned && "fill-current")} />

@@ -18,6 +18,7 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { cancelLeave, decideLeave } from "@/lib/actions/leave";
+import { cn } from "@/lib/utils";
 
 /**
  * Answering a request, and withdrawing your own.
@@ -36,10 +37,15 @@ export function DecisionButtons({ id }: { id: string }) {
   const [declining, setDeclining] = useState(false);
   const [note, setNote] = useState("");
   const [pending, startTransition] = useTransition();
+  // Held for one beat after a decision lands, so approving or declining reads
+  // as "this just happened" rather than the row silently changing under a
+  // refresh -- colour only, per CLAUDE.md's transition rule.
+  const [decided, setDecided] = useState<"approved" | "declined" | null>(null);
 
   function decide(decision: "approved" | "declined", withNote?: string) {
     startTransition(async () => {
       const result = await decideLeave({ id, decision, note: withNote });
+      setDeclining(false);
 
       if (!result.ok) {
         // Somebody else got there first. Saying so beats a silent no-op.
@@ -47,15 +53,24 @@ export function DecisionButtons({ id }: { id: string }) {
           title: result.error === "alreadyDecided" ? t("alreadyDecided") : t("invalid"),
           data: { tone: "attention" },
         });
+        router.refresh();
+        return;
       }
 
-      setDeclining(false);
-      router.refresh();
+      setDecided(decision);
+      setTimeout(() => router.refresh(), 350);
     });
   }
 
   return (
-    <div className="flex shrink-0 flex-wrap gap-2">
+    <div
+      className={cn(
+        "flex shrink-0 flex-wrap items-center gap-2 rounded-control p-1.5 -m-1.5",
+        "transition-colors duration-[var(--duration-slow)] ease-[var(--ease-out)]",
+        decided === "approved" && "bg-complete-bg",
+        decided === "declined" && "bg-blocked-bg",
+      )}
+    >
       {/*
         Both secondary, deliberately. Red is for the one action a screen most
         wants you to take, and a queue of ten requests would put ten of them on
