@@ -105,14 +105,8 @@ test("assigning a task from the drawer persists, and can be undone", async ({ pa
   const assignee = drawer.getByRole("combobox", { name: "Assignee" });
   await expect(assignee).toHaveValue("");
 
-  // Opens the list itself -- focusing the empty input alone doesn't. Not
-  // `getByRole("button", { name: "Show people" })`: Base UI wires this
-  // button's `aria-labelledby` to the field's own "Assignee" label, which
-  // wins over the `aria-label` this app gives it for exactly this purpose --
-  // the raw attribute is still there, just not the *computed* accessible
-  // name, so an attribute selector reaches it where an accessible-name query
-  // cannot. Worth a `KNOWN-GAPS.md` row; not this test's fix to make.
-  await drawer.locator('[aria-label="Show people"]').click();
+  // Opens the list itself -- focusing the empty input alone doesn't.
+  await drawer.getByRole("button", { name: "Show people" }).click();
   const options = page.getByRole("option");
   await expect(options.first()).toBeVisible();
   await options.first().click();
@@ -133,7 +127,7 @@ test("assigning a task from the drawer persists, and can be undone", async ({ pa
 
   // Undo, so HAR's first task is unassigned again for the next run -- the
   // same courtesy `board.spec.ts` already pays NOR's own shared fixture.
-  await drawer.locator('[aria-label="Clear assignee"]').click();
+  await drawer.getByRole("button", { name: "Clear assignee" }).click();
   await expect(drawer.getByRole("combobox", { name: "Assignee" })).toHaveValue("");
 });
 

@@ -59,6 +59,15 @@ function ComboboxInput({
       </ComboboxPrimitive.Clear>
       <ComboboxPrimitive.Trigger
         aria-label={openLabel}
+        // Base UI otherwise wires this button's own `aria-labelledby` to the
+        // field's label -- reasonable when there's no `openLabel`, but
+        // `aria-labelledby` always wins over `aria-label` per the accessible
+        // name computation, so it silently overrides the line above the
+        // moment a field actually gives one. Passed explicitly rather than
+        // omitted: an omitted prop leaves Base UI's own value in place,
+        // where only an explicit `undefined` clears it in the merge that
+        // combines this component's props with Base UI's internal ones.
+        aria-labelledby={undefined}
         className={cn(
           "text-fg-subtle hover:text-fg-default hover:bg-surface-hover inline-flex size-7 shrink-0 items-center justify-center rounded-[6px]",
           focusRing,
