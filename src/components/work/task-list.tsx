@@ -10,7 +10,7 @@ import type { Tone } from "@/components/ui/badge";
 import { StatusPill } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/feedback";
 import { focusRingInset, transition } from "@/components/ui/styles";
-import type { TaskBucket, TaskRow } from "@/lib/data/task-types";
+import type { AssignablePerson, TaskBucket, TaskRow } from "@/lib/data/task-types";
 import { dueDateLabel, isOverdue } from "@/lib/due-date";
 import { cn } from "@/lib/utils";
 
@@ -58,6 +58,7 @@ export function TaskList({
   emptyTitle,
   emptyBody,
   todayIso,
+  assignablePeople,
 }: {
   buckets: Partial<Record<TaskBucket, TaskRow[]>>;
   order: TaskBucket[];
@@ -72,6 +73,8 @@ export function TaskList({
    * pre-sorted by `bucketTasks()`) drives the color.
    */
   todayIso?: string;
+  /** Passed straight through to the drawer's own reassignment picker. */
+  assignablePeople: AssignablePerson[];
 }) {
   const t = useTranslations("Task");
   const router = useRouter();
@@ -142,7 +145,11 @@ export function TaskList({
         </div>
       )}
 
-      <TaskDrawer task={openTask} onClose={() => setOpenTask(null)} />
+      <TaskDrawer
+        task={openTask}
+        assignablePeople={assignablePeople}
+        onClose={() => setOpenTask(null)}
+      />
     </>
   );
 }
@@ -289,6 +296,7 @@ export function TaskListFlat({
   max,
   todayIso,
   showBlockedReason,
+  assignablePeople,
 }: {
   tasks: TaskRow[];
   emptyTitle: string;
@@ -298,6 +306,8 @@ export function TaskListFlat({
   /** See `TaskList`'s own doc -- same prop, same reason. */
   todayIso?: string;
   showBlockedReason?: boolean;
+  /** Passed straight through to the drawer's own reassignment picker. */
+  assignablePeople: AssignablePerson[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -331,7 +341,11 @@ export function TaskListFlat({
           />
         ))}
       </ul>
-      <TaskDrawer task={openTask} onClose={() => setOpenTask(null)} />
+      <TaskDrawer
+        task={openTask}
+        assignablePeople={assignablePeople}
+        onClose={() => setOpenTask(null)}
+      />
     </>
   );
 }

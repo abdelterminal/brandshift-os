@@ -86,6 +86,57 @@ test("completing a task moves it to Completed and records it", async ({ page }) 
   await expect(page.getByText("completed a task").first()).toBeVisible();
 });
 
+test("assigning a task from the drawer persists, and can be undone", async ({ page }) => {
+  await page.goto("/en/work/HAR");
+  await page.getByRole("tab", { name: "Tasks" }).click();
+
+  // HAR is the planning project, and `planTask` deliberately seeds the first
+  // title in its list (`TASK_TITLES.HAR`) unassigned and with no due date --
+  // a starting point this test doesn't have to guess at. Named directly
+  // rather than ".first()": that task has no date, so it sorts into "No
+  // deadline", rendered after every dated bucket -- last on the page, not
+  // first, and ".first()" would open one of those instead.
+  await page.getByText("Read the usability audit and pull the top ten findings").click();
+
+  const drawer = page.getByRole("dialog");
+  // Not `getByLabel` -- "Clear assignee" and the picker's own trigger both
+  // carry "assignee" in their accessible name too, and `getByLabel` matches
+  // by substring. The combobox role is unique to the actual input.
+  const assignee = drawer.getByRole("combobox", { name: "Assignee" });
+  await expect(assignee).toHaveValue("");
+
+  // Opens the list itself -- focusing the empty input alone doesn't. Not
+  // `getByRole("button", { name: "Show people" })`: Base UI wires this
+  // button's `aria-labelledby` to the field's own "Assignee" label, which
+  // wins over the `aria-label` this app gives it for exactly this purpose --
+  // the raw attribute is still there, just not the *computed* accessible
+  // name, so an attribute selector reaches it where an accessible-name query
+  // cannot. Worth a `KNOWN-GAPS.md` row; not this test's fix to make.
+  await drawer.locator('[aria-label="Show people"]').click();
+  const options = page.getByRole("option");
+  await expect(options.first()).toBeVisible();
+  await options.first().click();
+
+  // Controlled by the task itself, not local state: the input only shows
+  // the new name once `assignTask` and the `router.refresh()` after it have
+  // actually finished, so reading `inputValue()` right after the click would
+  // still see the old (empty) one.
+  await expect(assignee).not.toHaveValue("");
+  const assignedName = await assignee.inputValue();
+
+  // The database, not just this tab's memory. `?task=` survives the reload
+  // and reopens the same task directly -- no need to find it in the list
+  // again, and the list behind the open drawer is inert to click through
+  // anyway (see the drawer's own doc comment on why it traps focus).
+  await page.reload();
+  await expect(drawer.getByRole("combobox", { name: "Assignee" })).toHaveValue(assignedName);
+
+  // Undo, so HAR's first task is unassigned again for the next run -- the
+  // same courtesy `board.spec.ts` already pays NOR's own shared fixture.
+  await drawer.locator('[aria-label="Clear assignee"]').click();
+  await expect(drawer.getByRole("combobox", { name: "Assignee" })).toHaveValue("");
+});
+
 test("reporting a blocker demands a reason and then shows it", async ({ page }) => {
   await page.goto("/en/work/HAR");
   await page.getByRole("tab", { name: "Tasks" }).click();

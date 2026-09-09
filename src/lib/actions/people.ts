@@ -300,3 +300,52 @@ export async function createDepartment(formData: FormData): Promise<PeopleResult
   revalidatePath(`/${locale}/settings`);
   return { ok: true };
 }
+
+const updateDepartmentSchema = departmentSchema.extend({ id: z.uuid() });
+
+/**
+ * Rename a department, or change its description.
+ *
+ * Same gate as creating one -- this is the org's own shape, not a per-person
+ * decision. The slug is left alone on purpose: nothing in the app reads one
+ * from a URL or a link, so there is no reason for it to move once a name
+ * changes, and moving it anyway would be inventing a problem to go with the
+ * fix.
+ */
+export async function updateDepartment(formData: FormData): Promise<PeopleResult> {
+  const session = await requirePermissionForAction("organization.editSettings");
+
+  const parsed = updateDepartmentSchema.safeParse({
+    id: formData.get("id"),
+    name: formData.get("name"),
+    description: formData.get("description") ?? "",
+  });
+
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of parsed.error.issues) {
+      const field = String(issue.path[0] ?? "");
+      if (field) fieldErrors[field] = "invalid";
+    }
+    return { ok: false, error: "invalid", fieldErrors };
+  }
+
+  const [updated] = await withOrg(session.actor.organizationId).update(
+    departments,
+    { name: parsed.data.name, description: parsed.data.description || null },
+    eq(departments.id, parsed.data.id),
+  );
+  if (!updated) return { ok: false, error: "notFound" };
+
+  await recordActivity(session.actor, {
+    verb: "department.renamed",
+    subjectType: "department",
+    subjectId: updated.id,
+    metadata: { name: parsed.data.name },
+  });
+
+  const locale = await getLocale();
+  revalidatePath(`/${locale}/people`);
+  revalidatePath(`/${locale}/settings`);
+  return { ok: true };
+}

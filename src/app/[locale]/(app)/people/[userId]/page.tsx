@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { can } from "@/lib/authz";
 import { requireUser } from "@/lib/auth/guards";
 import { listPersonActivity } from "@/lib/data/activity";
-import { getPerson } from "@/lib/data/people";
+import { getPerson, listAssignablePeople } from "@/lib/data/people";
 import { listProjectsForUser } from "@/lib/data/projects";
 import { listTaskBuckets, organizationToday } from "@/lib/data/tasks";
 
@@ -33,12 +33,13 @@ export default async function PersonPage({ params }: PageProps<"/[locale]/people
   const person = await getPerson(session.actor, userId);
   if (!person) notFound();
 
-  const [t, roles, buckets, projects, activity] = await Promise.all([
+  const [t, roles, buckets, projects, activity, assignablePeople] = await Promise.all([
     getTranslations("People"),
     getTranslations("Roles"),
     listTaskBuckets(session.actor, { assigneeUserId: userId }),
     listProjectsForUser(session.actor, userId),
     listPersonActivity(session.actor, userId),
+    listAssignablePeople(session.actor),
   ]);
 
   const openCount =
@@ -83,6 +84,7 @@ export default async function PersonPage({ params }: PageProps<"/[locale]/people
           overdueCount={buckets.overdue.length}
           buckets={buckets}
           todayIso={todayIso}
+          assignablePeople={assignablePeople}
           projects={projects.map((project) => ({
             id: project.id,
             key: project.key,

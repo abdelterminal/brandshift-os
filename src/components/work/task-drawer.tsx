@@ -4,9 +4,15 @@ import { useFormatter, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { PersonAvatar } from "@/components/ui/avatar";
 import { StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
 import {
   Drawer,
   DrawerBody,
@@ -18,10 +24,12 @@ import {
 } from "@/components/ui/drawer";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/input";
-import { clearBlocker, completeTask, reportBlocker, startTask } from "@/lib/actions/tasks";
-import type { TaskRow } from "@/lib/data/task-types";
+import { assignTask, clearBlocker, completeTask, reportBlocker, startTask } from "@/lib/actions/tasks";
+import type { AssignablePerson, TaskRow } from "@/lib/data/task-types";
 
 import { STATUS_TONE } from "./task-list";
+
+type ComboboxOption = { value: string; label: string };
 
 /**
  * A task, in a side drawer.
@@ -33,9 +41,26 @@ import { STATUS_TONE } from "./task-list";
  *
  * Three actions, which are the whole vocabulary of moving work along: Start,
  * Complete, Report blocker. None of them asks for a password -- they are
- * routine writes.
+ * routine writes. Reassigning is a fourth, quieter one: unlike the other
+ * three it does not close the drawer on success, since picking a different
+ * person is not "done with this task" the way completing it is.
+ *
+ * Shown to anyone who can already open the drawer, with no further
+ * project-membership check -- the same as Start/Complete/Report blocker,
+ * which have never had one either (`KNOWN-GAPS.md`). Gating this one field
+ * more tightly than its neighbors would be a new inconsistency, not a fix of
+ * the old one.
  */
-export function TaskDrawer({ task, onClose }: { task: TaskRow | null; onClose: () => void }) {
+export function TaskDrawer({
+  task,
+  assignablePeople,
+  onClose,
+}: {
+  task: TaskRow | null;
+  /** Everyone who can be assigned work -- `listAssignablePeople()`, org-wide. */
+  assignablePeople: AssignablePerson[];
+  onClose: () => void;
+}) {
   const t = useTranslations("Task");
   const statuses = useTranslations("Status");
   const priorities = useTranslations("Priority");
@@ -46,6 +71,8 @@ export function TaskDrawer({ task, onClose }: { task: TaskRow | null; onClose: (
   const [blockerOpen, setBlockerOpen] = useState(false);
   const [blockerReason, setBlockerReason] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [assignPending, startAssignTransition] = useTransition();
+  const [assignError, setAssignError] = useState<string | null>(null);
 
   if (!task) return null;
 
@@ -65,8 +92,33 @@ export function TaskDrawer({ task, onClose }: { task: TaskRow | null; onClose: (
     });
   }
 
+  const assign = (userId: string | null) => {
+    setAssignError(null);
+    startAssignTransition(async () => {
+      const result = await assignTask(task.id, userId ?? "");
+      if (!result.ok) {
+        setAssignError(result.error ?? "notFound");
+        return;
+      }
+      // Unlike `run()`, no `onClose()` -- reassigning isn't "done with this
+      // task" the way completing or blocking it is.
+      router.refresh();
+    });
+  };
+
   const isDone = task.status === "done";
   const isBlocked = task.status === "blocked";
+  const assigneeOptions: ComboboxOption[] = assignablePeople.map((person) => ({
+    value: person.userId,
+    label: person.name,
+  }));
+  // Built from the task's own fields rather than looked up in
+  // `assignablePeople`, so an assignee who is no longer assignable (left the
+  // org, went inactive) still shows by name instead of silently reading as
+  // unassigned.
+  const currentAssignee: ComboboxOption | null = task.assigneeUserId
+    ? { value: task.assigneeUserId, label: task.assigneeName ?? "" }
+    : null;
 
   return (
     <Drawer
@@ -104,21 +156,33 @@ export function TaskDrawer({ task, onClose }: { task: TaskRow | null; onClose: (
             <p className="text-body text-fg-muted whitespace-pre-line">{task.description}</p>
           ) : null}
 
-          <dl className="grid grid-cols-2 gap-4">
-            <div>
-              <dt className="text-caption text-fg-muted">{t("assignee")}</dt>
-              <dd className="text-body text-fg-default mt-1 flex items-center gap-2">
-                {task.assigneeName ? (
-                  <>
-                    <PersonAvatar name={task.assigneeName} size="xs" />
-                    {task.assigneeName}
-                  </>
-                ) : (
-                  <span className="text-fg-subtle">{t("unassigned")}</span>
-                )}
-              </dd>
-            </div>
+          <Field>
+            <FieldLabel>{t("assignee")}</FieldLabel>
+            <Combobox
+              items={assigneeOptions}
+              value={currentAssignee}
+              onValueChange={(selected) => assign(selected ? selected.value : null)}
+            >
+              <ComboboxInput
+                placeholder={t("unassigned")}
+                disabled={assignPending}
+                clearLabel={t("assigneeClear")}
+                openLabel={t("assigneeOpen")}
+              />
+              <ComboboxContent emptyMessage={t("assigneeEmpty")}>
+                <ComboboxList>
+                  {(item: ComboboxOption) => (
+                    <ComboboxItem key={item.value} value={item}>
+                      {item.label}
+                    </ComboboxItem>
+                  )}
+                </ComboboxList>
+              </ComboboxContent>
+            </Combobox>
+            {assignError ? <FieldError match>{t("notFound")}</FieldError> : null}
+          </Field>
 
+          <dl className="grid grid-cols-2 gap-4">
             <div>
               <dt className="text-caption text-fg-muted">{t("dueDate")}</dt>
               <dd className="text-body text-fg-default mt-1 tabular-nums">

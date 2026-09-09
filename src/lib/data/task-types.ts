@@ -34,6 +34,9 @@ export type TaskRow = {
 
 export type TaskBucket = "overdue" | "today" | "upcoming" | "noDeadline" | "completed";
 
+/** One entry from `listAssignablePeople()` -- everyone a task could go to. */
+export type AssignablePerson = { userId: string; name: string };
+
 /** The order the buckets are shown in, which is the order they matter in. */
 export const BUCKET_ORDER: TaskBucket[] = [
   "overdue",

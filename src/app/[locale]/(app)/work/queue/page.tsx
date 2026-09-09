@@ -6,6 +6,7 @@ import { CountBadge } from "@/components/ui/badge";
 import { focusRing } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
 import { requirePermission } from "@/lib/auth/guards";
+import { listAssignablePeople } from "@/lib/data/people";
 import { coordinationQueue, organizationToday } from "@/lib/data/tasks";
 import { cn } from "@/lib/utils";
 
@@ -50,9 +51,10 @@ export default async function WorkQueuePage({
   const bucketParam = typeof params.bucket === "string" ? params.bucket : undefined;
   const bucket = isBucketKey(bucketParam) ? bucketParam : undefined;
 
-  const [t, queue] = await Promise.all([
+  const [t, queue, assignablePeople] = await Promise.all([
     getTranslations("Today"),
     coordinationQueue(session.actor),
+    listAssignablePeople(session.actor),
   ]);
   const todayIso = organizationToday();
 
@@ -93,6 +95,7 @@ export default async function WorkQueuePage({
                 emptyTitle={t(`${column.key}Empty`)}
                 emptyBody={t(`${column.key}Body`)}
                 todayIso={todayIso}
+                assignablePeople={assignablePeople}
               />
             </CardContent>
           </Card>

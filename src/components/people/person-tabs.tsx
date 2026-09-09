@@ -13,7 +13,7 @@ import { TaskList } from "@/components/work/task-list";
 import { Link } from "@/i18n/navigation";
 import { updateMemberRole } from "@/lib/actions/people";
 import type { ModulePermissions, Role } from "@/db/schema/people";
-import { BUCKET_ORDER, type TaskBucket, type TaskRow } from "@/lib/data/task-types";
+import { BUCKET_ORDER, type AssignablePerson, type TaskBucket, type TaskRow } from "@/lib/data/task-types";
 import { cn } from "@/lib/utils";
 
 const PROJECT_STATUS_TONE = {
@@ -30,6 +30,7 @@ export function PersonTabs({
   overdueCount,
   buckets,
   todayIso,
+  assignablePeople,
   projects,
   canEditRole,
   isSelf,
@@ -47,6 +48,8 @@ export function PersonTabs({
   buckets: Record<TaskBucket, TaskRow[]>;
   /** `YYYY-MM-DD` in the organization's timezone -- see `TaskList`'s own doc. */
   todayIso: string;
+  /** Passed straight through to the drawer's own reassignment picker. */
+  assignablePeople: AssignablePerson[];
   projects: Array<{ id: string; key: string; name: string; status: keyof typeof PROJECT_STATUS_TONE }>;
   canEditRole: boolean;
   isSelf: boolean;
@@ -138,6 +141,7 @@ export function PersonTabs({
           emptyTitle={t("noOpenWork")}
           emptyBody={t("noOpenWorkBody")}
           todayIso={todayIso}
+          assignablePeople={assignablePeople}
         />
       </TabsPanel>
 

@@ -14,6 +14,7 @@ import { requireUser } from "@/lib/auth/guards";
 import { can } from "@/lib/authz";
 import { listProjectActivity } from "@/lib/data/activity";
 import { listProjectMeetings } from "@/lib/data/meetings";
+import { listAssignablePeople } from "@/lib/data/people";
 import { getProjectByKey, listProjectMembers } from "@/lib/data/projects";
 import { bucketTasks, listProjectTasks, organizationToday } from "@/lib/data/tasks";
 
@@ -63,6 +64,7 @@ export default async function ProjectPage({
     members,
     activity,
     meetings,
+    assignablePeople,
   ] = await Promise.all([
     getTranslations("Work"),
     getTranslations("Channels"),
@@ -74,6 +76,7 @@ export default async function ProjectPage({
     listProjectMembers(session.actor, project.id),
     listProjectActivity(session.actor, project.id),
     listProjectMeetings(session.actor, project.id),
+    listAssignablePeople(session.actor),
   ]);
 
   const mayManageTemplates = can(session.actor, "template.manage");
@@ -188,6 +191,7 @@ export default async function ProjectPage({
           buckets={buckets}
           todayIso={todayIso}
           allTasks={tasks}
+          assignablePeople={assignablePeople}
           canEditBoard={canEditBoard}
           members={members.map((member) => ({
             userId: member.userId,

@@ -54,7 +54,7 @@ import {
   type BoardColumns,
   type BoardStatus,
 } from "@/lib/board";
-import type { TaskRow } from "@/lib/data/task-types";
+import type { AssignablePerson, TaskRow } from "@/lib/data/task-types";
 import { cn } from "@/lib/utils";
 
 import { STATUS_TONE } from "./task-list";
@@ -81,13 +81,16 @@ export function TaskBoard({
   tasks,
   projectId,
   canEditBoard,
+  assignablePeople,
 }: {
   tasks: TaskRow[];
   projectId: string;
   canEditBoard: boolean;
+  /** Passed straight through to the drawer's own reassignment picker. */
+  assignablePeople: AssignablePerson[];
 }) {
   if (!canEditBoard) return <ReadOnlyBoard tasks={tasks} />;
-  return <EditableBoard tasks={tasks} projectId={projectId} />;
+  return <EditableBoard tasks={tasks} projectId={projectId} assignablePeople={assignablePeople} />;
 }
 
 /** What everyone who is not on the project's team still sees -- unchanged. */
@@ -151,7 +154,15 @@ function ReadOnlyBoard({ tasks }: { tasks: TaskRow[] }) {
 type PendingBlocked = { taskId: string; fromStatus: BoardStatus; toIndex: number };
 
 /** The interactive board, for a project's own lead or contributor. */
-function EditableBoard({ tasks, projectId }: { tasks: TaskRow[]; projectId: string }) {
+function EditableBoard({
+  tasks,
+  projectId,
+  assignablePeople,
+}: {
+  tasks: TaskRow[];
+  projectId: string;
+  assignablePeople: AssignablePerson[];
+}) {
   const statuses = useTranslations("Status");
   const t = useTranslations("Work");
   const taskText = useTranslations("Task");
@@ -422,7 +433,11 @@ function EditableBoard({ tasks, projectId }: { tasks: TaskRow[]; projectId: stri
         </DialogContent>
       </Dialog>
 
-      <TaskDrawer task={openTask} onClose={() => setOpenTaskId(null)} />
+      <TaskDrawer
+        task={openTask}
+        assignablePeople={assignablePeople}
+        onClose={() => setOpenTaskId(null)}
+      />
     </div>
   );
 }

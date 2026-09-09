@@ -8,7 +8,7 @@ import { PersonAvatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/feedback";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
-import { BUCKET_ORDER, type TaskBucket, type TaskRow } from "@/lib/data/task-types";
+import { BUCKET_ORDER, type AssignablePerson, type TaskBucket, type TaskRow } from "@/lib/data/task-types";
 import { cn } from "@/lib/utils";
 
 import { TaskBoard } from "./task-board";
@@ -30,6 +30,7 @@ export function ProjectTabs({
   buckets,
   todayIso,
   allTasks,
+  assignablePeople,
   members,
   canEditBoard,
   activity,
@@ -44,6 +45,8 @@ export function ProjectTabs({
   /** `YYYY-MM-DD` in the organization's timezone -- see `TaskList`'s own doc. */
   todayIso: string;
   allTasks: TaskRow[];
+  /** Passed straight through to the drawer's own reassignment picker. */
+  assignablePeople: AssignablePerson[];
   members: Array<{ userId: string; name: string; avatarUrl: string | null; role: string }>;
   /** Whether the signed-in person is this project's own lead or contributor -- see the page. */
   canEditBoard: boolean;
@@ -89,6 +92,7 @@ export function ProjectTabs({
           buckets={buckets}
           todayIso={todayIso}
           allTasks={allTasks}
+          assignablePeople={assignablePeople}
           canEditBoard={canEditBoard}
         />
       </TabsPanel>
@@ -126,12 +130,14 @@ function TasksPanel({
   buckets,
   todayIso,
   allTasks,
+  assignablePeople,
   canEditBoard,
 }: {
   projectId: string;
   buckets: Record<TaskBucket, TaskRow[]>;
   todayIso: string;
   allTasks: TaskRow[];
+  assignablePeople: AssignablePerson[];
   canEditBoard: boolean;
 }) {
   const t = useTranslations("Work");
@@ -178,9 +184,15 @@ function TasksPanel({
           emptyTitle={t("noTasks")}
           emptyBody={t("noTasksBody")}
           todayIso={todayIso}
+          assignablePeople={assignablePeople}
         />
       ) : (
-        <TaskBoard tasks={allTasks} projectId={projectId} canEditBoard={canEditBoard} />
+        <TaskBoard
+          tasks={allTasks}
+          projectId={projectId}
+          canEditBoard={canEditBoard}
+          assignablePeople={assignablePeople}
+        />
       )}
     </div>
   );

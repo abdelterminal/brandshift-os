@@ -12,6 +12,7 @@ import { atLeast } from "@/lib/authz";
 import { requireUser } from "@/lib/auth/guards";
 import { dayKey } from "@/lib/calendar-dates";
 import { nextMeetingsFor } from "@/lib/data/meetings";
+import { listAssignablePeople } from "@/lib/data/people";
 import {
   coordinationQueue,
   listTaskBuckets,
@@ -44,10 +45,11 @@ export default async function TodayPage() {
 
 async function CoordinationQueue() {
   const session = await requireUser();
-  const [t, queue, meetings] = await Promise.all([
+  const [t, queue, meetings, assignablePeople] = await Promise.all([
     getTranslations("Today"),
     coordinationQueue(session.actor),
     nextMeetingsFor(session.actor, new Date()),
+    listAssignablePeople(session.actor),
   ]);
   const todayIso = organizationToday();
 
@@ -112,6 +114,7 @@ async function CoordinationQueue() {
                     emptyBody={t(`${column.key}Body`)}
                     max={8}
                     todayIso={todayIso}
+                    assignablePeople={assignablePeople}
                   />
                 )}
               </CardContent>
@@ -137,10 +140,11 @@ async function CoordinationQueue() {
 
 async function MyDay({ name }: { name: string }) {
   const session = await requireUser();
-  const [t, buckets, meetings] = await Promise.all([
+  const [t, buckets, meetings, assignablePeople] = await Promise.all([
     getTranslations("Today"),
     listTaskBuckets(session.actor, { assigneeUserId: session.actor.userId }),
     nextMeetingsFor(session.actor, new Date()),
+    listAssignablePeople(session.actor),
   ]);
 
   // Now is what is late or due today; Next is the rest of the week; Later is
@@ -214,6 +218,7 @@ async function MyDay({ name }: { name: string }) {
                     emptyBody={section.key === "now" ? t("nothingTodayBody") : t("noWorkBody")}
                     todayIso={todayIso}
                     showBlockedReason
+                    assignablePeople={assignablePeople}
                   />
                 </div>
               </section>
