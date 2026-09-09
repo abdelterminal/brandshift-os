@@ -66,6 +66,7 @@ export type Action =
   | "sop.view"
   | "template.view"
   | "review.view"
+  | "task.viewQueue"
   // Doing
   | "project.create"
   | "task.create"
@@ -171,6 +172,12 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   // the same reason objectives are: a review half the company cannot read is
   // a meeting held in a corridor.
   "review.view": () => true,
+
+  // The uncapped version of Today's own coordination queue -- the same
+  // "needs a decision" work, just not capped at eight rows. Today already
+  // gates that queue to managers inline; this is its formal `can()` rule,
+  // for the page that gives it a real, linkable URL.
+  "task.viewQueue": (actor) => atLeast(actor, "manager"),
 
   // Holding one, writing it up and publishing it is a manager's job, or
   // anybody holding `insights` -- the flag that already gates reporting

@@ -39,6 +39,10 @@ export const MANAGER_ROUTES = [
   // A project page, because the board inside it is the app's other horizontal
   // scroller and the sweep is what proves it scrolls inside its own box.
   "/en/work/NOR",
+  // The coordination queue, uncapped -- both the three-column view and the
+  // single-bucket one `?bucket=` narrows Today's own "View all" down to.
+  "/en/work/queue",
+  "/en/work/queue?bucket=unassigned",
 ] as const;
 
 /**

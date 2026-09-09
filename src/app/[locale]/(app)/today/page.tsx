@@ -1,3 +1,4 @@
+import { Check } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { NextMeetings } from "@/components/calendar/next-meetings";
@@ -48,6 +49,7 @@ async function CoordinationQueue() {
     coordinationQueue(session.actor),
     nextMeetingsFor(session.actor, new Date()),
   ]);
+  const todayIso = organizationToday();
 
   const nothingToDo =
     queue.blocked.length === 0 && queue.overdue.length === 0 && queue.unassigned.length === 0;
@@ -94,16 +96,31 @@ async function CoordinationQueue() {
                 </div>
               </CardHeader>
               <CardContent className="px-0 pt-1 pb-2">
-                <TaskListFlat
-                  tasks={column.tasks}
-                  emptyTitle={t("allClear")}
-                  emptyBody={t(`${column.key}Body`)}
-                  max={8}
-                />
+                {/* An empty column stays true, but doesn't out-weigh the
+                    ones with something in them: a full-height EmptyState
+                    here reads as a fourth thing to look at on a day where
+                    it's actually the two columns beside it that matter. */}
+                {column.tasks.length === 0 ? (
+                  <div className="flex items-center gap-2 px-4 py-2">
+                    <Check aria-hidden className="text-fg-subtle size-3.5 shrink-0" />
+                    <p className="text-caption text-fg-subtle">{t(`${column.key}Empty`)}</p>
+                  </div>
+                ) : (
+                  <TaskListFlat
+                    tasks={column.tasks}
+                    emptyTitle={t("allClear")}
+                    emptyBody={t(`${column.key}Body`)}
+                    max={8}
+                    todayIso={todayIso}
+                  />
+                )}
               </CardContent>
               {column.tasks.length > 8 ? (
                 <div className="border-border border-t px-4 py-2.5">
-                  <Button variant="link" render={<Link href="/work" />}>
+                  <Button
+                    variant="link"
+                    render={<Link href={`/work/queue?bucket=${column.key}`} />}
+                  >
                     {t("viewAll")}
                   </Button>
                 </div>
@@ -195,6 +212,8 @@ async function MyDay({ name }: { name: string }) {
                     tasks={section.tasks}
                     emptyTitle={section.key === "now" ? t("nothingToday") : t("noWork")}
                     emptyBody={section.key === "now" ? t("nothingTodayBody") : t("noWorkBody")}
+                    todayIso={todayIso}
+                    showBlockedReason
                   />
                 </div>
               </section>

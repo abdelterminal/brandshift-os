@@ -10,7 +10,7 @@ import { requireUser } from "@/lib/auth/guards";
 import { listPersonActivity } from "@/lib/data/activity";
 import { getPerson } from "@/lib/data/people";
 import { listProjectsForUser } from "@/lib/data/projects";
-import { listTaskBuckets } from "@/lib/data/tasks";
+import { listTaskBuckets, organizationToday } from "@/lib/data/tasks";
 
 /**
  * A person, as a routed page with tabs.
@@ -46,6 +46,7 @@ export default async function PersonPage({ params }: PageProps<"/[locale]/people
     buckets.today.length +
     buckets.upcoming.length +
     buckets.noDeadline.length;
+  const todayIso = organizationToday();
 
   return (
     <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8">
@@ -81,6 +82,7 @@ export default async function PersonPage({ params }: PageProps<"/[locale]/people
           openCount={openCount}
           overdueCount={buckets.overdue.length}
           buckets={buckets}
+          todayIso={todayIso}
           projects={projects.map((project) => ({
             id: project.id,
             key: project.key,

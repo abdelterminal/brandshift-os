@@ -769,6 +769,38 @@ it *is* the gesture. `prefers-reduced-motion` still gets a real accommodation: d
 drop-settle animation is skipped for it, and the keyboard path (the four buttons) never produces a
 transform in the first place, so reduced motion loses nothing functional either way.
 
+## Added when Today learned what's actually late
+
+**Priority is a word, not a color.** `CLAUDE.md`'s tone vocabulary is closed on purpose --
+"green means complete, amber means needs attention, blue means in progress, red means blocked or
+overdue, and none of them ever means anything else... a screen that wants a fifth meaning needs a
+fifth word, not a spare colour." Marking an urgent task with a red dot would be exactly the sixth
+meaning that rule exists to stop. `task-drawer.tsx` had already solved "show this task's priority"
+without touching the palette -- a neutral-tone `StatusPill` with the word itself (`Priority` /
+`Urgent`, `High`, ...) -- so the row reuses that same pill rather than inventing a color, shown
+only for `urgent`/`high` since `medium`/`low` are the default and showing them everywhere would be
+noise, not information.
+
+**A task reads as overdue independently of what its status happens to be.** Before this,
+`TaskListFlat` (Today's own list, unlike the project and person pages' bucketed `TaskList`) colored
+a row's date from `task.status` alone, so a `todo` or `in_progress` task past its date read exactly
+like one due next month -- only a task somebody had separately marked `Blocked` ever turned red.
+`TaskList` already got this right by accident: `bucketTasks()` sorts by due date before status is
+ever consulted, so its `overdue` bucket's tone already meant the right thing. The fix moved the
+question into `TaskListRow` itself (`isOverdue()`, `src/lib/due-date.ts`) so neither list can regress
+this way again, and kept status and lateness visually separate on purpose: the icon *shape* still
+comes from status (a hollow circle stays a hollow circle), and only its color, and the date's, flip
+red when the row is actually late. Borrowing the triangle glyph that already means "blocked" for a
+task nobody has blocked yet would trade one confusion for another.
+
+**"View all" got a real page instead of a fixed link.** The coordination queue's cards cap at eight
+rows so a daily glance never scrolls, and the "View all" underneath used to point at `/work` --
+which lists *projects*, not tasks; there was no screen a capped column could actually hand off to.
+`/work/queue` is that screen: the same `coordinationQueue()` read, uncapped, with `?bucket=` to jump
+straight to the column that was full. Gated with a proper `can()` rule (`task.viewQueue`) rather
+than copying Today's own inline `atLeast(actor, "manager")` check -- which still exists, unchanged,
+and is exactly the inconsistency `KNOWN-GAPS.md` now names rather than quietly doubling.
+
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the
   requirement is that everything runs on the local network.
 - **Restyling the existing Angular app** -- cheaper, but tenancy, permissions and the task schema

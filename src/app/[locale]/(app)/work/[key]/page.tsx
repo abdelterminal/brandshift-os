@@ -89,7 +89,8 @@ export default async function ProjectPage({
   );
   const done = tasks.filter((task) => task.status === "done");
   const blocked = tasks.filter((task) => task.status === "blocked");
-  const buckets = bucketTasks(open, done, organizationToday());
+  const todayIso = organizationToday();
+  const buckets = bucketTasks(open, done, todayIso);
 
   return (
     <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8">
@@ -185,6 +186,7 @@ export default async function ProjectPage({
           priority={priorities(project.priority)}
           projectId={project.id}
           buckets={buckets}
+          todayIso={todayIso}
           allTasks={tasks}
           canEditBoard={canEditBoard}
           members={members.map((member) => ({

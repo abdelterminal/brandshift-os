@@ -46,6 +46,13 @@ test("is refused Insights with a 403 that keeps the session", async ({ page }) =
   await expect(page.getByRole("heading", { name: "Today", level: 1 })).toBeVisible();
 });
 
+test("is refused the coordination queue with a 403 that keeps the session", async ({ page }) => {
+  await page.goto("/en/work/queue");
+
+  await expect(page.getByRole("heading", { name: "You do not have access to this" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Primary" }).first()).toBeVisible();
+});
+
 test("is refused the project wizard", async ({ page }) => {
   await page.goto("/en/work/new");
   await expect(page.getByRole("heading", { name: "You do not have access to this" })).toBeVisible();

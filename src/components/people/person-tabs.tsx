@@ -29,6 +29,7 @@ export function PersonTabs({
   openCount,
   overdueCount,
   buckets,
+  todayIso,
   projects,
   canEditRole,
   isSelf,
@@ -44,6 +45,8 @@ export function PersonTabs({
   openCount: number;
   overdueCount: number;
   buckets: Record<TaskBucket, TaskRow[]>;
+  /** `YYYY-MM-DD` in the organization's timezone -- see `TaskList`'s own doc. */
+  todayIso: string;
   projects: Array<{ id: string; key: string; name: string; status: keyof typeof PROJECT_STATUS_TONE }>;
   canEditRole: boolean;
   isSelf: boolean;
@@ -134,6 +137,7 @@ export function PersonTabs({
           order={BUCKET_ORDER}
           emptyTitle={t("noOpenWork")}
           emptyBody={t("noOpenWorkBody")}
+          todayIso={todayIso}
         />
       </TabsPanel>
 

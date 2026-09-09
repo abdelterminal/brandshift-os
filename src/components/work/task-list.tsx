@@ -7,9 +7,11 @@ import { useCallback, useMemo } from "react";
 
 import { PersonAvatar } from "@/components/ui/avatar";
 import type { Tone } from "@/components/ui/badge";
+import { StatusPill } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/feedback";
 import { focusRingInset, transition } from "@/components/ui/styles";
 import type { TaskBucket, TaskRow } from "@/lib/data/task-types";
+import { dueDateLabel, isOverdue } from "@/lib/due-date";
 import { cn } from "@/lib/utils";
 
 import { TaskDrawer } from "./task-drawer";
@@ -55,12 +57,21 @@ export function TaskList({
   showProject = true,
   emptyTitle,
   emptyBody,
+  todayIso,
 }: {
   buckets: Partial<Record<TaskBucket, TaskRow[]>>;
   order: TaskBucket[];
   showProject?: boolean;
   emptyTitle: string;
   emptyBody: string;
+  /**
+   * `YYYY-MM-DD` in the organization's timezone, for the relative due-date
+   * label ("in 3 days") and for recognising a task as overdue independent of
+   * its bucket. Optional: without it, dates render as plain "d MMM" and only
+   * the bucket's own tone (already correct -- `overdue` buckets go in here
+   * pre-sorted by `bucketTasks()`) drives the color.
+   */
+  todayIso?: string;
 }) {
   const t = useTranslations("Task");
   const router = useRouter();
@@ -120,6 +131,7 @@ export function TaskList({
                       task={task}
                       tone={BUCKET_TONE[bucket]}
                       showProject={showProject}
+                      todayIso={todayIso}
                       onOpen={() => setOpenTask(task.id)}
                     />
                   ))}
@@ -139,16 +151,37 @@ function TaskListRow({
   task,
   tone,
   showProject,
+  todayIso,
+  showBlockedReason = false,
   onOpen,
 }: {
   task: TaskRow;
   tone: Tone;
   showProject: boolean;
+  todayIso?: string;
+  /**
+   * One truncated line of `blockedReason` under the title. Off by default --
+   * the coordination queue already groups a whole column under "Blocked",
+   * where the reason would repeat what the heading says; `MyDay` turns it on,
+   * since there the reason is the one thing that changes what "pick this up"
+   * even means, and it's otherwise hidden behind opening the drawer.
+   */
+  showBlockedReason?: boolean;
   onOpen: () => void;
 }) {
   const t = useTranslations("Task");
+  const priorities = useTranslations("Priority");
   const format = useFormatter();
   const Icon = STATUS_ICON[task.status];
+
+  // Late is a fact about the date, not about whether someone has gotten
+  // around to marking the task Blocked -- see due-date.ts. Without a
+  // `todayIso` (a caller that already sorted this into a bucket whose own
+  // tone says the same thing) this just agrees with `tone`.
+  const overdue = todayIso ? isOverdue(task.dueDate, todayIso, task.status) : tone === "blocked";
+  const dateTone: Tone = overdue ? "blocked" : tone;
+
+  const label = task.dueDate && todayIso ? dueDateLabel(task.dueDate, todayIso) : null;
 
   return (
     <li>
@@ -167,24 +200,43 @@ function TaskListRow({
           className={cn(
             "size-4 shrink-0",
             task.status === "done" && "text-complete-solid",
-            task.status === "blocked" && "text-blocked-solid",
-            task.status === "in_progress" && "text-active-solid",
-            (task.status === "todo" || task.status === "cancelled") && "text-fg-subtle",
+            (task.status === "blocked" || overdue) && "text-blocked-solid",
+            task.status === "in_progress" && !overdue && "text-active-solid",
+            (task.status === "todo" || task.status === "cancelled") &&
+              !overdue &&
+              "text-fg-subtle",
           )}
         />
 
         <span className="min-w-0 flex-1">
-          <span
-            className={cn(
-              "text-body block truncate",
-              task.status === "done" ? "text-fg-muted line-through" : "text-fg-default",
-            )}
-          >
-            {task.title}
+          <span className="flex min-w-0 items-baseline gap-1.5">
+            <span
+              className={cn(
+                "text-body truncate",
+                task.status === "done" ? "text-fg-muted line-through" : "text-fg-default",
+              )}
+            >
+              {task.title}
+            </span>
+            {/* Every task already carries a priority; medium and low are the
+                default and stay silent, so only urgent/high earn a pill --
+                the exact one the drawer already shows, just moved onto the
+                row, rather than a colour: CLAUDE.md's tone vocabulary is
+                closed, and priority isn't one of its five meanings. */}
+            {task.priority === "urgent" || task.priority === "high" ? (
+              <StatusPill tone="neutral" size="sm" className="shrink-0">
+                {priorities(task.priority)}
+              </StatusPill>
+            ) : null}
           </span>
           {showProject && task.projectName ? (
             <span className="text-caption text-fg-subtle block truncate">
               {task.projectKey} · {task.projectName}
+            </span>
+          ) : null}
+          {showBlockedReason && task.status === "blocked" && task.blockedReason ? (
+            <span className="text-caption text-fg-muted mt-0.5 block truncate">
+              {task.blockedReason}
             </span>
           ) : null}
         </span>
@@ -192,19 +244,26 @@ function TaskListRow({
         {/* No "Blocker" pill here. The red warning icon already says it, and in
             the coordination queue the whole column is blocked work -- the pill
             repeated that while squeezing the title it sat next to. The reason
-            itself is in the drawer, which is where it can actually be read. */}
+            itself is in the drawer (or, on `MyDay`, the line above) rather
+            than repeated here too. */}
 
         {task.dueDate ? (
           <span
             className={cn(
               "text-caption hidden shrink-0 tabular-nums sm:block",
-              tone === "blocked" ? "text-blocked-text" : "text-fg-muted",
+              dateTone === "blocked" ? "text-blocked-text" : "text-fg-muted",
             )}
           >
-            {format.dateTime(new Date(`${task.dueDate}T00:00:00`), {
-              day: "numeric",
-              month: "short",
-            })}
+            {label?.kind === "today"
+              ? t("dueToday")
+              : label?.kind === "in"
+                ? t("dueIn", { days: label.days })
+                : label?.kind === "overdueBy"
+                  ? t("overdueBy", { days: label.days })
+                  : format.dateTime(new Date(`${task.dueDate}T00:00:00`), {
+                      day: "numeric",
+                      month: "short",
+                    })}
           </span>
         ) : null}
 
@@ -228,12 +287,17 @@ export function TaskListFlat({
   emptyBody,
   showProject = true,
   max,
+  todayIso,
+  showBlockedReason,
 }: {
   tasks: TaskRow[];
   emptyTitle: string;
   emptyBody: string;
   showProject?: boolean;
   max?: number;
+  /** See `TaskList`'s own doc -- same prop, same reason. */
+  todayIso?: string;
+  showBlockedReason?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -261,6 +325,8 @@ export function TaskListFlat({
             task={task}
             tone={STATUS_TONE[task.status]}
             showProject={showProject}
+            todayIso={todayIso}
+            showBlockedReason={showBlockedReason}
             onOpen={() => setOpenTask(task.id)}
           />
         ))}

@@ -28,6 +28,7 @@ export function ProjectTabs({
   priority,
   projectId,
   buckets,
+  todayIso,
   allTasks,
   members,
   canEditBoard,
@@ -40,6 +41,8 @@ export function ProjectTabs({
   priority: string;
   projectId: string;
   buckets: Record<TaskBucket, TaskRow[]>;
+  /** `YYYY-MM-DD` in the organization's timezone -- see `TaskList`'s own doc. */
+  todayIso: string;
   allTasks: TaskRow[];
   members: Array<{ userId: string; name: string; avatarUrl: string | null; role: string }>;
   /** Whether the signed-in person is this project's own lead or contributor -- see the page. */
@@ -84,6 +87,7 @@ export function ProjectTabs({
         <TasksPanel
           projectId={projectId}
           buckets={buckets}
+          todayIso={todayIso}
           allTasks={allTasks}
           canEditBoard={canEditBoard}
         />
@@ -120,11 +124,13 @@ export function ProjectTabs({
 function TasksPanel({
   projectId,
   buckets,
+  todayIso,
   allTasks,
   canEditBoard,
 }: {
   projectId: string;
   buckets: Record<TaskBucket, TaskRow[]>;
+  todayIso: string;
   allTasks: TaskRow[];
   canEditBoard: boolean;
 }) {
@@ -171,6 +177,7 @@ function TasksPanel({
           showProject={false}
           emptyTitle={t("noTasks")}
           emptyBody={t("noTasksBody")}
+          todayIso={todayIso}
         />
       ) : (
         <TaskBoard tasks={allTasks} projectId={projectId} canEditBoard={canEditBoard} />
