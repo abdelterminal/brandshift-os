@@ -71,6 +71,7 @@ export type Action =
   | "project.create"
   | "task.create"
   | "channel.post"
+  | "channel.manageMembers"
   | "meeting.schedule"
   | "meeting.manage"
   | "leave.request"
@@ -109,11 +110,21 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   "inbox.view": () => true,
   "calendar.view": () => true,
 
-  // Channels are how the org talks to itself. Reading and posting are open to
-  // every member: a conversation half the company cannot join is a meeting
-  // held in a corridor, which is the thing this replaces.
+  // Channels are how the org talks to itself, and everyone may use the
+  // feature -- browse the list, ask to join. Which channel's *content* you
+  // may actually see is narrower, and is a data-layer question (an active
+  // row in `channel_members`), the same shape project board editing already
+  // uses: `work.view` is open to everyone, and the board itself checks
+  // `project_members`.
   "channel.view": () => true,
   "channel.post": () => true,
+
+  // Approving or declining a request to join, once one of these two channels
+  // is not enough on its own: an admin/owner for the whole org, or whoever
+  // actually made this specific channel -- the same shape `meeting.manage`
+  // already uses for "the organizer, or an admin".
+  "channel.manageMembers": (actor, resource) =>
+    atLeast(actor, "admin") || resource?.ownerUserId === actor.userId,
 
   // Everyone can see the time-off screen and ask for time off. What you see on
   // it differs: your own requests always, the approval queue only if you are

@@ -141,6 +141,13 @@
       "when": 1788872463069,
       "tag": "0019_loving_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1788972112928,
+      "tag": "0020_premium_franklin_richards",
+      "breakpoints": true
     }
   ]
 }

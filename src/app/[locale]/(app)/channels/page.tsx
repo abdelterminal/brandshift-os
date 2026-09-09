@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
-import { CountBadge } from "@/components/ui/badge";
+import { Badge, CountBadge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/feedback";
 import { focusRingInset, transition } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
@@ -36,8 +36,10 @@ export default async function ChannelsPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-6">
-          <ChannelSection heading={t("yours")} rows={mine} emptyLabel={t("noneJoined")} />
-          {rest.length > 0 ? <ChannelSection heading={t("browse")} rows={rest} /> : null}
+          <ChannelSection heading={t("yours")} rows={mine} emptyLabel={t("noneJoined")} requestedLabel={t("requested")} />
+          {rest.length > 0 ? (
+            <ChannelSection heading={t("browse")} rows={rest} requestedLabel={t("requested")} />
+          ) : null}
         </div>
       )}
     </div>
@@ -48,10 +50,12 @@ function ChannelSection({
   heading,
   rows,
   emptyLabel,
+  requestedLabel,
 }: {
   heading: string;
   rows: ChannelListRow[];
   emptyLabel?: string;
+  requestedLabel: string;
 }) {
   if (rows.length === 0 && !emptyLabel) return null;
 
@@ -87,7 +91,11 @@ function ChannelSection({
                   </span>
                 </span>
 
-                {row.unread > 0 ? (
+                {row.status === "pending" ? (
+                  <Badge tone="attention" size="sm" className="shrink-0">
+                    {requestedLabel}
+                  </Badge>
+                ) : row.unread > 0 ? (
                   <CountBadge tone="accent" className="shrink-0">
                     {row.unread}
                   </CountBadge>

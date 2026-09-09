@@ -14,7 +14,7 @@ import { listProjectActivity, type ActivityRow } from "./activity";
 /**
  * Channels.
  *
- * Two ideas hold this together.
+ * Three ideas hold this together.
  *
  * The first is that a project channel is not a chat room bolted onto a
  * project -- it is the project's own history with people talking in it. The
@@ -28,6 +28,14 @@ import { listProjectActivity, type ActivityRow } from "./activity";
  * a blocker on something you run. A chat app that copies every message into a
  * notification list produces two queues saying the same thing, and people stop
  * reading both. Mentions will change this, and will be the reason to.
+ *
+ * The third is that being on a project or deal is what earns you its channel,
+ * not asking for it. `joinChannel()` puts the right people in the moment a
+ * project's or deal's channel exists -- that decision was already made by
+ * whoever added them to the work. `requestToJoinChannel()` is the other
+ * door, for anyone else: a request an admin, owner, or the channel's own
+ * creator has to actually open before it does anything. See `channelMembers.status`
+ * in the schema for what an unanswered request looks like at rest.
  */
 
 // ---------------------------------------------------------------------------
@@ -43,6 +51,8 @@ export type ChannelRow = {
   projectId: string | null;
   projectKey: string | null;
   projectName: string | null;
+  /** Who may approve a join request here, besides an admin -- see `can("channel.manageMembers")`. */
+  createdByUserId: string | null;
 };
 
 /**
@@ -83,18 +93,26 @@ export async function ensureDealChannel(
   });
   if (!created) throw new Error("Could not create the deal channel.");
 
-  await scope.insert(channelMembers, { channelId: created.id, userId: actor.userId });
+  await scope.insert(channelMembers, { channelId: created.id, userId: actor.userId, status: "active" });
 
   return { id: created.id, slug: created.slug };
 }
+
+export type ChannelMembershipStatus = "active" | "pending" | "declined" | "none";
 
 export type ChannelListRow = ChannelRow & {
   /** Unread messages from other people. Your own are never unread. */
   unread: number;
   /** Null while you have never opened it. */
   lastReadAt: Date | null;
-  /** Whether you are in it, which is what puts it on your rail. */
+  /** Whether you are an active member, which is what puts it on your rail. */
   joined: boolean;
+  /**
+   * Your own standing with this channel -- `"none"` if you have never asked.
+   * `joined` above is exactly `status === "active"`, kept alongside it so the
+   * rail and the "yours" split on `/channels` do not have to be rewritten.
+   */
+  status: ChannelMembershipStatus;
   /** Pinned to the top of your own rail. Nobody else's is affected. */
   pinned: boolean;
 };
@@ -108,6 +126,7 @@ const CHANNEL_FIELDS = {
   projectId: channels.projectId,
   projectKey: projects.key,
   projectName: projects.name,
+  createdByUserId: channels.createdByUserId,
 };
 
 /** Left: a general channel belongs to no project. */
@@ -166,6 +185,7 @@ export async function listChannels(actor: Actor): Promise<ChannelListRow[]> {
         channelId: channelMembers.channelId,
         lastReadAt: channelMembers.lastReadAt,
         pinned: channelMembers.pinned,
+        status: channelMembers.status,
       },
       eq(channelMembers.userId, actor.userId),
     ),
@@ -177,11 +197,13 @@ export async function listChannels(actor: Actor): Promise<ChannelListRow[]> {
   return rows
     .map((row) => {
       const membership = mine.get(row.id);
+      const status: ChannelMembershipStatus = membership?.status ?? "none";
       return {
         ...row,
         unread: unread.get(row.id) ?? 0,
         lastReadAt: membership?.lastReadAt ?? null,
-        joined: mine.has(row.id),
+        joined: status === "active",
+        status,
         pinned: membership?.pinned ?? false,
       };
     })
@@ -207,6 +229,22 @@ export async function getChannelBySlug(actor: Actor, slug: string): Promise<Chan
     CHANNEL_FIELDS,
     PROJECT_JOIN,
     eq(channels.slug, slug.toLowerCase()),
+  )) as ChannelRow[];
+
+  return rows[0] ?? null;
+}
+
+/**
+ * Looked up by id, for the actions that already have one (a join request
+ * names a channel by id, not a URL) and need `createdByUserId` for
+ * `can("channel.manageMembers")`.
+ */
+export async function getChannelById(actor: Actor, channelId: string): Promise<ChannelRow | null> {
+  const rows = (await withOrg(actor.organizationId).selectJoined(
+    channels,
+    CHANNEL_FIELDS,
+    PROJECT_JOIN,
+    eq(channels.id, channelId),
   )) as ChannelRow[];
 
   return rows[0] ?? null;
@@ -303,12 +341,14 @@ export async function readChannelFeed(
 // ---------------------------------------------------------------------------
 
 /**
- * Put someone in a channel.
+ * Put someone in a channel outright, as an active member.
  *
- * Idempotent, because it runs every time a channel is opened. Joining is what
- * gives you a read mark, and a read mark is what makes the badge mean
- * something: a channel you have never opened has no unread count because it
- * has no "since when".
+ * Provisioning, not a request: `ensureProjectChannel()`/`ensureDealChannel()`
+ * are its only callers, adding the people already on that project or deal the
+ * moment its channel exists. Whether someone belongs here was already decided
+ * by whoever put them on the project -- asking again, via a join request,
+ * would be asking the same question twice. Idempotent, so re-running it for a
+ * project that already has its channel does nothing to members it already has.
  */
 export async function joinChannel(
   actor: Actor,
@@ -326,7 +366,105 @@ export async function joinChannel(
   );
   if (existing.length > 0) return;
 
-  await scope.insert(channelMembers, { channelId, userId });
+  await scope.insert(channelMembers, { channelId, userId, status: "active" });
+}
+
+/** Whether this person may already read and post in this channel. */
+export async function isActiveChannelMember(actor: Actor, channelId: string): Promise<boolean> {
+  const [row] = await withOrg(actor.organizationId).selectFields(
+    channelMembers,
+    { status: channelMembers.status },
+    eq(channelMembers.channelId, channelId),
+    eq(channelMembers.userId, actor.userId),
+  );
+  return row?.status === "active";
+}
+
+/**
+ * Ask to get into a channel you are not on.
+ *
+ * The one path left, now that opening a channel and posting into one no
+ * longer join you on their own. Idempotent for an existing request the same
+ * way `joinChannel` is idempotent for an existing membership; a declined
+ * request is the one case worth re-asking, so it goes back to `pending`
+ * rather than staying a dead end.
+ */
+export async function requestToJoinChannel(actor: Actor, channelId: string): Promise<void> {
+  const scope = withOrg(actor.organizationId);
+
+  const [existing] = await scope.selectFields(
+    channelMembers,
+    { id: channelMembers.id, status: channelMembers.status },
+    eq(channelMembers.channelId, channelId),
+    eq(channelMembers.userId, actor.userId),
+  );
+
+  if (!existing) {
+    await scope.insert(channelMembers, { channelId, userId: actor.userId, status: "pending" });
+    return;
+  }
+
+  if (existing.status === "declined") {
+    await scope.update(
+      channelMembers,
+      { status: "pending", joinedAt: new Date() },
+      eq(channelMembers.id, existing.id),
+    );
+  }
+  // Active, or already pending: nothing to do.
+}
+
+/** Everyone waiting on an answer from this channel, oldest request first. */
+export async function listPendingRequests(
+  actor: Actor,
+  channelId: string,
+): Promise<Array<{ userId: string; name: string; avatarUrl: string | null; requestedAt: Date }>> {
+  const rows = (await withOrg(actor.organizationId).selectJoined(
+    channelMembers,
+    {
+      userId: channelMembers.userId,
+      name: users.name,
+      avatarUrl: users.avatarUrl,
+      requestedAt: channelMembers.joinedAt,
+    },
+    [{ table: users, on: eq(users.id, channelMembers.userId), type: "inner" as const }],
+    eq(channelMembers.channelId, channelId),
+    eq(channelMembers.status, "pending"),
+  )) as Array<{ userId: string; name: string; avatarUrl: string | null; requestedAt: Date }>;
+
+  return rows.sort((a, b) => a.requestedAt.getTime() - b.requestedAt.getTime());
+}
+
+/** Let someone in. Scoped to a `pending` row, so approving twice is a no-op. */
+export async function approveJoinRequest(
+  actor: Actor,
+  channelId: string,
+  userId: string,
+): Promise<boolean> {
+  const rows = await withOrg(actor.organizationId).update(
+    channelMembers,
+    { status: "active", joinedAt: new Date() },
+    eq(channelMembers.channelId, channelId),
+    eq(channelMembers.userId, userId),
+    eq(channelMembers.status, "pending"),
+  );
+  return rows.length > 0;
+}
+
+/** Say no. They can ask again -- `requestToJoinChannel` re-opens a decline. */
+export async function declineJoinRequest(
+  actor: Actor,
+  channelId: string,
+  userId: string,
+): Promise<boolean> {
+  const rows = await withOrg(actor.organizationId).update(
+    channelMembers,
+    { status: "declined" },
+    eq(channelMembers.channelId, channelId),
+    eq(channelMembers.userId, userId),
+    eq(channelMembers.status, "pending"),
+  );
+  return rows.length > 0;
 }
 
 /** Take yourself out of a channel. It leaves the rail; nothing is deleted. */
@@ -474,7 +612,7 @@ export async function ensureProjectChannel(
 
   await scope.insert(
     channelMembers,
-    [...userIds].map((userId) => ({ channelId: created.id, userId })),
+    [...userIds].map((userId) => ({ channelId: created.id, userId, status: "active" as const })),
   );
 
   return { id: created.id, slug: created.slug };

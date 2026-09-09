@@ -206,4 +206,5 @@ export const activitySubjectEnum = pgEnum("activity_subject", [
   "sop",
   "template",
   "review",
+  "channel",
 ]);

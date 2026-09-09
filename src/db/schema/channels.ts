@@ -22,6 +22,20 @@ import { projects } from "./projects";
  */
 export const channelKindEnum = pgEnum("channel_kind", ["project", "deal", "general"]);
 
+/**
+ * Whether someone's seat in a channel is real yet.
+ *
+ * `active` is the only status that existed before this: everyone who had ever
+ * joined a channel, however they got there. `pending` is a request nobody has
+ * acted on; `declined` is one somebody said no to, kept rather than deleted so
+ * the person who asked reads "not yet" and can ask again, not "never asked".
+ */
+export const channelMemberStatusEnum = pgEnum("channel_member_status", [
+  "active",
+  "pending",
+  "declined",
+]);
+
 export const channels = pgTable(
   "channels",
   {
@@ -68,6 +82,13 @@ export const channels = pgTable(
  * Read state lives here as one timestamp rather than a per-message receipt.
  * "Everything before this moment is read" is what an unread badge needs, and
  * it stays one row per person per channel however long the channel gets.
+ *
+ * `status` defaults to `active` so every row that existed before it was added
+ * is unaffected -- this is a gate on *new* requests, not a retroactive lockout
+ * of anyone already in a conversation. `joinChannel()` (provisioning: a
+ * project or deal adding its own people) still writes `active` directly;
+ * `requestToJoinChannel()` (someone asking to get into a channel they are not
+ * otherwise on) is the only path that ever writes `pending`.
  */
 export const channelMembers = pgTable(
   "channel_members",
@@ -82,6 +103,7 @@ export const channelMembers = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    status: channelMemberStatusEnum("status").notNull().default("active"),
     /** Null means they have never opened it, so everything counts as unread. */
     lastReadAt: timestamp("last_read_at", { withTimezone: true }),
     /** Pinned to the top of your own rail. Nobody else's rail is affected. */

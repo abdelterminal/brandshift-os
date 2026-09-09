@@ -38,7 +38,8 @@ export type ActivityRow = {
     | "key_result"
     | "sop"
     | "template"
-    | "review";
+    | "review"
+    | "channel";
   subjectId: string;
   projectId: string | null;
   taskId: string | null;

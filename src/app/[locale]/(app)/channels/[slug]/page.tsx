@@ -2,11 +2,18 @@ import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
 import { Membership } from "@/components/channels/membership";
+import { PendingRequests } from "@/components/channels/pending-requests";
 import { Conversation, type FeedItem } from "@/components/channels/conversation";
+import { EmptyState } from "@/components/ui/feedback";
 import { Link } from "@/i18n/navigation";
 import { requirePermission } from "@/lib/auth/guards";
 import { can } from "@/lib/authz";
-import { getChannelBySlug, listChannels, readChannelFeed } from "@/lib/data/channels";
+import {
+  getChannelBySlug,
+  listChannels,
+  listPendingRequests,
+  readChannelFeed,
+} from "@/lib/data/channels";
 import { viewersOf } from "@/lib/realtime/presence";
 import { focusRing, transition } from "@/components/ui/styles";
 import { cn } from "@/lib/utils";
@@ -14,11 +21,12 @@ import { cn } from "@/lib/utils";
 /**
  * One channel.
  *
- * Anyone in the organization can read any channel; joining is what puts it on
- * your rail and gives you a read mark, which is what makes an unread badge
- * mean anything. Saying something joins you, because someone who has just
- * spoken in a room is in it. Leaving is one click away in the header, so it
- * stays a door rather than a trap.
+ * Being on the project or deal it belongs to is what earns you a seat here;
+ * anyone else has to ask, and an admin, owner, or this channel's own creator
+ * has to say yes before the feed opens. The membership control stays visible
+ * either way, so asking (or leaving) is always one click from here -- what
+ * changes with your standing is only whether the conversation underneath it
+ * is showing.
  */
 
 /** A held-open SSE connection and a cached page do not belong together. */
@@ -38,16 +46,28 @@ export default async function ChannelPage({ params }: PageProps<"/[locale]/chann
   const channel = await getChannelBySlug(session.actor, slug);
   if (!channel) notFound();
 
-  const [t, feed, mine] = await Promise.all([
+  const [t, mine] = await Promise.all([
     getTranslations("Channels"),
-    readChannelFeed(session.actor, channel),
     listChannels(session.actor),
   ]);
 
-  // Opening a channel does not put you in it: if it did, Leave would undo
-  // itself on the very next render. Joining is deliberate -- pressing Join, or
-  // saying something, which is the same intent expressed faster.
-  const joined = mine.find((row) => row.id === channel.id)?.joined ?? false;
+  // Opening a channel no longer puts you in it -- that used to double as the
+  // "did I mean to join" question this control already asks; asking is now
+  // deliberate every time, either the button here or a decision someone else
+  // makes on your request.
+  const status = mine.find((row) => row.id === channel.id)?.status ?? "none";
+  const active = status === "active";
+
+  const canManage = can(session.actor, "channel.manageMembers", {
+    ownerUserId: channel.createdByUserId,
+  });
+
+  const [feed, pendingRequests] = await Promise.all([
+    // Nothing to read until you're actually in -- fetching a feed nobody may
+    // see would be a query that exists only to be thrown away.
+    active ? readChannelFeed(session.actor, channel) : Promise.resolve([]),
+    canManage ? listPendingRequests(session.actor, channel.id) : Promise.resolve([]),
+  ]);
 
   const items: FeedItem[] = feed.map((entry) =>
     entry.kind === "message"
@@ -104,20 +124,33 @@ export default async function ChannelPage({ params }: PageProps<"/[locale]/chann
             ) : null}
           </div>
 
-          <Membership channelId={channel.id} joined={joined} />
+          <Membership channelId={channel.id} status={status} />
         </div>
       </header>
 
-      <Conversation
-        channelId={channel.id}
-        currentUserId={session.actor.userId}
-        items={items}
-        // Rendered on the server so the roster is right on first paint, then
-        // kept current by the stream. Without it the row appears a beat late
-        // and reads as "nobody is here" for as long as that takes.
-        initialViewers={viewersOf(session.actor.organizationId, channel.id)}
-        canPost={can(session.actor, "channel.post")}
-      />
+      {pendingRequests.length > 0 ? (
+        <PendingRequests channelId={channel.id} requests={pendingRequests} />
+      ) : null}
+
+      {active ? (
+        <Conversation
+          channelId={channel.id}
+          currentUserId={session.actor.userId}
+          items={items}
+          // Rendered on the server so the roster is right on first paint, then
+          // kept current by the stream. Without it the row appears a beat late
+          // and reads as "nobody is here" for as long as that takes.
+          initialViewers={viewersOf(session.actor.organizationId, channel.id)}
+          canPost={can(session.actor, "channel.post")}
+        />
+      ) : (
+        <div className="border-border rounded-card border">
+          <EmptyState
+            title={status === "pending" ? t("noAccessPendingTitle") : t("noAccessTitle")}
+            description={status === "pending" ? t("noAccessPendingBody") : t("noAccessBody")}
+          />
+        </div>
+      )}
     </div>
   );
 }

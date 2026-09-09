@@ -3,8 +3,9 @@ import "server-only";
 import { eq, isNull } from "drizzle-orm";
 
 import { activityEvents } from "@/db/schema/activity";
+import { channels } from "@/db/schema/channels";
 import { notifications } from "@/db/schema/notifications";
-import { users } from "@/db/schema/people";
+import { memberships, users } from "@/db/schema/people";
 import { meetingAttendees } from "@/db/schema/meetings";
 import { projectMembers, projects } from "@/db/schema/projects";
 import { tasks } from "@/db/schema/tasks";
@@ -47,13 +48,16 @@ export type NotificationRow = {
     | "deal"
     | "quote"
     | "invoice"
-    | "expense";
+    | "expense"
+    | "channel";
   subjectId: string;
   actorName: string | null;
   taskId: string | null;
   taskTitle: string | null;
   projectId: string | null;
   projectKey: string | null;
+  /** Set only when `subjectType` is `"channel"` -- what `href()` needs to link there. */
+  channelSlug: string | null;
   projectName: string | null;
 };
 
@@ -71,6 +75,7 @@ const NOTIFICATION_FIELDS = {
   projectId: activityEvents.projectId,
   projectKey: projects.key,
   projectName: projects.name,
+  channelSlug: channels.slug,
 };
 
 const NOTIFICATION_JOINS = [
@@ -83,6 +88,11 @@ const NOTIFICATION_JOINS = [
   // a task or a project.
   { table: users, on: eq(users.id, activityEvents.actorUserId), type: "left" as const },
   { table: tasks, on: eq(tasks.id, activityEvents.taskId), type: "left" as const },
+  // Joined on `subjectId`, which several other subject types also use as
+  // their own foreign key -- harmless, since a `channels.id` never collides
+  // with a task's or a project's own uuid, and this only ever resolves for
+  // an event whose `subjectType` actually is `"channel"`.
+  { table: channels, on: eq(channels.id, activityEvents.subjectId), type: "left" as const },
   { table: projects, on: eq(projects.id, activityEvents.projectId), type: "left" as const },
 ];
 
@@ -272,6 +282,41 @@ async function recipientsFor(
     case "leave.cancelled": {
       const approver = event.metadata?.approverUserId;
       if (typeof approver === "string") recipients.add(approver);
+      break;
+    }
+
+    // A request nobody with the standing to answer is told about sits
+    // pending forever. Two kinds of "standing" here, not one: every
+    // admin/owner in the org, the same population `member.editRole` and
+    // `organization.editSettings` already trust with org-wide decisions, plus
+    // whoever actually made this specific channel -- `channel.manageMembers`'s
+    // own two-part rule, echoed here rather than re-derived from it.
+    case "channel.joinRequested": {
+      const [channel, admins] = await Promise.all([
+        scope.selectFields(
+          channels,
+          { createdByUserId: channels.createdByUserId },
+          eq(channels.id, event.subjectId),
+        ),
+        scope.selectFields(
+          memberships,
+          { userId: memberships.userId, role: memberships.role },
+          eq(memberships.status, "active"),
+        ),
+      ]);
+      if (channel[0]?.createdByUserId) recipients.add(channel[0].createdByUserId);
+      for (const row of admins) {
+        if (row.role === "owner" || row.role === "admin") recipients.add(row.userId);
+      }
+      break;
+    }
+
+    // The answer goes to whoever asked, and to nobody else -- same shape as
+    // `leave.approved`/`leave.declined` just above.
+    case "channel.joinApproved":
+    case "channel.joinDeclined": {
+      const requester = event.metadata?.requesterUserId;
+      if (typeof requester === "string") recipients.add(requester);
       break;
     }
 

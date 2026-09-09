@@ -801,6 +801,38 @@ straight to the column that was full. Gated with a proper `can()` rule (`task.vi
 than copying Today's own inline `atLeast(actor, "manager")` check -- which still exists, unchanged,
 and is exactly the inconsistency `KNOWN-GAPS.md` now names rather than quietly doubling.
 
+## Channels stop being open-join
+
+**Reversed, not forgotten.** Channels shipped with `channel.view`/`channel.post` open to
+everyone in the org, and the reasoning was written down in two places: the channel page's own
+doc comment ("anyone in the organization can read any channel") and `authz.ts`'s own comment on
+the rule ("a conversation half the company cannot join is a meeting held in a corridor"). That
+argument was never wrong for a project or deal channel's *own* people -- being on the work is
+still what gets you in, instantly, with nothing to ask (`joinChannel()`, called only by
+`ensureProjectChannel()`/`ensureDealChannel()`). What changed is the door standing open beside
+it: anyone else, browsing in from "All channels" or just posting a first message, walked into
+any conversation with nothing to stop them. Requested explicitly, closed on purpose -- this is
+the second time this app has drawn that line differently for "provisioning" (decided by whoever
+already controls the work) versus "asking" (decided by whoever can say yes), the first being the
+task board's own `saveBoardChanges` membership check.
+
+**Approved by an admin/owner, or specifically by whoever made the channel.** Not admin alone:
+a channel's own creator knows who belongs in it at least as well as an admin who has never
+looked at it, and requiring an admin for every general channel's every request would make the
+feature about admins' time rather than about the right people finding each other. Mirrors
+`meeting.manage`'s exact shape -- an org-wide rank, or the one person closest to this specific
+row.
+
+**A declined request looks exactly like one never made.** `channelMembers.status` has three
+values, but the UI only ever shows two: "Request to join" or "Requested" (see
+`components/channels/membership.tsx`). Telling someone they were declined, specifically, adds a
+fact that helps nobody and stings for no reason; re-asking is free either way, so the visible
+state might as well be the same.
+
+**Existing memberships are untouched.** `status` defaults to `active`, so this is a gate on
+requests made from here on, not a retroactive lockout of every channel every person had already
+joined the old way.
+
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the
   requirement is that everything runs on the local network.
 - **Restyling the existing Angular app** -- cheaper, but tenancy, permissions and the task schema

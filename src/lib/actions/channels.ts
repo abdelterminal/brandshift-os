@@ -4,14 +4,20 @@ import { getLocale } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { requirePermissionForAction } from "@/lib/auth/guards";
+import { requirePermissionForAction, requireUserForAction } from "@/lib/auth/guards";
+import { can } from "@/lib/authz";
+import { recordActivity } from "@/lib/data/activity";
 import {
+  approveJoinRequest,
+  declineJoinRequest,
   deleteMessage,
   editMessage,
-  joinChannel,
+  getChannelById,
+  isActiveChannelMember,
   leaveChannel,
   markChannelRead,
   postMessage,
+  requestToJoinChannel,
   setChannelPinned,
 } from "@/lib/data/channels";
 import { publishChannelChange } from "@/lib/realtime/channel-events";
@@ -56,9 +62,13 @@ export async function sendMessage(channelId: string, body: string): Promise<Acti
 
   const session = await requirePermissionForAction("channel.post");
 
-  // Sending into a channel you are not in is how you end up in it. It is the
-  // same rule as opening one, and it keeps the read mark honest.
-  await joinChannel(session.actor, id.data);
+  // Posting used to be a second, quieter way in -- say something and you're
+  // joined. That door closes with the first one: only an active member may
+  // post, and asking is `requestToJoinChannelAction`, not a side effect of
+  // typing.
+  if (!(await isActiveChannelMember(session.actor, id.data))) {
+    return { ok: false, error: "notMember" };
+  }
 
   const created = await postMessage(session.actor, id.data, text.data);
   if (!created) return { ok: false, error: "notFound" };
@@ -113,12 +123,91 @@ export async function readChannel(channelId: string): Promise<ActionResult> {
   return { ok: true };
 }
 
-export async function joinChannelAction(channelId: string): Promise<ActionResult> {
+/** Ask to get into a channel you're not on. Somebody with the standing to answer has to. */
+export async function requestToJoinChannelAction(channelId: string): Promise<ActionResult> {
   const id = idSchema.safeParse(channelId);
   if (!id.success) return { ok: false, error: "notFound" };
 
   const session = await requirePermissionForAction("channel.view");
-  await joinChannel(session.actor, id.data);
+  const channel = await getChannelById(session.actor, id.data);
+  if (!channel) return { ok: false, error: "notFound" };
+
+  await requestToJoinChannel(session.actor, id.data);
+
+  await recordActivity(session.actor, {
+    verb: "channel.joinRequested",
+    subjectType: "channel",
+    subjectId: id.data,
+    metadata: { title: channel.name },
+  });
+
+  await revalidateChannelViews();
+  return { ok: true };
+}
+
+/**
+ * Answer a request. `can("channel.manageMembers")` here, not in `authz.ts`
+ * alone -- it needs the channel's own `createdByUserId` as the resource, the
+ * same shape `meeting.manage` already takes for "the organizer, or an admin".
+ */
+async function requireChannelManager(channelId: string) {
+  const session = await requireUserForAction();
+  const channel = await getChannelById(session.actor, channelId);
+  if (!channel) return { session, channel: null, allowed: false };
+
+  const allowed = can(session.actor, "channel.manageMembers", {
+    ownerUserId: channel.createdByUserId,
+  });
+  return { session, channel, allowed };
+}
+
+export async function approveJoinRequestAction(
+  channelId: string,
+  userId: string,
+): Promise<ActionResult> {
+  const id = idSchema.safeParse(channelId);
+  const requester = idSchema.safeParse(userId);
+  if (!id.success || !requester.success) return { ok: false, error: "notFound" };
+
+  const { session, channel, allowed } = await requireChannelManager(id.data);
+  if (!channel) return { ok: false, error: "notFound" };
+  if (!allowed) return { ok: false, error: "forbidden" };
+
+  const approved = await approveJoinRequest(session.actor, id.data, requester.data);
+  if (!approved) return { ok: false, error: "notFound" };
+
+  await recordActivity(session.actor, {
+    verb: "channel.joinApproved",
+    subjectType: "channel",
+    subjectId: id.data,
+    metadata: { title: channel.name, requesterUserId: requester.data },
+  });
+
+  await revalidateChannelViews();
+  return { ok: true };
+}
+
+export async function declineJoinRequestAction(
+  channelId: string,
+  userId: string,
+): Promise<ActionResult> {
+  const id = idSchema.safeParse(channelId);
+  const requester = idSchema.safeParse(userId);
+  if (!id.success || !requester.success) return { ok: false, error: "notFound" };
+
+  const { session, channel, allowed } = await requireChannelManager(id.data);
+  if (!channel) return { ok: false, error: "notFound" };
+  if (!allowed) return { ok: false, error: "forbidden" };
+
+  const declined = await declineJoinRequest(session.actor, id.data, requester.data);
+  if (!declined) return { ok: false, error: "notFound" };
+
+  await recordActivity(session.actor, {
+    verb: "channel.joinDeclined",
+    subjectType: "channel",
+    subjectId: id.data,
+    metadata: { title: channel.name, requesterUserId: requester.data },
+  });
 
   await revalidateChannelViews();
   return { ok: true };

@@ -42,6 +42,33 @@ test("the task board is clean, both editable and read-only", async ({ page }) =>
   await expectNoAxeViolations(page, "/en/work/MER -- Board view (read-only)");
 });
 
+test("a channel you have not joined is clean, waiting or not -- and so is the approval panel", async ({
+  page,
+}) => {
+  const ATLAS = "/en/channels/atlas-design-system";
+
+  // Elena is not on Atlas's team (see channels.spec.ts's own note on this).
+  await page.goto(ATLAS);
+  await expectNoAxeViolations(page, `${ATLAS} -- not a member`);
+
+  await page.getByRole("button", { name: "Request to join" }).click();
+  await expect(page.getByRole("button", { name: "Requested" })).toBeVisible();
+  await expectNoAxeViolations(page, `${ATLAS} -- request pending`);
+
+  // Tom (finance) is an admin, so this is also the pending-requests panel's
+  // own sweep -- and undoing the request as him leaves Atlas exactly as this
+  // test found it.
+  const financeContext = await page.context().browser()!.newContext({
+    storageState: "e2e/.auth/finance.json",
+  });
+  const financePage = await financeContext.newPage();
+  await financePage.goto(ATLAS);
+  await expectNoAxeViolations(financePage, `${ATLAS} -- pending requests panel`);
+  await financePage.getByRole("button", { name: "Decline" }).click();
+  await expect(financePage.getByText("Elena Rossi")).toHaveCount(0);
+  await financeContext.close();
+});
+
 test("a person page is clean", async ({ page }) => {
   await page.goto("/en/people");
   await page.getByRole("link", { name: "Marc Dubois" }).click();

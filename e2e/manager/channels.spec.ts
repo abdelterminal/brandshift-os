@@ -171,21 +171,132 @@ test("a project that predates channels gets one on first visit", async ({ page }
   ).toBeVisible();
 });
 
-test("leaving takes a channel off the rail, and joining puts it back", async ({ page }) => {
+test("leaving takes a channel off the rail, but leaves the door open to ask again", async ({
+  page,
+}) => {
   await page.goto("/en/channels/general");
 
   await expect(rail(page).getByRole("link", { name: "General" })).toBeVisible();
 
   await page.getByRole("button", { name: "Leave" }).click();
-  await expect(page.getByRole("button", { name: "Join" })).toBeVisible();
   await expect(rail(page).getByRole("link", { name: "General" })).toHaveCount(0);
 
-  // Nothing was deleted: the conversation is still there to read.
-  await expect(main(page).getByText("New starter handbook is ready")).toBeVisible();
+  // Nothing was deleted: the conversation is still there to read, for whoever
+  // is still in it -- just not, from here, for the person who just left.
+  await expect(page.getByRole("button", { name: "Request to join" })).toBeVisible();
+  await expect(main(page).getByText("You're not in this channel")).toBeVisible();
 
-  await page.getByRole("button", { name: "Join" }).click();
+  // Undo, so the next run of this file finds Elena in General exactly as it
+  // did before this test touched it -- the same courtesy `board.spec.ts`
+  // pays NOR's own shared fixture. Tom (finance -- an admin) is who approves
+  // it; the requests-need-an-answer test below is the one actually about
+  // that mechanism.
+  await page.getByRole("button", { name: "Request to join" }).click();
+  await expect(page.getByRole("button", { name: "Requested" })).toBeVisible();
+
+  const financeContext = await page.context().browser()!.newContext({
+    storageState: "e2e/.auth/finance.json",
+  });
+  const financePage = await financeContext.newPage();
+  await financePage.goto("/en/channels/general");
+  await financePage.getByRole("button", { name: "Approve" }).click();
+  await expect(financePage.getByText("Elena Rossi")).toHaveCount(0);
+  await financeContext.close();
+
+  await page.goto("/en/channels/general");
   await expect(page.getByRole("button", { name: "Leave" })).toBeVisible();
   await expect(rail(page).getByRole("link", { name: "General" })).toBeVisible();
+});
+
+/**
+ * Requesting, approving and declining -- the actual point of the gate.
+ *
+ * Elena runs Northwind and is on Meridian's team by way of Client Services,
+ * but is not on Atlas: the same fact `channels.spec.ts` already relied on
+ * for "the channel index separates the ones you are in from the rest".
+ */
+const ATLAS = "/en/channels/atlas-design-system";
+
+test("asking to join needs someone to say yes, and does not let you in on its own", async ({
+  page,
+}) => {
+  await page.goto(ATLAS);
+
+  await expect(page.getByRole("button", { name: "Request to join" })).toBeVisible();
+  await expect(main(page).getByText("You're not in this channel")).toBeVisible();
+  await expect(composer(page)).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Request to join" }).click();
+
+  // Asking again while already waiting changes nothing -- the button just
+  // names the state now, with nothing left to press.
+  const requested = page.getByRole("button", { name: "Requested" });
+  await expect(requested).toBeVisible();
+  await expect(requested).toBeDisabled();
+  await expect(main(page).getByText("Your request is waiting")).toBeVisible();
+  await expect(composer(page)).toHaveCount(0);
+
+  // Still nothing to see from here, whatever the request's fate.
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Requested" })).toBeVisible();
+
+  // Undo, so the next test to touch Atlas -- there is one right after this --
+  // finds Elena with nothing pending, the same way she started.
+  const financeContext = await page.context().browser()!.newContext({
+    storageState: "e2e/.auth/finance.json",
+  });
+  const financePage = await financeContext.newPage();
+  await financePage.goto(ATLAS);
+  await financePage.getByRole("button", { name: "Decline" }).click();
+  await expect(financePage.getByText("Elena Rossi")).toHaveCount(0);
+  await financeContext.close();
+});
+
+test("an admin sees the request and can approve or decline it", async ({ page, browser }) => {
+  await page.goto(ATLAS);
+  await page.getByRole("button", { name: "Request to join" }).click();
+  await expect(page.getByRole("button", { name: "Requested" })).toBeVisible();
+
+  const financeContext = await browser.newContext({ storageState: "e2e/.auth/finance.json" });
+  const financePage = await financeContext.newPage();
+  await financePage.goto(ATLAS);
+
+  await expect(financePage.getByText("Elena Rossi")).toBeVisible();
+  await financePage.getByRole("button", { name: "Decline" }).click();
+  await expect(financePage.getByText("1 request to join")).toHaveCount(0);
+  await financeContext.close();
+
+  // Declined reads exactly like never asked -- not a fourth, harsher state.
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Request to join" })).toBeVisible();
+
+  // Ask again, and this time say yes.
+  await page.getByRole("button", { name: "Request to join" }).click();
+  await expect(page.getByRole("button", { name: "Requested" })).toBeVisible();
+
+  const secondFinance = await browser.newContext({ storageState: "e2e/.auth/finance.json" });
+  const secondFinancePage = await secondFinance.newPage();
+  await secondFinancePage.goto(ATLAS);
+  await secondFinancePage.getByRole("button", { name: "Approve" }).click();
+  await secondFinance.close();
+
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Leave" })).toBeVisible();
+  await expect(composer(page)).toBeVisible();
+  await expect(rail(page).getByRole("link", { name: "Atlas design system" })).toBeVisible();
+
+  // Leave it as this test found it, for whichever spec runs Atlas next.
+  await page.getByRole("button", { name: "Leave" }).click();
+});
+
+test("someone off a project's team sees no way to post until they're let in", async ({
+  page,
+}) => {
+  await page.goto(ATLAS);
+  // The whole reason posting no longer joins you on its own: there is no
+  // composer to find in the first place until an active member.
+  await expect(composer(page)).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Send" })).toHaveCount(0);
 });
 
 test("the channel index separates the ones you are in from the rest", async ({ page }) => {

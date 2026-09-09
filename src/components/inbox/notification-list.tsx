@@ -30,6 +30,7 @@ export type InboxItem = {
   taskTitle: string | null;
   projectKey: string | null;
   projectName: string | null;
+  channelSlug: string | null;
 };
 
 /**
@@ -86,6 +87,11 @@ export function NotificationList({ items }: { items: InboxItem[] }) {
     // A leave request has no page of its own: it is a row on the time-off
     // screen, which is where both halves of the conversation happen.
     if (item.subjectType === "leave") return "/leave";
+    // A join request, its approval and its decline all point at the channel
+    // itself -- the request lands you on the pending-requests panel there if
+    // you can act on it, and the answer lands you on the conversation you can
+    // now (or still can't) see.
+    if (item.subjectType === "channel" && item.channelSlug) return `/channels/${item.channelSlug}`;
     if (item.projectKey && item.taskId) return `/work/${item.projectKey}?task=${item.taskId}`;
     if (item.projectKey) return `/work/${item.projectKey}`;
     return "/today";
