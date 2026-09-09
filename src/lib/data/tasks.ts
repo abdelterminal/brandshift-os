@@ -39,6 +39,7 @@ const TASK_FIELDS = {
   projectId: tasks.projectId,
   projectKey: projects.key,
   projectName: projects.name,
+  position: tasks.position,
 };
 
 /** Both are left joins: a task may have no assignee and no project. */

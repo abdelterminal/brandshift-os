@@ -26,6 +26,22 @@ test("a project page is clean on every tab", async ({ page }) => {
   }
 });
 
+test("the task board is clean, both editable and read-only", async ({ page }) => {
+  // NOR: Elena is its lead, so this is the interactive board -- dnd-kit's
+  // context, the drag handles, the four chevrons per card.
+  await page.goto("/en/work/NOR");
+  await page.getByRole("tab", { name: "Tasks" }).click();
+  await page.getByRole("radio", { name: "Board" }).click();
+  await expectNoAxeViolations(page, "/en/work/NOR -- Board view (editable)");
+
+  // MER: she is not on its team, so this is the same static board every
+  // other project's board used to be, for everyone, before this feature.
+  await page.goto("/en/work/MER");
+  await page.getByRole("tab", { name: "Tasks" }).click();
+  await page.getByRole("radio", { name: "Board" }).click();
+  await expectNoAxeViolations(page, "/en/work/MER -- Board view (read-only)");
+});
+
 test("a person page is clean", async ({ page }) => {
   await page.goto("/en/people");
   await page.getByRole("link", { name: "Marc Dubois" }).click();

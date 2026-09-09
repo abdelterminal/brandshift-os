@@ -740,6 +740,35 @@ a currency on purpose yet, so a row on `EUR` is a row that never got asked, not 
 it. `src/db/migrate/run.ts`'s Mongo migration already defaulted its own `currency` flag to `MAD`,
 which is what made the mismatch obvious rather than assumed.
 
+## Added when the task board learned to drag
+
+**The board is not read-only, and that is not the same decision the CRM pipeline made.** The
+pipeline's own rule reads "a drag has no keyboard equivalent, no confirmation, and nowhere to put
+a question -- and moving a deal to Lost has to ask why." A task moving to `blocked` has exactly
+that same problem, and it already had an answer before this: `reportBlocker(taskId, reason)`
+requires one. The board's drag reuses that same requirement at the moment of the drop -- the
+question the pipeline's decision says a drag cannot ask gets asked here too, just interactively
+rather than by refusing the drag outright. The two screens differ because one of them solved its
+"needs a reason" problem and the other has not yet, not because task status and deal stage are
+different kinds of thing.
+
+**Keyboard movement is four buttons, not a keyboard-driven drag.** dnd-kit's keyboard sensor
+reorders within one `SortableContext` out of the box; moving an item into a *different* container
+by keyboard is not built in; its own "multiple containers" reference example hand-rolls it, and
+doing the same felt like more surface than the problem needed. SOP steps and template tasks
+already solved the identical shape of problem -- "a drag has no keyboard equivalent" -- with plain
+Move up / Move down buttons. The board's four chevrons per card (two for reordering within a
+column, two for moving to the adjacent one) are the same answer, applied here: real drag-and-drop
+for a pointer, the same underlying move for anyone else, through the same code either way.
+
+**The dragged card's own transform is a deliberate, narrow exception to "opacity and color
+only."** `CLAUDE.md`'s transition rule bars translate and scale everywhere else in this app, and
+that holds: no card's resting, hovering or focused state moves. The one exception is the card
+actually being dragged following the pointer, which is not a decoration on top of the gesture --
+it *is* the gesture. `prefers-reduced-motion` still gets a real accommodation: dnd-kit's cosmetic
+drop-settle animation is skipped for it, and the keyboard path (the four buttons) never produces a
+transform in the first place, so reduced motion loses nothing functional either way.
+
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the
   requirement is that everything runs on the local network.
 - **Restyling the existing Angular app** -- cheaper, but tenancy, permissions and the task schema

@@ -1,12 +1,21 @@
 "use server";
 
+import { db } from "@/db/client";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { projectMembers } from "@/db/schema/projects";
 import { tasks } from "@/db/schema/tasks";
 import { withOrg } from "@/db/tenancy";
 import { requirePermissionForAction, requireUserForAction } from "@/lib/auth/guards";
+import {
+  BOARD_STATUSES,
+  isBoardStatus,
+  statusFieldsFor,
+  type BoardChange,
+  type BoardStatus,
+} from "@/lib/board";
 import { recordActivity } from "@/lib/data/activity";
 
 /**
@@ -248,6 +257,148 @@ export async function createTask(formData: FormData): Promise<ActionResult> {
     projectId: created.projectId,
     taskId: created.id,
     metadata: { title: created.title },
+  });
+
+  revalidateTaskViews();
+  return { ok: true };
+}
+
+const boardStatusSchema = z.enum(BOARD_STATUSES);
+
+// Whether a reason is *required* depends on whether this is a genuine move
+// into "blocked" from something else, versus a reorder of a card that was
+// already there -- and only the task's row in the database, not this
+// payload, says which. So the requirement is checked below, once the task's
+// prior status is known, rather than here at the shape level.
+const boardChangeSchema = z.object({
+  taskId: idSchema,
+  status: boardStatusSchema,
+  position: z.number().int().min(0),
+  // The same minimum reportBlocker() already asks for.
+  blockedReason: z.string().trim().min(3).max(500).optional(),
+});
+
+const saveBoardSchema = z.object({
+  projectId: idSchema,
+  changes: z.array(boardChangeSchema).max(500),
+});
+
+/**
+ * Persist a batch of drags at once.
+ *
+ * The board only ever calls this after somebody presses Save -- every drag
+ * before that is local state, see task-board.tsx. Restricted to a `lead` or
+ * `contributor` on this project specifically: the same idea as
+ * `markChannelRead` or `joinChannel` scoping themselves to the caller's own
+ * row rather than adding a new rule to `authz.ts`, because "am I on this
+ * project's team" is a many-to-many fact `can()` has no resource shape for
+ * (see `Resource` there -- it knows a single owner, not a membership table).
+ *
+ * Every field this writes mirrors `startTask` / `completeTask` /
+ * `reportBlocker` / `clearBlocker` exactly, via `statusFieldsFor()`, so a
+ * status changed by dragging and the same status changed from the task
+ * drawer leave identical rows behind -- see src/lib/board.ts.
+ */
+export async function saveBoardChanges(
+  projectId: string,
+  changes: BoardChange[],
+): Promise<ActionResult> {
+  const parsed = saveBoardSchema.safeParse({ projectId, changes });
+  if (!parsed.success) return { ok: false, error: "invalid" };
+  if (parsed.data.changes.length === 0) return { ok: true };
+
+  const session = await requireUserForAction();
+  const scope = withOrg(session.actor.organizationId);
+
+  const [membership] = await scope.selectFields(
+    projectMembers,
+    { role: projectMembers.role },
+    eq(projectMembers.projectId, parsed.data.projectId),
+    eq(projectMembers.userId, session.actor.userId),
+  );
+  if (!membership || membership.role === "viewer") {
+    return { ok: false, error: "forbidden" };
+  }
+
+  // Every task named in the batch has to actually belong to this project --
+  // otherwise the batch is refused whole, rather than silently dropping the
+  // ones that do not, which would tell the caller their save succeeded when
+  // part of it was ignored.
+  const targetIds = parsed.data.changes.map((change) => change.taskId);
+  const ownedTasks = await scope.selectFields(
+    tasks,
+    { id: tasks.id, status: tasks.status, projectId: tasks.projectId },
+    eq(tasks.projectId, parsed.data.projectId),
+  );
+  const ownedIds = new Set(ownedTasks.map((task) => task.id));
+  if (!targetIds.every((id) => ownedIds.has(id))) {
+    return { ok: false, error: "invalid" };
+  }
+
+  const statusByIdRaw = new Map(ownedTasks.map((task) => [task.id, task.status]));
+  // A cancelled task has no column on the board -- see isBoardStatus() -- so
+  // it should never appear as a target of a change. Only the tasks this
+  // batch actually touches are checked: the project can hold plenty of
+  // cancelled tasks nobody is trying to move.
+  if (!targetIds.every((id) => isBoardStatus(statusByIdRaw.get(id)!))) {
+    return { ok: false, error: "invalid" };
+  }
+  // Every targeted status just proved to be a BoardStatus, one line up.
+  const statusById = statusByIdRaw as Map<string, BoardStatus>;
+
+  // Whether a reason is required depends on the task's actual prior status,
+  // not on anything the client claims -- a reorder of a card already sitting
+  // in Blocked needs none, matching statusFieldsFor()'s "same status, nothing
+  // touched" rule below.
+  const missingReason = parsed.data.changes.some(
+    (change) =>
+      change.status === "blocked" &&
+      statusById.get(change.taskId) !== "blocked" &&
+      !change.blockedReason,
+  );
+  if (missingReason) return { ok: false, error: "blockerReasonRequired" };
+
+  const now = new Date();
+
+  await db.transaction(async (tx) => {
+    const txScope = withOrg(session.actor.organizationId, tx);
+
+    for (const change of parsed.data.changes) {
+      const oldStatus = statusById.get(change.taskId);
+      // Already checked to exist above; narrows the type for statusFieldsFor.
+      if (!oldStatus) continue;
+
+      const patch = statusFieldsFor(oldStatus, change.status, now, change.blockedReason);
+
+      const [updated] = await txScope.update(
+        tasks,
+        {
+          status: patch.status,
+          position: change.position,
+          startedAt: patch.startedAt,
+          completedAt: patch.completedAt,
+          blockedAt: patch.blockedAt,
+          blockedReason: patch.blockedReason,
+          updatedAt: now,
+        },
+        eq(tasks.id, change.taskId),
+      );
+
+      if (updated && patch.activityVerb) {
+        await recordActivity(
+          session.actor,
+          {
+            verb: patch.activityVerb,
+            subjectType: "task",
+            subjectId: updated.id,
+            projectId: updated.projectId,
+            taskId: updated.id,
+            metadata: patch.activityVerb === "task.blocked" ? { reason: change.blockedReason } : {},
+          },
+          tx,
+        );
+      }
+    }
   });
 
   revalidateTaskViews();

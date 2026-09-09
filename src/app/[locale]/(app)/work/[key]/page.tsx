@@ -77,6 +77,12 @@ export default async function ProjectPage({
   ]);
 
   const mayManageTemplates = can(session.actor, "template.manage");
+  // Only this project's own lead or contributor may drag a card on its board
+  // -- "viewer" exists as a role but nothing assigns it today, named here
+  // rather than assumed so the day something does, it is excluded on purpose.
+  const canEditBoard = members.some(
+    (member) => member.userId === session.actor.userId && member.role !== "viewer",
+  );
 
   const open = tasks.filter(
     (task) => task.status === "todo" || task.status === "in_progress" || task.status === "blocked",
@@ -177,8 +183,10 @@ export default async function ProjectPage({
           defaultTab={typeof task === "string" && task ? "tasks" : "overview"}
           description={project.description}
           priority={priorities(project.priority)}
+          projectId={project.id}
           buckets={buckets}
           allTasks={tasks}
+          canEditBoard={canEditBoard}
           members={members.map((member) => ({
             userId: member.userId,
             name: member.name,

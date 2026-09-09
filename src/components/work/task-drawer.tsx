@@ -148,6 +148,7 @@ export function TaskDrawer({ task, onClose }: { task: TaskRow | null; onClose: (
             <Field>
               <FieldLabel>{t("blocker")}</FieldLabel>
               <Textarea
+                required
                 autoFocus
                 value={blockerReason}
                 onChange={(event) => setBlockerReason(event.target.value)}

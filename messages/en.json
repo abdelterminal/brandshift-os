@@ -237,7 +237,16 @@
     "noActivity": "Nothing has happened yet",
     "noActivityBody": "Changes to this project will be listed here.",
     "listView": "List",
-    "boardView": "Board"
+    "boardView": "Board",
+    "saveChanges": "Save changes",
+    "discardChanges": "Discard",
+    "unsavedBoardChanges": "{count, plural, one {# unsaved change} other {# unsaved changes}}",
+    "boardSaveError": "Could not save the board. Try again.",
+    "dragHandle": "Reorder {title}",
+    "boardPickedUp": "Picked up {title}.",
+    "boardMoved": "{title} moved to {status}, position {position} of {count}.",
+    "boardDropped": "{title} dropped in {status}.",
+    "boardCancelled": "Move cancelled. {title} is back where it started."
   },
   "Task": {
     "bucketOverdue": "Overdue",
@@ -1358,6 +1367,8 @@
     "lineGuide": "Description, quantity and unit price are required. Inclusions and exclusions are optional.",
     "moveUp": "Move up",
     "moveDown": "Move down",
+    "moveLeft": "Move to the previous column",
+    "moveRight": "Move to the next column",
     "collapsed": "Show section",
     "expanded": "Hide section",
     "fullPreview": "View at full size",

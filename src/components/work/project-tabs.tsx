@@ -5,13 +5,14 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { PersonAvatar } from "@/components/ui/avatar";
-import { Badge, StatusPill } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/feedback";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { BUCKET_ORDER, type TaskBucket, type TaskRow } from "@/lib/data/task-types";
 import { cn } from "@/lib/utils";
 
-import { STATUS_TONE, TaskList } from "./task-list";
+import { TaskBoard } from "./task-board";
+import { TaskList } from "./task-list";
 
 /**
  * A project's tabs.
@@ -25,9 +26,11 @@ export function ProjectTabs({
   defaultTab = "overview",
   description,
   priority,
+  projectId,
   buckets,
   allTasks,
   members,
+  canEditBoard,
   activity,
   meetings,
 }: {
@@ -35,9 +38,12 @@ export function ProjectTabs({
   defaultTab?: "overview" | "tasks" | "team" | "activity";
   description: string | null;
   priority: string;
+  projectId: string;
   buckets: Record<TaskBucket, TaskRow[]>;
   allTasks: TaskRow[];
   members: Array<{ userId: string; name: string; avatarUrl: string | null; role: string }>;
+  /** Whether the signed-in person is this project's own lead or contributor -- see the page. */
+  canEditBoard: boolean;
   activity: React.ReactNode;
   /**
    * The project's meetings, rendered on the server and handed in as a slot --
@@ -75,7 +81,12 @@ export function ProjectTabs({
       </TabsPanel>
 
       <TabsPanel value="tasks">
-        <TasksPanel buckets={buckets} allTasks={allTasks} />
+        <TasksPanel
+          projectId={projectId}
+          buckets={buckets}
+          allTasks={allTasks}
+          canEditBoard={canEditBoard}
+        />
       </TabsPanel>
 
       <TabsPanel value="team">
@@ -107,11 +118,15 @@ export function ProjectTabs({
 
 /** List by default, board on request. */
 function TasksPanel({
+  projectId,
   buckets,
   allTasks,
+  canEditBoard,
 }: {
+  projectId: string;
   buckets: Record<TaskBucket, TaskRow[]>;
   allTasks: TaskRow[];
+  canEditBoard: boolean;
 }) {
   const t = useTranslations("Work");
   const [view, setView] = useState<"list" | "board">("list");
@@ -158,65 +173,9 @@ function TasksPanel({
           emptyBody={t("noTasksBody")}
         />
       ) : (
-        <TaskBoard tasks={allTasks} />
+        <TaskBoard tasks={allTasks} projectId={projectId} canEditBoard={canEditBoard} />
       )}
     </div>
   );
 }
 
-/** The secondary view: one column per status, scrolling sideways on its own. */
-function TaskBoard({ tasks }: { tasks: TaskRow[] }) {
-  const statuses = useTranslations("Status");
-  const t = useTranslations("Work");
-
-  const columns = (["todo", "in_progress", "blocked", "done"] as const).map((status) => ({
-    status,
-    tasks: tasks.filter((task) => task.status === status),
-  }));
-
-  if (tasks.length === 0) {
-    return (
-      <div className="border-border rounded-card border">
-        <EmptyState title={t("noTasks")} description={t("noTasksBody")} />
-      </div>
-    );
-  }
-
-  return (
-    // `relative` for the same reason the month grid needs it: `sr-only` is
-    // `position: absolute`, and an avatar group's hidden name list would
-    // otherwise be laid out against the viewport rather than this box, taking
-    // the board's width out with it.
-    <div role="region" tabIndex={0} aria-label={t("tasks")} className="relative overflow-x-auto pb-2 focus-visible:outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2">
-      <div className="flex min-w-[48rem] gap-3">
-        {columns.map((column) => (
-          <div key={column.status} className="bg-surface-sunken min-w-0 flex-1 rounded-card p-2">
-            <div className="mb-2 flex items-center gap-2 px-1">
-              <h4 className="text-label text-fg-default">{statuses(column.status)}</h4>
-              <span className="text-caption text-fg-subtle tabular-nums">
-                {column.tasks.length}
-              </span>
-            </div>
-
-            <ul className="flex flex-col gap-2">
-              {column.tasks.map((task) => (
-                <li
-                  key={task.id}
-                  className="bg-surface-raised border-border rounded-control border p-2.5"
-                >
-                  <p className="text-body text-fg-default">{task.title}</p>
-                  <div className="mt-2 flex items-center justify-between gap-2">
-                    <StatusPill tone={STATUS_TONE[task.status]} size="sm">
-                      {statuses(task.status)}
-                    </StatusPill>
-                    {task.assigneeName ? <PersonAvatar name={task.assigneeName} size="xs" /> : null}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}

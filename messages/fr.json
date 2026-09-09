@@ -237,7 +237,16 @@
     "noActivity": "Rien ne s'est encore passé",
     "noActivityBody": "Les changements sur ce projet seront listés ici.",
     "listView": "Liste",
-    "boardView": "Tableau"
+    "boardView": "Tableau",
+    "saveChanges": "Enregistrer les modifications",
+    "discardChanges": "Annuler",
+    "unsavedBoardChanges": "{count, plural, one {# modification non enregistrée} other {# modifications non enregistrées}}",
+    "boardSaveError": "Impossible d'enregistrer le tableau. Réessayez.",
+    "dragHandle": "Déplacer {title}",
+    "boardPickedUp": "{title} saisie.",
+    "boardMoved": "{title} déplacée vers {status}, position {position} sur {count}.",
+    "boardDropped": "{title} déposée dans {status}.",
+    "boardCancelled": "Déplacement annulé. {title} revient à sa place."
   },
   "Task": {
     "bucketOverdue": "En retard",
@@ -1358,6 +1367,8 @@
     "lineGuide": "Description, quantité et prix unitaire obligatoires. Inclusions et exclusions facultatives.",
     "moveUp": "Monter",
     "moveDown": "Descendre",
+    "moveLeft": "Déplacer vers la colonne précédente",
+    "moveRight": "Déplacer vers la colonne suivante",
     "collapsed": "Afficher la section",
     "expanded": "Masquer la section",
     "fullPreview": "Voir en taille réelle",

@@ -28,6 +28,8 @@ export type TaskRow = {
   projectId: string | null;
   projectKey: string | null;
   projectName: string | null;
+  /** Manual order inside a Kanban column -- see src/lib/board.ts, its first real reader. */
+  position: number;
 };
 
 export type TaskBucket = "overdue" | "today" | "upcoming" | "noDeadline" | "completed";
