@@ -1,0 +1,2174 @@
+{
+  "root_page_id": "3ccb57af-bb28-81c9-bd08-c5471720a9de",
+  "databases": {
+    "6d670445-3477-407d-a018-25c243a35ed2": {
+      "id": "6d670445-3477-407d-a018-25c243a35ed2",
+      "title": [
+        {
+          "plain_text": "SOP Library — Mediast Creative"
+        }
+      ]
+    },
+    "3ccb57af-bb28-81d8-8b6c-d41be0ff1ed7": {
+      "id": "3ccb57af-bb28-81d8-8b6c-d41be0ff1ed7",
+      "title": [
+        {
+          "plain_text": "Untitled"
+        }
+      ]
+    }
+  },
+  "data_sources": {
+    "6e9286dc-898a-43c5-b821-3826077b7220": {
+      "database_id": "6d670445-3477-407d-a018-25c243a35ed2",
+      "rows": [
+        {
+          "id": "3ccb57af-bb28-8121-9d21-d5e57d985629",
+          "parent": {
+            "type": "data_source_id",
+            "data_source_id": "6e9286dc-898a-43c5-b821-3826077b7220",
+            "database_id": "6d670445-3477-407d-a018-25c243a35ed2"
+          },
+          "properties": {
+            "SOP Name": {
+              "id": "title",
+              "type": "title",
+              "title": [
+                {
+                  "plain_text": "Monthly Reporting"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "3ccb57af-bb28-819e-892e-dbe9309df219",
+          "parent": {
+            "type": "data_source_id",
+            "data_source_id": "6e9286dc-898a-43c5-b821-3826077b7220",
+            "database_id": "6d670445-3477-407d-a018-25c243a35ed2"
+          },
+          "properties": {
+            "SOP Name": {
+              "id": "title",
+              "type": "title",
+              "title": [
+                {
+                  "plain_text": "Client Onboarding"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "decoy-ds": {
+      "database_id": "3ccb57af-bb28-81d8-8b6c-d41be0ff1ed7",
+      "rows": []
+    }
+  },
+  "blocks_by_page": {
+    "3ccb57af-bb28-8121-9d21-d5e57d985629": [
+      {
+        "type": "callout",
+        "callout": {
+          "rich_text": [
+            {
+              "plain_text": "Version initiale Mediast Creative."
+            },
+            {
+              "plain_text": " À valider avec l’équipe pour confirmer les délais standards, les rôles de validation et les règles contractuelles propres à l’agence."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "1. 🎯 Objective"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Transformer les données du mois en décisions utiles. Le reporting doit expliquer ce qui s’est passé, pourquoi cela compte, ce qui doit continuer, s’arrêter ou être testé, et comment les résultats contribuent aux objectifs du client."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "2. 👤 Owner & Responsibilities"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Process Owner : Marketing Manager."
+            },
+            {
+              "plain_text": " Le Marketing Manager dirige l’analyse et les recommandations. Le Marketing Manager collecte et fiabilise les données organiques. Les spécialistes Paid Media, web ou CRM contribuent lorsqu’ils sont inclus. L’Marketing Manager ajoute le contexte client, prépare la présentation et enregistre les décisions."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "3. ⏱ When to Use"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "À la fin de chaque période mensuelle convenue, après stabilisation des données disponibles et avant la planification finale du mois suivant. Utiliser aussi après une campagne lorsque le contrat prévoit un bilan séparé."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "4. 📥 Inputs Required"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Objectifs, Key Results et KPI de la période"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Registre des contenus publiés et calendrier"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Données organiques par plateforme"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Données paid media, web, leads ou ventes lorsque disponibles"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Rapport du mois précédent"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Événements ayant influencé les résultats"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Feedback client, leads qualitatifs et incidents"
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "5. 🔄 Workflow"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Close data → Validate → Analyze → Extract insights → Recommend actions → Internal review → Client review → Create next actions"
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "6. 📋 Step-by-Step Procedure"
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_3",
+        "heading_3": {
+          "rich_text": [
+            {
+              "plain_text": "Step 1 — Clôturer la période"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Action :"
+            },
+            {
+              "plain_text": " Définir les dates exactes du rapport et collecter les données depuis les sources officielles. Conserver exports ou captures utiles et noter les limites d’accès."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Owner :"
+            },
+            {
+              "plain_text": " Marketing Manager et spécialistes concernés."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Verify :"
+            },
+            {
+              "plain_text": " Toutes les métriques utilisent la même période; les données manquantes sont signalées plutôt que remplacées par des estimations."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Gate :"
+            },
+            {
+              "plain_text": " Le jeu de données est complet ou ses limites sont documentées."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_3",
+        "heading_3": {
+          "rich_text": [
+            {
+              "plain_text": "Step 2 — Valider les données"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Action :"
+            },
+            {
+              "plain_text": " Contrôler doublons, changements de définition, campagnes hors période, anomalies, attributions et différences entre outils. Comparer aux sources lorsque possible."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Owner :"
+            },
+            {
+              "plain_text": " Marketing Manager avec contributeurs."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Verify :"
+            },
+            {
+              "plain_text": " Les chiffres importants sont reproductibles; les écarts entre plateformes sont expliqués."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Gate :"
+            },
+            {
+              "plain_text": " Les données peuvent être analysées."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_3",
+        "heading_3": {
+          "rich_text": [
+            {
+              "plain_text": "Step 3 — Comparer aux objectifs"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Action :"
+            },
+            {
+              "plain_text": " Mettre en regard Actual, Target, mois précédent et tendance pertinente. Distinguer output de production, métriques de contenu et résultats business."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Owner :"
+            },
+            {
+              "plain_text": " Marketing Manager."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Verify :"
+            },
+            {
+              "plain_text": " Chaque KPI possède une source, une période et une interprétation; les métriques de vanité ne remplacent pas les objectifs."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Gate :"
+            },
+            {
+              "plain_text": " La performance est évaluée honnêtement."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_3",
+        "heading_3": {
+          "rich_text": [
+            {
+              "plain_text": "Step 4 — Analyser les contenus et campagnes"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Action :"
+            },
+            {
+              "plain_text": " Identifier meilleurs et moins bons résultats par objectif, format, pilier, hook, sujet, CTA, audience et distribution. Chercher des patterns sans prétendre à une causalité non démontrée."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Owner :"
+            },
+            {
+              "plain_text": " Marketing Manager et Marketing Manager."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Verify :"
+            },
+            {
+              "plain_text": " Les conclusions reposent sur plusieurs signaux ou sont présentées comme hypothèses; le contexte de volume et budget est pris en compte."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Gate :"
+            },
+            {
+              "plain_text": " Des insights actionnables émergent."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_3",
+        "heading_3": {
+          "rich_text": [
+            {
+              "plain_text": "Step 5 — Formuler recommandations et tests"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Action :"
+            },
+            {
+              "plain_text": " Proposer ce qu’il faut poursuivre, améliorer, arrêter et tester. Pour chaque action, préciser raison, KPI concerné, owner et période de test."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Owner :"
+            },
+            {
+              "plain_text": " Marketing Manager."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Verify :"
+            },
+            {
+              "plain_text": " Le rapport ne se termine pas par des constats; les recommandations sont compatibles avec la stratégie et la capacité."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Gate :"
+            },
+            {
+              "plain_text": " Un plan d’action priorisé existe."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_3",
+        "heading_3": {
+          "rich_text": [
+            {
+              "plain_text": "Step 6 — Réaliser la revue interne"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Action :"
+            },
+            {
+              "plain_text": " Faire vérifier chiffres, narration, cohérence et recommandations par l’Marketing Manager et les spécialistes concernés. Corriger les erreurs et anticiper les questions client."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Owner :"
+            },
+            {
+              "plain_text": " Marketing Manager."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Verify :"
+            },
+            {
+              "plain_text": " Le rapport est compréhensible, exact et ne cache pas les contre-performances."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Gate :"
+            },
+            {
+              "plain_text": " La version client est prête."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_3",
+        "heading_3": {
+          "rich_text": [
+            {
+              "plain_text": "Step 7 — Présenter et décider"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Action :"
+            },
+            {
+              "plain_text": " Partager le bilan au client, expliquer les résultats en langage clair, recueillir contexte et décisions, puis documenter ce qui est approuvé, refusé ou à tester."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Owner :"
+            },
+            {
+              "plain_text": " Marketing Manager et Marketing Manager."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Verify :"
+            },
+            {
+              "plain_text": " Les décisions et responsabilités sont enregistrées; les désaccords ne restent pas implicites."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Gate :"
+            },
+            {
+              "plain_text": " Le rapport devient une base de planification."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_3",
+        "heading_3": {
+          "rich_text": [
+            {
+              "plain_text": "Step 8 — Mettre à jour Mediast OS"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Action :"
+            },
+            {
+              "plain_text": " Actualiser KPI, créer tâches et projets issus des décisions, relier les priorités au prochain Content Planning et archiver le rapport."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Owner :"
+            },
+            {
+              "plain_text": " Marketing Manager ou Marketing Manager."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Verify :"
+            },
+            {
+              "plain_text": " Chaque recommandation retenue est traduite en action suivie, avec owner et deadline."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Gate :"
+            },
+            {
+              "plain_text": " Le cycle suivant peut démarrer."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "7. ✅ Operational Checklist"
+            }
+          ]
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Période du rapport clairement définie"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Sources de données identifiées"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Exports/captures conservés lorsque nécessaires"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Données contrôlées et anomalies signalées"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Targets et Actual comparés"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Résultats comparés au mois précédent lorsque pertinent"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Performance par contenu/format/pilier analysée"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Résultats business inclus lorsqu’accessibles"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Insights distingués des hypothèses"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Recommandations priorisées"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Owners et périodes de test proposés"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Revue interne terminée"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Présentation client réalisée si prévue"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Décisions enregistrées"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "KPI et tâches mis à jour dans Mediast OS"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "8. 🔍 Quality Check"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Les chiffres sont traçables vers une source"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Le rapport distingue corrélation, hypothèse et causalité démontrée"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Les résultats négatifs sont expliqués sans manipulation"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Les recommandations découlent directement des données et du contexte"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Le client peut comprendre rapidement les décisions à prendre"
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "9. 📤 Expected Output"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Un rapport mensuel validé, accompagné de ses sources, insights, recommandations, décisions client et actions créées dans Mediast OS pour le cycle suivant."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "10. 🛠 Tools"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Meta Business Suite et analytics natifs"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "GA4, Search Console ou outils web lorsque disponibles"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Plateformes publicitaires et CRM lorsque inclus"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Notion / Mediast OS pour KPI et décisions"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Google Sheets pour consolidation si nécessaire"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Canva ou Google Slides pour la présentation"
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "11. 🚨 Common Problems / What to Avoid"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Additionner des métriques qui n’ont pas la même définition"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Choisir uniquement les chiffres favorables"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Comparer des périodes incompatibles sans contexte"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Attribuer une vente à un contenu sans donnée suffisante"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Produire un beau rapport sans recommandations"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Ne pas transformer les décisions en tâches"
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "12. ➡️ Next Step"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Utiliser les enseignements dans la prochaine SOP "
+            },
+            {
+              "plain_text": "Content Planning"
+            },
+            {
+              "plain_text": " et suivre leur exécution lors de la "
+            },
+            {
+              "plain_text": "Weekly Project Review"
+            },
+            {
+              "plain_text": "."
+            }
+          ]
+        }
+      }
+    ],
+    "3ccb57af-bb28-819e-892e-dbe9309df219": [
+      {
+        "type": "callout",
+        "callout": {
+          "rich_text": [
+            {
+              "plain_text": "Version initiale Mediast Creative."
+            },
+            {
+              "plain_text": " À valider avec l’équipe pour confirmer les délais standards, les rôles de validation et les règles contractuelles propres à l’agence."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "1. 🎯 Objective"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Transformer un client gagné en projet prêt à démarrer, avec un périmètre compris, des responsabilités claires, les informations et accès nécessaires, un espace de travail organisé et un premier plan d’action. La production ne doit pas commencer sur la base d’informations dispersées ou d’accords uniquement verbaux."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "2. 👤 Owner & Responsibilities"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Process Owner : Marketing Manager."
+            },
+            {
+              "plain_text": " L’Marketing Manager coordonne le passage du commercial à l’opérationnel, centralise les informations et reste le point de contact principal. Le Marketing Manager valide la compréhension des objectifs. Le Marketing Manager vérifie que les éléments contractuels et de paiement sont documentés, sans lui attribuer de responsabilité comptable non confirmée. L’équipe projet confirme sa capacité et ses dépendances. Le contact client fournit les informations, accès et validations."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "3. ⏱ When to Use"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Déclencher cette SOP dès qu’une opportunité passe à "
+            },
+            {
+              "plain_text": "Won"
+            },
+            {
+              "plain_text": " et avant le brief approfondi, la stratégie ou toute production. Elle s’applique aussi lorsqu’un ancien client démarre une nouvelle collaboration avec un périmètre sensiblement différent."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "4. 📥 Inputs Required"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Offre ou devis accepté et périmètre des services"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Contrat ou conditions de collaboration applicables"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "État du paiement ou de l’acompte, selon l’accord"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Coordonnées du contact principal et du valideur final côté client"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Objectifs préliminaires, livrables, canaux et échéances annoncées"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Éléments de marque déjà disponibles"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Liste prévisionnelle des accès et ressources nécessaires"
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "5. 🔄 Workflow"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Commercial handover → Création du client et du projet → Collecte des informations et accès → Kick-off → Planning initial → Ready for Brief"
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "6. 📋 Step-by-Step Procedure"
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_3",
+        "heading_3": {
+          "rich_text": [
+            {
+              "plain_text": "Step 1 — Valider le handover commercial"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Action :"
+            },
+            {
+              "plain_text": " Relire l’offre, le devis et les échanges ayant conduit à l’accord. Résumer les services inclus, les livrables, la fréquence, les exclusions, les engagements pris et les points encore ouverts."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Owner :"
+            },
+            {
+              "plain_text": " Marketing Manager, avec le Marketing Manager et la vérification administrative nécessaire."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Verify :"
+            },
+            {
+              "plain_text": " Le périmètre écrit correspond à ce qui a été vendu; les conditions administratives sont satisfaites ou l’exception est documentée."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Gate :"
+            },
+            {
+              "plain_text": " Le projet peut être créé sans ambiguïté majeure sur ce qui doit être livré."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_3",
+        "heading_3": {
+          "rich_text": [
+            {
+              "plain_text": "Step 2 — Créer l’espace opérationnel"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Action :"
+            },
+            {
+              "plain_text": " Créer ou compléter la fiche Client, créer le projet dans Mediast OS, relier les deux, nommer l’owner, ajouter l’équipe connue, les dates, les priorités et la prochaine action. Créer le dossier Drive avec une structure claire."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Owner :"
+            },
+            {
+              "plain_text": " Marketing Manager."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Verify :"
+            },
+            {
+              "plain_text": " Aucun doublon n’existe; le client, le projet et les futures tâches sont correctement reliés; les accès au dossier sont appropriés."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Gate :"
+            },
+            {
+              "plain_text": " L’équipe dispose d’une source unique de vérité."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_3",
+        "heading_3": {
+          "rich_text": [
+            {
+              "plain_text": "Step 3 — Collecter les éléments et accès"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Action :"
+            },
+            {
+              "plain_text": " Envoyer une demande structurée couvrant brief, branding, offres, catalogues, photos/vidéos, anciens contenus, résultats disponibles et accès aux plateformes. Utiliser un moyen sécurisé pour les identifiants; ne jamais stocker un mot de passe en texte libre dans Notion."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Owner :"
+            },
+            {
+              "plain_text": " Marketing Manager; client pour la fourniture; rôles techniques pour tester les accès."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Verify :"
+            },
+            {
+              "plain_text": " Chaque élément est reçu, manquant ou explicitement non applicable; les accès ont été testés par le rôle qui les utilisera."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Gate :"
+            },
+            {
+              "plain_text": " Les informations critiques sont disponibles ou un blocage avec owner et date est enregistré."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_3",
+        "heading_3": {
+          "rich_text": [
+            {
+              "plain_text": "Step 4 — Conduire le kick-off"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Action :"
+            },
+            {
+              "plain_text": " Présenter le périmètre, les objectifs, les interlocuteurs, le circuit de validation, les canaux de communication, les dépendances, les risques et le fonctionnement de Mediast Creative. Documenter les décisions et prochaines actions."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Owner :"
+            },
+            {
+              "plain_text": " Marketing Manager anime; Marketing Manager et rôles clés participent; client valide."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Verify :"
+            },
+            {
+              "plain_text": " Un valideur final est identifié; les attentes sont réalistes; chaque décision possède un owner et une échéance."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Gate :"
+            },
+            {
+              "plain_text": " Le compte rendu du kick-off est partagé et les points bloquants sont visibles."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_3",
+        "heading_3": {
+          "rich_text": [
+            {
+              "plain_text": "Step 5 — Préparer le premier mois"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Action :"
+            },
+            {
+              "plain_text": " Réaliser un diagnostic rapide, traduire le périmètre en jalons, définir les priorités du premier mois et créer les tâches initiales avec responsables et deadlines réalistes."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Owner :"
+            },
+            {
+              "plain_text": " Marketing Manager et Marketing Manager, avec l’équipe projet."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Verify :"
+            },
+            {
+              "plain_text": " Le planning respecte la capacité de l’équipe et les dépendances client; aucune date n’est promise sans responsable."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Gate :"
+            },
+            {
+              "plain_text": " Le projet a un plan exécutable et non une simple liste d’idées."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_3",
+        "heading_3": {
+          "rich_text": [
+            {
+              "plain_text": "Step 6 — Clôturer l’onboarding"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Action :"
+            },
+            {
+              "plain_text": " Passer la checklist, signaler les éléments manquants, mettre le projet en statut approprié et effectuer le handoff vers le Client Brief. Les manquants non bloquants restent des tâches suivies."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Owner :"
+            },
+            {
+              "plain_text": " Marketing Manager."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Verify :"
+            },
+            {
+              "plain_text": " Les éléments obligatoires sont présents; les risques sont documentés; la prochaine réunion ou action est planifiée."
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Gate :"
+            },
+            {
+              "plain_text": " Le dossier est déclaré Ready for Brief ou Blocked avec raison claire."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "7. ✅ Operational Checklist"
+            }
+          ]
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Offre/devis et périmètre confirmés"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Contrat ou conditions applicables confirmés"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Paiement/acompte vérifié selon l’accord"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Fiche Client créée sans doublon"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Projet créé et relié au client"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Marketing Manager et équipe initiale définis"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Contact principal et valideur final identifiés"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Dossier Drive créé et partagé"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Brand assets reçus ou demandés"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Accès nécessaires listés et testés"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Kick-off réalisé et compte rendu partagé"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Objectifs et contraintes enregistrés"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Planning initial créé"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Blocages attribués avec prochaine action"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "to_do",
+        "to_do": {
+          "rich_text": [
+            {
+              "plain_text": "Handoff vers Client Brief effectué"
+            }
+          ],
+          "checked": false
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "8. 🔍 Quality Check"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Le périmètre vendu et le périmètre opérationnel sont identiques"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Le client sait qui contacter, comment valider et où partager les éléments"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Les informations sensibles ne sont pas stockées dans des champs non sécurisés"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Chaque élément manquant possède un owner et une date de suivi"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Aucune production importante ne commence si un prérequis critique reste non résolu"
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "9. 📤 Expected Output"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Une fiche Client complète, un projet relié, un espace documentaire organisé, des accès fonctionnels, un compte rendu de kick-off, un planning initial et un statut explicite "
+            },
+            {
+              "plain_text": "Ready for Brief"
+            },
+            {
+              "plain_text": " ou "
+            },
+            {
+              "plain_text": "Blocked"
+            },
+            {
+              "plain_text": "."
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "10. 🛠 Tools"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Notion / Mediast OS pour clients, projets et tâches"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Google Drive pour les documents et assets"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Google Meet ou réunion physique pour le kick-off"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Canal client convenu pour les échanges"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Gestionnaire sécurisé ou méthode approuvée pour les accès"
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "11. 🚨 Common Problems / What to Avoid"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Commencer la production avant de confirmer le périmètre ou les conditions administratives"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Accepter plusieurs valideurs sans décideur final"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Conserver les fichiers uniquement dans WhatsApp ou dans des ordinateurs individuels"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Copier des mots de passe dans Notion ou dans des messages ouverts"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Promettre des dates avant de vérifier la capacité de l’équipe"
+            }
+          ]
+        }
+      },
+      {
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+          "rich_text": [
+            {
+              "plain_text": "Marquer l’onboarding terminé malgré un blocage critique"
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading_2",
+        "heading_2": {
+          "rich_text": [
+            {
+              "plain_text": "12. ➡️ Next Step"
+            }
+          ]
+        }
+      },
+      {
+        "type": "paragraph",
+        "paragraph": {
+          "rich_text": [
+            {
+              "plain_text": "Passer à la SOP "
+            },
+            {
+              "plain_text": "Client Brief"
+            },
+            {
+              "plain_text": ". Si les prérequis critiques manquent, garder le projet bloqué et suivre les actions dans Mediast OS."
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "users": {},
+  "errors": []
+}

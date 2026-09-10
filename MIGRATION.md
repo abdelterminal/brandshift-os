@@ -170,3 +170,56 @@ Decisions this run made
 
 Eighteen distinct client strings became seventeen companies. A second run changed nothing. A
 migrated account signed in with its old password and the hash was scrypt afterwards.
+
+---
+
+# The Notion SOP import -- a separate source
+
+`db:migrate:mongo` moves the old *app's* data. It does not move the old *Notion workspace*,
+which is where Mediast Creative actually wrote down how the work is done. A full Notion API
+export of that workspace (`Mediast_OS_API_Raw_Export.json`) was provided later, and one script
+brings the useful part of it across:
+
+```bash
+# Look, and write nothing. This is the default.
+npm run db:import:sops -- --file ./Mediast_OS_API_Raw_Export.json
+
+# Do it.
+npm run db:import:sops -- --file ./Mediast_OS_API_Raw_Export.json --commit
+```
+
+| Flag | Default | What it is |
+|---|---|---|
+| `--file` | *required* | Path to the raw Notion export JSON. |
+| `--org` | `mediast` | Slug of the organization the procedures land in. |
+| `--commit` | off | Without it, nothing is written. |
+
+## Why only the SOPs
+
+The export has 28 Notion "databases", but 20 are filtered views. Of the eight real ones, only
+the **SOP Library — Mediast Creative** holds substantial written content: twelve procedures,
+each with the same twelve sections (🎯 Objective … ➡️ Next Step). Projects (22), Tasks (39) and
+Team (7) are name-only, and every one of them overlaps a row `db:migrate:mongo` already carries
+*with* dates, owners and status -- importing the Notion copies would duplicate. Clients, CRM,
+Objectives & KPI and Weekly Reviews are empty. So this importer touches `sops` and `sop_steps`
+and nothing else.
+
+## What it does
+
+- Each Notion page becomes one `sops` row: title, `summary` from the 🎯 Objective section,
+  `status = "draft"` (the Notion rows are all drafts, "à valider avec l'équipe"),
+  `created_by_user_id` = the target org's owner. Each of the twelve sections becomes one
+  `sop_steps` row -- heading as the step title, the section's blocks flattened to plain text
+  (`- ` bullets, `[ ] ` checklist items, `### ` sub-steps) as the detail.
+- **Owner and department are left null** -- see `KNOWN-GAPS.md`. The Notion "Owner" is a role
+  title, not a department here, and the SOP-owner relation points at Team pages that are not
+  people in this org.
+- **Re-runnable.** Row ids are derived from the Notion page id (`identity.ts`, a UUIDv5 with
+  its own namespace, distinct from the Mongo migration's), so a second run updates the same
+  rows. A procedure's steps are replaced wholesale each run.
+- The dry run prints new-vs-updated counts, the org and author it resolved, and any title that
+  needed its slug suffixed. Nothing is written without `--commit`.
+
+## What the run on the real data produced
+
+*(To be filled in once run against production.)*
