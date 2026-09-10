@@ -910,3 +910,41 @@ scheduler and mail transport this deployment still lacks (see `KNOWN-GAPS.md`).
   plus module flags cover the real cases. Revisit if a customer actually asks.
 - **Postgres row-level security** -- auth is custom, so tenancy is enforced in app code via
   `withOrg()`. Accepted risk; the guardrail is that no raw query on a tenant table is permitted.
+
+## Added when the whole app went real-time
+
+**Every tenant write announces itself, from the one place every write already goes.**
+`withOrg()`'s `insert` / `update` / `delete` each emit a `pg_notify('brandshift_live', {org,
+topic})` after the row lands. That is the same choke point tenancy itself is enforced at, so a
+new Server Action cannot forget to be live any more than it can forget to be scoped -- there is
+nothing extra to remember. The channel bus (`publishChannelChange`) already proved the shape;
+this generalises it.
+
+**Coarse topics, one per screen family, and the browser refetches through the server.** The
+notification says `tasks` or `finance` moved, never which row. `LiveSync` in the shell calls
+`router.refresh()`, which re-runs the current route's server components -- so what arrives live
+and what arrives on a reload come from one code path and cannot drift apart, and a message or a
+task never travels as a second, cheaper copy that has to be reconciled.
+
+**The client refreshes on any change, not the one on screen.** Deciding client-side whether a
+change touches what is rendered is harder and more fragile than just refetching; the debounce
+and a "wait until ~1.2s after the viewer's last click" gate keep it cheap and, crucially, stop a
+background refresh from landing on top of a Server Action the viewer just fired (which is how it
+first broke the guided-tour test). Topic-to-route matching is noted in `KNOWN-GAPS.md` as the
+refinement.
+
+**A second `LISTEN` connection, not a shared one.** `live-bus.ts` is its own hub and its own
+Postgres connection, independent of the channel bus. Two features that both hold a long-lived
+connection, each a few lines, beats one shared abstraction where a bug in either silences both.
+
+**The write wrapper stays lazy and keeps `.toSQL()`.** `announcing()` returns a thenable that
+runs -- and announces -- only when awaited, and awaiting twice still runs once. `tenancy.ts`'s
+tests read `.toSQL()` off these builders and never await them; that contract is unchanged.
+
+- **A shared broker (Redis, a WebSocket gateway)** -- every extra service is another thing down
+  at 9am. Postgres was already required and already where the write went.
+- **Publishing explicitly from each `revalidatePath` site** -- ~60 call sites across 22 files, and
+  forgettable on the 61st. The `withOrg()` choke point cannot be skipped.
+- **Routing the notify through the caller's transaction** -- would make it rollback-correct and
+  self-deduping, at one round trip per write. Matched `publishChannelChange`'s existing pooled
+  fire-and-forget instead; the cost of the edge case is one wasted refetch.

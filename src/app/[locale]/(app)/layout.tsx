@@ -4,6 +4,7 @@ import { departmentLabel } from "@/components/ui/department-label";
 import { Breadcrumbs } from "@/components/shell/breadcrumbs";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { CommandPalette } from "@/components/shell/command-palette";
+import { LiveSync } from "@/components/shell/live-sync";
 import { Sidebar } from "@/components/shell/sidebar";
 import { Tour } from "@/components/shell/tour";
 import { AccountMenu, LocaleSwitcher, OrgSwitcher } from "@/components/shell/switchers";
@@ -153,6 +154,10 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
         */}
         <Tour initiallyOpen={user.tourCompletedAt === null} />
         <ToastViewport />
+
+        {/* One SSE connection for the whole shell: other people's changes land
+            on the page without a refresh. */}
+        <LiveSync />
       </ToastProvider>
     </TooltipProvider>
   );

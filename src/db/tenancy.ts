@@ -23,6 +23,8 @@ import { departments, memberships } from "./schema/people";
 import { projectMembers, projects } from "./schema/projects";
 import { tasks } from "./schema/tasks";
 import { db, type Database } from "./client";
+import { publishLiveChange } from "@/lib/realtime/live-bus";
+import { topicForTable } from "@/lib/realtime/live-topics";
 
 /**
  * Anything that can run a query: the pool, or a transaction opened on it.
@@ -167,6 +169,35 @@ function assertOrganizationId(organizationId: string): string {
 }
 
 export type OrgScope = ReturnType<typeof withOrg>;
+
+type Query = { sql: string; params: unknown[] };
+type WriteBuilder<R> = PromiseLike<R> & { toSQL: () => Query };
+
+/**
+ * Wrap a write so that awaiting it also announces the change on the live bus,
+ * which is what lets every open page refetch without a manual refresh.
+ *
+ * Two things this keeps intact: `.toSQL()` (the tenancy tests read it, and so
+ * does nobody else), and laziness -- nothing runs, and nothing is announced,
+ * until a caller actually awaits. Awaiting twice still executes and announces
+ * once. The announcement is fire-and-forget by design: see `publishLiveChange`.
+ */
+function announcing<R>(builder: WriteBuilder<R>, table: TenantTable, orgId: string): WriteBuilder<R> {
+  let run: Promise<R> | undefined;
+  return {
+    toSQL: () => builder.toSQL(),
+    then<T1 = R, T2 = never>(
+      onFulfilled?: ((value: R) => T1 | PromiseLike<T1>) | null,
+      onRejected?: ((reason: unknown) => T2 | PromiseLike<T2>) | null,
+    ): PromiseLike<T1 | T2> {
+      run ??= Promise.resolve<R>(builder).then((rows) => {
+        void publishLiveChange(orgId, topicForTable(getTableName(table)));
+        return rows;
+      });
+      return run.then(onFulfilled, onRejected);
+    },
+  };
+}
 
 /**
  * Bind an executor to one organization.
@@ -337,7 +368,7 @@ export function withOrg(organizationId: string, executor: Executor = db) {
         organizationId: orgId,
       })) as PgInsertValue<T>[];
 
-      return executor.insert(table).values(rows).returning();
+      return announcing(executor.insert(table).values(rows).returning(), table, orgId);
     },
 
     /** Update, always filtered by tenant. `organizationId` is not settable. */
@@ -346,19 +377,24 @@ export function withOrg(organizationId: string, executor: Executor = db) {
       set: Omit<PgUpdateSetSource<T>, "organizationId">,
       ...where: Array<SQL | undefined>
     ) {
-      return executor
-        .update(table)
-        .set(set as PgUpdateSetSource<T>)
-        .where(scoped(table, ...where))
-        .returning();
+      return announcing(
+        executor
+          .update(table)
+          .set(set as PgUpdateSetSource<T>)
+          .where(scoped(table, ...where))
+          .returning(),
+        table,
+        orgId,
+      );
     },
 
     /** Delete, always filtered by tenant. Most domains soft-delete instead. */
     delete<T extends TenantTable>(table: T, ...where: Array<SQL | undefined>) {
-      return executor
-        .delete(table)
-        .where(scoped(table, ...where))
-        .returning();
+      return announcing(
+        executor.delete(table).where(scoped(table, ...where)).returning(),
+        table,
+        orgId,
+      );
     },
   };
 }

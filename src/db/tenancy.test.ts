@@ -152,6 +152,16 @@ describe("withOrg", () => {
     expect(params).toContain(ORG_ID);
   });
 
+  it("returns writes as a thenable that still exposes toSQL", () => {
+    // Every write is wrapped so that awaiting it also announces the change on
+    // the live bus. The wrapper must stay lazy (this test never awaits, so
+    // nothing runs and nothing is announced) and must keep `.toSQL()`.
+    const write = withOrg(ORG_ID).insert(tasks, { title: "x" });
+    expect(typeof write.then).toBe("function");
+    expect(typeof write.toSQL).toBe("function");
+    expect(write.toSQL().sql).toContain("insert into");
+  });
+
   it("scopes updates and deletes", () => {
     const update = withOrg(ORG_ID).update(tasks, { title: "Renamed" }).toSQL();
     expect(update.sql).toContain('"organization_id" =');
