@@ -79,7 +79,9 @@ function renderBlock(block: Json): string {
     case "heading_1":
     case "heading_2":
     case "heading_3":
-      return `### ${text}`;
+      // A blank line before it, so a sub-step heading ("Step 3 — …") reads as
+      // one. No `#` marker: the detail is plain text, nothing parses it.
+      return `\n${text}`;
     case "bulleted_list_item":
       return `- ${text}`;
     case "numbered_list_item":

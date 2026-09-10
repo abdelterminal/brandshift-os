@@ -151,7 +151,7 @@ export default async function SopPage({ params }: { params: Promise<{ slug: stri
                 <div className="min-w-0">
                   <p className="text-body text-fg-default">{step.title}</p>
                   {step.detail ? (
-                    <p className="text-caption text-fg-muted mt-1">{step.detail}</p>
+                    <p className="text-body text-fg-muted mt-1 whitespace-pre-line">{step.detail}</p>
                   ) : null}
                 </div>
               </li>

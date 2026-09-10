@@ -52,7 +52,7 @@ describe("readSopExport", () => {
 
     expect(body).toMatch(/^- .+/m); // 📥 Inputs Required -> bullets
     expect(body).toMatch(/^\[ \] .+/m); // ✅ Operational Checklist -> to-dos
-    expect(body).toMatch(/^### Step 1 /m); // 📋 Step-by-Step -> heading_3
+    expect(body).toMatch(/\n\nStep 2 /); // 📋 Step-by-Step -> heading_3 gets a blank line before it
   });
 
   it("produces content that fits the SOP editor's limits", () => {
