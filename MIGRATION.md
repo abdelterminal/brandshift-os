@@ -222,4 +222,19 @@ npm run db:import:notion -- --file ./Mediast_OS_API_Raw_Export.json --commit
 
 ## What the run on production produced
 
-*(To be filled in once run against production.)*
+Run against the `mediast` org after migration `0021`:
+
+```
+Carried across
+     22  projects new
+     38  tasks
+      9  documents new
+     62  document sections
+     12  procedures updated   (the SOP-only import's rows, now with a stage)
+      3  people given a role description   (Youssef, Mohammed, Zayneb)
+
+Unmatched by first name, reported: Ayoub, Yassin, Abdeltif, Freelance Editor.
+```
+
+A second `--commit` changed nothing new -- everything came back "updated".
+Owners, departments and task assignees are all null, by design.
