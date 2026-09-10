@@ -314,15 +314,25 @@ async function planImport(
   );
 
   // -- Team responsibilities -> jobTitle ----------------------------
+  // Resolved through the same confirmed name map as the assignees (so
+  // "Yassin" reaches Yacine and "Abdeltif" reaches Abdellatif), falling back
+  // to a first-name match for anyone the map does not name.
   const membershipUpdates: { id: string; jobTitle: string }[] = [];
   for (const member of source.team) {
-    const first = member.name.split(/\s+/)[0]!.toLowerCase();
-    const match = existingMembers.find((m) => m.name.toLowerCase().split(/\s+/)[0] === first);
+    if (!member.role && !member.responsibilities) continue;
+
+    const first = member.name.trim().split(/\s+/)[0]!.toLowerCase();
+    const userId =
+      teamPageToUserId.get(member.notionId) ??
+      existingMembers.find((m) => m.name.toLowerCase().split(/\s+/)[0] === first)?.userId;
+    const match = userId ? existingMembers.find((m) => m.userId === userId) : undefined;
+
     if (!match) {
       report.warn(`Team member "${member.name}" has no matching person in "${options.orgSlug}".`);
       continue;
     }
     if (match.jobTitle && match.jobTitle.trim().length > 0) continue;
+
     const jobTitle = clamp(
       [member.role, member.responsibilities].filter(Boolean).join(" — "),
       200,
