@@ -1,0 +1,76 @@
+import { expect, test, type Page } from "@playwright/test";
+
+import { MEMBER } from "../people";
+
+/**
+ * A member sees only their own work.
+ *
+ * Named to sort before `session.spec.ts`, which signs out and so invalidates
+ * the storage state the rest of the `member` project shares.
+ *
+ * The whole directory, every project's task list, the activity feed and other
+ * people's pages are for someone who coordinates the work. A plain member --
+ * Lukas, the `member` fixture -- gets their own tasks, the projects they are
+ * on, and their teammates by name. Nothing about what a colleague is doing, or
+ * how far along they are.
+ *
+ * Lukas is on ATL and NOR. His teammates there include Priya (a fellow
+ * member). Sofia is on neither and should be invisible to him.
+ */
+
+const main = (page: Page) => page.locator("#main");
+
+test("the directory is teammates by name, not the whole org", async ({ page }) => {
+  await page.goto("/en/people");
+  await expect(page.getByRole("heading", { name: "People", level: 1 })).toBeVisible();
+
+  // A teammate is listed (the page renders a mobile and a desktop row, so
+  // `.first()` -- the assertion is that the name is present, not which copy)...
+  await expect(main(page).getByText("Priya Raman").first()).toBeAttached();
+  // ...but not as a link -- their page is where their work lives.
+  await expect(main(page).getByRole("link", { name: "Priya Raman" })).toHaveCount(0);
+
+  // Somebody on no shared project is not in the roster at all.
+  await expect(main(page).getByText("Sofia Laurent")).toHaveCount(0);
+
+  // Their own row still links, to their own page.
+  await expect(main(page).getByRole("link", { name: MEMBER.name })).toBeVisible();
+});
+
+test("another person's page is a 404", async ({ page }) => {
+  // A well-formed id that is not the member's own: the silo refuses it before
+  // it ever becomes a question of whether that person exists.
+  const response = await page.goto("/en/people/00000000-0000-4000-8000-000000000000");
+  expect(response?.status()).toBe(404);
+  await expect(page.getByRole("heading", { name: "That page does not exist" })).toBeVisible();
+});
+
+test("a project they are not on is a 404", async ({ page }) => {
+  // HAR belongs to Elena, Inès and Yusuf. Lukas is not on it.
+  const response = await page.goto("/en/work/HAR");
+  expect(response?.status()).toBe(404);
+  await expect(page.getByRole("heading", { name: "That page does not exist" })).toBeVisible();
+});
+
+test("a project they are on shows their own work, and no activity feed", async ({ page }) => {
+  await page.goto("/en/work/NOR");
+  await expect(main(page).getByRole("heading", { name: /Northwind/, level: 1 })).toBeVisible();
+
+  // The activity feed is a running log of everyone's actions -- gone for a member.
+  await expect(page.getByRole("tab", { name: "Activity" })).toHaveCount(0);
+
+  // The team is still there, by name.
+  await page.getByRole("tab", { name: "Team" }).click();
+  await expect(main(page).getByText("Priya Raman").first()).toBeVisible();
+
+  // The Tasks tab is the member's own work: opening a row shows the
+  // reassignment picker rather than a read-only assignee, which the drawer
+  // only renders for a task that is theirs (or a project they run).
+  await page.getByRole("tab", { name: "Tasks" }).click();
+  const openTaskButtons = page.getByRole("button", { name: "Open task" });
+  expect(await openTaskButtons.count()).toBeGreaterThan(0);
+  await openTaskButtons.first().click();
+  await expect(
+    page.getByRole("dialog").getByRole("combobox", { name: "Assignee" }),
+  ).toBeVisible();
+});

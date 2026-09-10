@@ -6,48 +6,50 @@ import { expect, test, type Page } from "@playwright/test";
  * One SSE connection in the shell (`/api/stream`) means a change anyone makes
  * lands on everyone else's open page without a refresh -- the same mechanism
  * channels already used, now generalised to every tenant write via
- * `withOrg()`. This proves the end-to-end path: a write in one browser, a
- * `pg_notify`, the stream, and `router.refresh()` in another browser, with no
- * `reload()` anywhere in the observer's timeline.
+ * `withOrg()`. This proves the end-to-end path: a write in one browser
+ * context, a `pg_notify`, the stream, and `router.refresh()` in another, with
+ * no `reload()` anywhere in the observer's timeline.
+ *
+ * Two contexts off the same manager fixture: same person, two tabs -- each
+ * holds its own SSE connection and its own server-side subscription, so this
+ * still exercises cross-connection fan-out. A manager sees the whole project,
+ * which keeps the assertion independent of the member silo.
  */
 
 const main = (page: Page) => page.locator("#main");
 
 // HAR is the planning project: everything on it is seeded to-do, so this title
 // is safe to complete and the assertion does not depend on dates or ordering.
-// Chosen from the tail of HAR's list, away from the `.first()` row that other
-// specs mutate.
 const TITLE = "Estimate the engineering work";
 
-test("a change made in one window appears in another without a refresh", async ({ browser }) => {
-  const managerCtx = await browser.newContext({ storageState: "e2e/.auth/manager.json" });
-  const memberCtx = await browser.newContext({ storageState: "e2e/.auth/member.json" });
-  const manager = await managerCtx.newPage();
-  const member = await memberCtx.newPage();
+test("a change made in one context appears in another without a refresh", async ({ browser }) => {
+  const watcherCtx = await browser.newContext({ storageState: "e2e/.auth/manager.json" });
+  const actorCtx = await browser.newContext({ storageState: "e2e/.auth/manager.json" });
+  const watcher = await watcherCtx.newPage();
+  const actor = await actorCtx.newPage();
 
   try {
-    // The member is watching the project's task list and nothing else.
-    await member.goto("/en/work/HAR");
-    await member.getByRole("tab", { name: "Tasks" }).click();
-    await expect(main(member).getByText(TITLE, { exact: true })).toBeVisible();
+    await watcher.goto("/en/work/HAR");
+    await watcher.getByRole("tab", { name: "Tasks" }).click();
+    await expect(main(watcher).getByText(TITLE, { exact: true })).toBeVisible();
 
-    const memberCompleted = member.locator("section", { hasText: "Completed" });
-    await expect(memberCompleted.getByText(TITLE, { exact: true })).toHaveCount(0);
+    const watcherCompleted = watcher.locator("section", { hasText: "Completed" });
+    await expect(watcherCompleted.getByText(TITLE, { exact: true })).toHaveCount(0);
 
-    // The manager completes it from a separate browser context.
-    await manager.goto("/en/work/HAR");
-    await manager.getByRole("tab", { name: "Tasks" }).click();
-    await main(manager).getByText(TITLE, { exact: true }).click();
-    const drawer = manager.getByRole("dialog");
+    // The other context completes it.
+    await actor.goto("/en/work/HAR");
+    await actor.getByRole("tab", { name: "Tasks" }).click();
+    await main(actor).getByText(TITLE, { exact: true }).click();
+    const drawer = actor.getByRole("dialog");
     await drawer.getByRole("button", { name: "Mark complete" }).click();
     await expect(drawer).toBeHidden();
 
-    // The member's page catches up on its own. No member.reload() has run.
-    await expect(memberCompleted.getByText(TITLE, { exact: true })).toBeVisible({
+    // The watcher's page catches up on its own. No watcher.reload() has run.
+    await expect(watcherCompleted.getByText(TITLE, { exact: true })).toBeVisible({
       timeout: 15_000,
     });
   } finally {
-    await managerCtx.close();
-    await memberCtx.close();
+    await watcherCtx.close();
+    await actorCtx.close();
   }
 });

@@ -24,6 +24,7 @@ import { getProjectByKey, listProjectMembers } from "@/lib/data/projects";
 import { listProjectDeliverables } from "@/lib/data/deliverables";
 import { getPlaybook, stageSetupFor } from "@/lib/data/playbook";
 import { listWorkableProjectIds } from "@/lib/data/project-access";
+import { isOnProject, seesOnlyOwnWork } from "@/lib/data/visibility";
 import { sopForStage } from "@/lib/data/sops";
 import { bucketTasks, listProjectTasks, organizationToday } from "@/lib/data/tasks";
 
@@ -62,6 +63,11 @@ export default async function ProjectPage({
   const project = await getProjectByKey(session.actor, key);
   if (!project) notFound();
 
+  // A member sees only projects they are on, and only their own work within
+  // one. A manager and up coordinates the whole org, so none of this applies.
+  const siloed = seesOnlyOwnWork(session.actor);
+  if (siloed && !(await isOnProject(session.actor, project.id))) notFound();
+
   const [
     t,
     channels,
@@ -69,7 +75,7 @@ export default async function ProjectPage({
     statusLabels,
     priorities,
     format,
-    tasks,
+    allProjectTasks,
     members,
     activity,
     meetings,
@@ -83,12 +89,21 @@ export default async function ProjectPage({
     getFormatter(),
     listProjectTasks(session.actor, project.id),
     listProjectMembers(session.actor, project.id),
-    listProjectActivity(session.actor, project.id),
+    siloed ? Promise.resolve([]) : listProjectActivity(session.actor, project.id),
     listProjectMeetings(session.actor, project.id),
     listAssignablePeople(session.actor),
   ]);
 
-  const deliverables = await listProjectDeliverables(session.actor, project.id);
+  // A member sees their own tasks and deliverables on the project; everyone
+  // else sees all of them.
+  const tasks = siloed
+    ? allProjectTasks.filter((row) => row.assigneeUserId === session.actor.userId)
+    : allProjectTasks;
+
+  const allDeliverables = await listProjectDeliverables(session.actor, project.id);
+  const deliverables = siloed
+    ? allDeliverables.filter((row) => row.assigneeUserId === session.actor.userId)
+    : allDeliverables;
   const canConvertDeliverables = can(session.actor, "deliverable.convert");
 
   const viewer = {
@@ -103,8 +118,9 @@ export default async function ProjectPage({
     (member) => member.userId === session.actor.userId && member.role !== "viewer",
   );
   // "On this project's team, or a manager" -- the same gate the server applies.
-  // A deliverable's own assignee is handled per-row inside the panel.
-  const canWorkDeliverables = canEditBoard || viewer.isManager;
+  // A deliverable's own assignee is handled per-row inside the panel. A member
+  // only ever moves their own, so the panel-wide controls are off for them.
+  const canWorkDeliverables = !siloed && (canEditBoard || viewer.isManager);
 
   const mayManageTemplates = can(session.actor, "template.manage");
   const canSetStage = can(session.actor, "project.setStage", {
@@ -224,6 +240,7 @@ export default async function ProjectPage({
           priority={priorities(project.priority)}
           projectId={project.id}
           viewer={viewer}
+          siloed={siloed}
           buckets={buckets}
           todayIso={todayIso}
           allTasks={tasks}
@@ -235,7 +252,7 @@ export default async function ProjectPage({
             avatarUrl: member.avatarUrl,
             role: member.role,
           }))}
-          activity={<ActivityFeed events={activity} />}
+          activity={siloed ? null : <ActivityFeed events={activity} />}
           meetings={
             <ProjectMeetings
               meetings={meetings}

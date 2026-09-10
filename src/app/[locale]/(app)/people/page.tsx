@@ -18,7 +18,7 @@ import { PeoplePagination } from "@/components/people/people-pagination";
 import { Link } from "@/i18n/navigation";
 import { atLeast, can } from "@/lib/authz";
 import { requireUser } from "@/lib/auth/guards";
-import { listDepartments, listPeople } from "@/lib/data/people";
+import { listDepartments, listPeople, listTeammates } from "@/lib/data/people";
 import { listOpenTasks, organizationToday, workloadFrom } from "@/lib/data/tasks";
 import type { Role } from "@/db/schema/people";
 
@@ -55,17 +55,18 @@ export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/
     getTranslations("People"),
     getTranslations("Roles"),
     listDepartments(session.actor),
-    // A member sees the whole roster in one page rather than a pagination
-    // control they never get, since that control is coordinator-shaped too --
-    // 100 is `listPeople`'s own ceiling, generous for a roster nobody is
-    // managing.
-    listPeople(session.actor, {
-      query,
-      role,
-      departmentId,
-      page,
-      pageSize: isCoordinator ? undefined : 100,
-    }),
+    // A coordinator gets the whole directory, paged. A member gets only the
+    // people they share a project with -- names, not a window onto everyone's
+    // work -- in one page, since the pagination control is coordinator-shaped
+    // too.
+    isCoordinator
+      ? listPeople(session.actor, { query, role, departmentId, page })
+      : listTeammates(session.actor).then((rows) => ({
+          rows,
+          total: rows.length,
+          page: 1,
+          pageSize: rows.length,
+        })),
     // Nobody who cannot see workload should pay for computing it either.
     isCoordinator ? listOpenTasks(session.actor) : Promise.resolve([]),
   ]);
@@ -74,6 +75,12 @@ export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/
   const workload = workloadFrom(openTasks, organizationToday());
   const filtered = Boolean(query || role || departmentId);
   const mayInvite = can(session.actor, "member.invite");
+
+  // A member's roster is names, not links: a teammate's own page is where
+  // their tasks and activity live, and that is exactly what a member does not
+  // see. Their own row still links, to their own page.
+  const linksToPerson = (userId: string) =>
+    isCoordinator || userId === session.actor.userId;
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8">
@@ -107,7 +114,11 @@ export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/
                 <div className="flex items-start gap-3">
                   <PersonAvatar name={person.name} src={person.avatarUrl} size="sm" />
                   <div className="min-w-0 flex-1">
-                    <Link href={`/people/${person.userId}`} className="text-body text-fg-default focus-visible:outline-focus-ring rounded-control font-medium hover:underline focus-visible:outline-2">{person.name}</Link>
+                    {linksToPerson(person.userId) ? (
+                      <Link href={`/people/${person.userId}`} className="text-body text-fg-default focus-visible:outline-focus-ring rounded-control font-medium hover:underline focus-visible:outline-2">{person.name}</Link>
+                    ) : (
+                      <span className="text-body text-fg-default font-medium">{person.name}</span>
+                    )}
                     <p className="text-caption text-fg-muted mt-1 break-all">{person.email}</p>
                     <p className="text-caption text-fg-muted mt-1">{[roles(person.role), person.departmentName, person.jobTitle].filter(Boolean).join(" · ")}</p>
                     {person.status === "invited" ? <Badge tone="attention" size="sm">{t("pending")}</Badge> : null}
@@ -148,12 +159,18 @@ export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/
                             className="shrink-0"
                           />
                           <span className="min-w-0">
-                            <Link
-                              href={`/people/${person.userId}`}
-                              className="text-fg-default focus-visible:outline-focus-ring block truncate rounded-[4px] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
-                            >
-                              {person.name}
-                            </Link>
+                            {linksToPerson(person.userId) ? (
+                              <Link
+                                href={`/people/${person.userId}`}
+                                className="text-fg-default focus-visible:outline-focus-ring block truncate rounded-[4px] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
+                              >
+                                {person.name}
+                              </Link>
+                            ) : (
+                              <span className="text-fg-default block truncate font-medium">
+                                {person.name}
+                              </span>
+                            )}
                             <span className="text-caption text-fg-subtle block truncate">
                               {person.email}
                             </span>

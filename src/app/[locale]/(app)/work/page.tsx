@@ -22,6 +22,7 @@ import { requireUser } from "@/lib/auth/guards";
 import { listDepartments } from "@/lib/data/people";
 import { listProjectMembers, listProjects, type ProjectStatus } from "@/lib/data/projects";
 import { listOpenTasks } from "@/lib/data/tasks";
+import { memberProjectIds, seesOnlyOwnWork } from "@/lib/data/visibility";
 
 /**
  * Projects.
@@ -47,7 +48,9 @@ export default async function WorkPage({ searchParams }: PageProps<"/[locale]/wo
   const status = typeof params.status === "string" ? (params.status as ProjectStatus) : undefined;
   const departmentId = typeof params.department === "string" ? params.department : undefined;
 
-  const [t, statusLabels, format, projects, departments, openTasks] = await Promise.all([
+  const siloed = seesOnlyOwnWork(session.actor);
+
+  const [t, statusLabels, format, allProjects, departments, openTasks] = await Promise.all([
     getTranslations("Work"),
     getTranslations("ProjectStatus"),
     getFormatter(),
@@ -56,10 +59,18 @@ export default async function WorkPage({ searchParams }: PageProps<"/[locale]/wo
     listOpenTasks(session.actor),
   ]);
 
+  // A member sees only the projects they are on, and per-project counts of
+  // their own work -- not the team's load.
+  const mineIds = siloed ? new Set(await memberProjectIds(session.actor)) : null;
+  const projects = mineIds ? allProjects.filter((p) => mineIds.has(p.id)) : allProjects;
+  const countedTasks = siloed
+    ? openTasks.filter((task) => task.assigneeUserId === session.actor.userId)
+    : openTasks;
+
   // Counted from the open set already loaded rather than a query per project.
   const openByProject = new Map<string, number>();
   const blockedByProject = new Map<string, number>();
-  for (const task of openTasks) {
+  for (const task of countedTasks) {
     if (!task.projectId) continue;
     openByProject.set(task.projectId, (openByProject.get(task.projectId) ?? 0) + 1);
     if (task.status === "blocked") {

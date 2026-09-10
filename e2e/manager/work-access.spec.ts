@@ -13,13 +13,12 @@ import { expect, test, type Page } from "@playwright/test";
  *
  * The assignee-who-is-a-plain-member case is covered next door, in
  * `deliverables.spec.ts` ("a member on the work can move a deliverable"), which
- * signs in as Marc. This file covers the two edges around it: a member on
- * neither, and a manager on nothing.
+ * signs in as Marc. This file covers the edges around it: a member gets no
+ * further than the front door of a project they are not on (the silo), a
+ * contributor keeps the actions, and a manager may act anywhere.
  *
- * LUM (the Lumen campaign) is the fixture: owned by Priya, with Marc and Nadia
- * on the team. Lukas -- `member.json` -- is on none of it and holds none of its
- * work, so the gate denies him. He *is* a contributor on NOR, which is how the
- * "a contributor keeps the actions" case has something to assert.
+ * LUM (the Lumen campaign) is owned by Priya, with Marc and Nadia on the team.
+ * Lukas -- `member.json` -- is on none of it. He *is* a contributor on NOR.
  */
 
 const main = (page: Page) => page.locator("#main");
@@ -32,28 +31,16 @@ async function openFirstTask(page: Page, key: string) {
   await expect(page.getByRole("dialog")).toBeVisible();
 }
 
-test("a member on neither the task nor its project gets a read-only drawer", async ({ browser }) => {
+test("a member cannot open a project they are not on", async ({ browser }) => {
   const context = await browser.newContext({ storageState: "e2e/.auth/member.json" });
   const page = await context.newPage();
 
-  await openFirstTask(page, "LUM");
-  const drawer = page.getByRole("dialog");
-
-  // The note takes the place of the action row.
-  await expect(drawer.getByText(RESTRICTED)).toBeVisible();
-
-  // None of the four ways to move it are rendered.
-  await expect(drawer.getByRole("button", { name: "Start" })).toHaveCount(0);
-  await expect(drawer.getByRole("button", { name: "Mark complete" })).toHaveCount(0);
-  await expect(drawer.getByRole("button", { name: "Report blocker" })).toHaveCount(0);
-  await expect(drawer.getByRole("button", { name: "Clear blocker" })).toHaveCount(0);
-
-  // The assignee is shown as plain text, not the reassignment picker.
-  await expect(drawer.getByRole("combobox", { name: "Assignee" })).toHaveCount(0);
-
-  // Reading is untouched: the project line and the assignee are still shown.
-  await expect(drawer.getByText("Lumen campaign launch")).toBeVisible();
-  await expect(drawer.getByText("Assignee", { exact: true })).toBeVisible();
+  // Lukas is on none of LUM. The silo turns that into a plain 404 -- he never
+  // reaches the task drawer, let alone its read-only state.
+  const response = await page.goto("/en/work/LUM");
+  expect(response?.status()).toBe(404);
+  await expect(page.getByRole("heading", { name: "That page does not exist" })).toBeVisible();
+  await expect(page.getByText("Lumen campaign launch")).toHaveCount(0);
 
   await context.close();
 });
@@ -83,29 +70,6 @@ test("a manager can act on a project they are not on", async ({ page }) => {
 
   await expect(drawer.getByText(RESTRICTED)).toHaveCount(0);
   await expect(drawer.getByRole("combobox", { name: "Assignee" })).toBeVisible();
-});
-
-test("a member on neither cannot move a deliverable", async ({ browser }) => {
-  const context = await browser.newContext({ storageState: "e2e/.auth/member.json" });
-  const page = await context.newPage();
-
-  await page.goto("/en/work/LUM");
-  await page.getByRole("tab", { name: "Deliverables" }).click();
-  await expect(main(page).getByText("Launch carrousel — 6 slides")).toBeVisible();
-
-  // The panel says so once, rather than on every row.
-  await expect(main(page).getByText(RESTRICTED)).toBeVisible();
-
-  // No create affordance, and no chevrons on the row.
-  await expect(main(page).getByRole("button", { name: "New deliverable" })).toHaveCount(0);
-  await expect(
-    main(page)
-      .getByRole("listitem")
-      .filter({ hasText: "Launch carrousel — 6 slides" })
-      .getByRole("button", { name: "Move forward" }),
-  ).toHaveCount(0);
-
-  await context.close();
 });
 
 test("a manager can move a deliverable on a project they are not on", async ({ page }) => {

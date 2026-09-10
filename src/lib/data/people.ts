@@ -1,6 +1,6 @@
 import "server-only";
 
-import { eq, ilike, isNull, or, type SQL } from "drizzle-orm";
+import { eq, ilike, inArray, isNull, or, type SQL } from "drizzle-orm";
 
 import { departments, memberships, users } from "@/db/schema/people";
 import { withOrg } from "@/db/tenancy";
@@ -8,6 +8,7 @@ import { withOrg } from "@/db/tenancy";
 import type { Actor } from "../authz";
 import type { ModulePermissions, Role } from "@/db/schema/people";
 import { isUuid } from "@/lib/uuid";
+import { seesOnlyOwnWork, teammateIds } from "./visibility";
 
 /**
  * People reads.
@@ -114,6 +115,24 @@ export async function listPeople(
   };
 }
 
+/**
+ * The people a member is allowed to see: everyone on a project they are also
+ * on, themselves included. A manager gets the whole directory from `listPeople`
+ * instead -- this is the narrowed roster, not a filter on top of that one.
+ */
+export async function listTeammates(actor: Actor): Promise<PersonRow[]> {
+  const ids = await teammateIds(actor);
+  const rows = (await withOrg(actor.organizationId).selectJoined(
+    memberships,
+    PERSON_FIELDS,
+    PERSON_JOINS,
+    inArray(memberships.userId, ids),
+    or(eq(memberships.status, "active"), eq(memberships.status, "invited")),
+  )) as PersonRow[];
+
+  return rows.sort((a, b) => a.name.localeCompare(b.name));
+}
+
 /** One person's membership in this organization, or null if they are not in it. */
 export async function getPerson(actor: Actor, userId: string): Promise<PersonRow | null> {
   // A malformed id is a missing row, not a server error -- see `isUuid`.
@@ -153,13 +172,20 @@ export async function listDepartments(actor: Actor): Promise<DepartmentRow[]> {
   return rows.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** Everyone who can be assigned work, for pickers. */
+/**
+ * Everyone who can be assigned work, for pickers. A member only ever sees the
+ * people they share a project with -- the reassignment combobox is not a way
+ * around the roster being narrowed everywhere else.
+ */
 export async function listAssignablePeople(actor: Actor): Promise<PersonRow[]> {
   const rows = (await withOrg(actor.organizationId).selectJoined(
     memberships,
     PERSON_FIELDS,
     PERSON_JOINS,
     eq(memberships.status, "active"),
+    seesOnlyOwnWork(actor)
+      ? inArray(memberships.userId, await teammateIds(actor))
+      : undefined,
   )) as PersonRow[];
 
   return rows.sort((a, b) => a.name.localeCompare(b.name));

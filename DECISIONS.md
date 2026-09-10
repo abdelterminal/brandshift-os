@@ -948,3 +948,34 @@ tests read `.toSQL()` off these builders and never await them; that contract is 
 - **Routing the notify through the caller's transaction** -- would make it rollback-correct and
   self-deduping, at one round trip per write. Matched `publishChannelChange`'s existing pooled
   fire-and-forget instead; the cost of the edge case is one wasted refetch.
+
+## Added when a member's view was narrowed to their own work
+
+**A member sees their own work and nobody else's.** Until now the app was open by design -- the
+roster, every project's task list, the activity feed and everyone's person-page were readable by
+any member, on the argument that shared context beats siloing. That is right for a studio that
+coordinates in the open; it is wrong for one where a member should not be able to watch a
+colleague's progress. So a `member` now gets: their own tasks, the projects they are on, and
+their teammates *by name*. A manager, admin or owner is unchanged -- coordinating the whole org
+is the job.
+
+**The rule is `seesOnlyOwnWork(actor)` in `src/lib/data/visibility.ts`, keyed off the role, and
+it lives in the data layer.** Not `authz.ts`: this is a "which rows" question, not a "may I"
+question, the same reason project-membership checks are in the data layer. What it narrows:
+
+- `/people` -> teammates on shared projects only, names not links.
+- `/people/<someone else>` -> `notFound()`. Your own page still works.
+- `/work` -> only projects you are on; per-project counts are of your own work.
+- `/work/<key>` you are not on -> `notFound()`.
+- A project's Tasks and Deliverables -> your own only. Its Activity tab -> gone. Its Team tab
+  stays, as names without roles.
+- The command palette -> your projects, your teammates, no department views.
+- `listAssignablePeople` -> your teammates, so the reassignment picker is not a way around it.
+
+**The one crack in the wall is the handoff link.** A member may see a single upstream or
+downstream task -- its title, its status, its assignee's name -- because "is the thing I am
+waiting on done yet, and who has it" is a question they legitimately need answered. Nothing
+more of that task or that person is exposed. See `task-links.ts`.
+
+**The calendar, objectives, weekly reviews and channels are deliberately left open** for now --
+narrowing them is a follow-up, recorded in `KNOWN-GAPS.md` rather than half-done here.

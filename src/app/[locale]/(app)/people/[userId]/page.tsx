@@ -10,6 +10,7 @@ import { requireUser } from "@/lib/auth/guards";
 import { listPersonActivity } from "@/lib/data/activity";
 import { getPerson, listAssignablePeople } from "@/lib/data/people";
 import { listWorkableProjectIds } from "@/lib/data/project-access";
+import { seesOnlyOwnWork } from "@/lib/data/visibility";
 import { listProjectsForUser } from "@/lib/data/projects";
 import { listTaskBuckets, organizationToday } from "@/lib/data/tasks";
 
@@ -30,6 +31,10 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/people/[
 export default async function PersonPage({ params }: PageProps<"/[locale]/people/[userId]">) {
   const session = await requireUser();
   const { userId } = await params;
+
+  // A member's page is their own and nobody else's: what another person is
+  // working on, and how far along, is not theirs to browse.
+  if (seesOnlyOwnWork(session.actor) && userId !== session.actor.userId) notFound();
 
   const person = await getPerson(session.actor, userId);
   if (!person) notFound();

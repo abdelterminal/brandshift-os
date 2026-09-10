@@ -1,6 +1,6 @@
 import "server-only";
 
-import { eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { getTranslations } from "next-intl/server";
 
@@ -12,6 +12,7 @@ import type { PaletteEntry } from "@/components/shell/command-palette";
 
 import type { Actor } from "./authz";
 import { destinationsFor } from "./navigation";
+import { memberProjectIds, seesOnlyOwnWork, teammateIds } from "./data/visibility";
 
 /**
  * Everything the command palette can jump to.
@@ -32,22 +33,39 @@ export async function paletteIndex(actor: Actor): Promise<PaletteEntry[]> {
   const scope = withOrg(actor.organizationId);
   const nav = await getTranslations("Nav");
 
+  // A member's palette can only jump to what a member may open: their own
+  // projects, their teammates, and no department views.
+  const siloed = seesOnlyOwnWork(actor);
+  const [ownProjectIds, mateIds] = siloed
+    ? await Promise.all([memberProjectIds(actor), teammateIds(actor)])
+    : [null, null];
+
+  const noProjects = ownProjectIds != null && ownProjectIds.length === 0;
+
   const [projectRows, membershipRows, departmentRows] = await Promise.all([
-    scope.selectFields(
-      projects,
-      { id: projects.id, key: projects.key, name: projects.name },
-      isNull(projects.archivedAt),
-    ),
+    noProjects
+      ? Promise.resolve([] as Array<{ id: string; key: string; name: string }>)
+      : scope.selectFields(
+          projects,
+          { id: projects.id, key: projects.key, name: projects.name },
+          ownProjectIds
+            ? and(isNull(projects.archivedAt), inArray(projects.id, ownProjectIds))
+            : isNull(projects.archivedAt),
+        ),
     scope.selectFields(
       memberships,
       { userId: memberships.userId, jobTitle: memberships.jobTitle },
-      eq(memberships.status, "active"),
+      mateIds
+        ? and(eq(memberships.status, "active"), inArray(memberships.userId, mateIds))
+        : eq(memberships.status, "active"),
     ),
-    scope.selectFields(
-      departments,
-      { id: departments.id, slug: departments.slug, name: departments.name },
-      isNull(departments.archivedAt),
-    ),
+    siloed
+      ? Promise.resolve([] as Array<{ id: string; slug: string; name: string }>)
+      : scope.selectFields(
+          departments,
+          { id: departments.id, slug: departments.slug, name: departments.name },
+          isNull(departments.archivedAt),
+        ),
   ]);
 
   const userIds = membershipRows.map((row) => row.userId);

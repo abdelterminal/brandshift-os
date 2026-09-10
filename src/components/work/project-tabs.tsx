@@ -33,6 +33,7 @@ export function ProjectTabs({
   allTasks,
   assignablePeople,
   viewer,
+  siloed = false,
   members,
   canEditBoard,
   activity,
@@ -56,10 +57,16 @@ export function ProjectTabs({
   /** Passed straight through to the drawer's own reassignment picker. */
   assignablePeople: AssignablePerson[];
   viewer: TaskDrawerViewer;
+  /**
+   * True for a member: the Activity tab is gone (it is a running log of
+   * everyone's actions), and the Team tab shows names without roles.
+   */
+  siloed?: boolean;
   members: Array<{ userId: string; name: string; avatarUrl: string | null; role: string }>;
   /** Whether the signed-in person is this project's own lead or contributor -- see the page. */
   canEditBoard: boolean;
-  activity: React.ReactNode;
+  /** Null for a member -- see `siloed`. */
+  activity: React.ReactNode | null;
   /**
    * The project's meetings, rendered on the server and handed in as a slot --
    * the same arrangement as `activity`, because this is a Client Component and
@@ -89,7 +96,7 @@ export function ProjectTabs({
         <TabsTab value="deliverables">{t("deliverables")}</TabsTab>
         <TabsTab value="docs">{t("docs")}</TabsTab>
         <TabsTab value="team">{t("team")}</TabsTab>
-        <TabsTab value="activity">{t("activity")}</TabsTab>
+        {siloed ? null : <TabsTab value="activity">{t("activity")}</TabsTab>}
       </TabsList>
 
       <TabsPanel value="overview">
@@ -148,16 +155,18 @@ export function ProjectTabs({
                 <span className="text-body text-fg-default min-w-0 flex-1 truncate">
                   {member.name}
                 </span>
-                <Badge tone={member.role === "lead" ? "accent" : "neutral"} size="sm">
-                  {member.role}
-                </Badge>
+                {siloed ? null : (
+                  <Badge tone={member.role === "lead" ? "accent" : "neutral"} size="sm">
+                    {member.role}
+                  </Badge>
+                )}
               </li>
             ))}
           </ul>
         )}
       </TabsPanel>
 
-      <TabsPanel value="activity">{activity}</TabsPanel>
+      {siloed ? null : <TabsPanel value="activity">{activity}</TabsPanel>}
     </Tabs>
   );
 }
