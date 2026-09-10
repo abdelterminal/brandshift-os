@@ -58,6 +58,23 @@ export const projectStageEnum = pgEnum("project_stage", [
 ]);
 
 /**
+ * Where a deliverable is in its life.
+ *
+ * A deliverable is the thing a client project produces -- a carrousel, a set
+ * of videos, a menu board -- and it goes somewhere a task cannot: out to the
+ * client and back for revisions. `cancelled` is off the line, like everywhere
+ * else; the five working states are the flow.
+ */
+export const deliverableStatusEnum = pgEnum("deliverable_status", [
+  "producing",
+  "internal_review",
+  "with_client",
+  "revising",
+  "published",
+  "cancelled",
+]);
+
+/**
  * Where a deal has got to.
  *
  * One vocabulary, and a short one. Every pipeline that grows a tenth stage
@@ -247,4 +264,5 @@ export const activitySubjectEnum = pgEnum("activity_subject", [
   "review",
   "channel",
   "document",
+  "deliverable",
 ]);

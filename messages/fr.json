@@ -268,7 +268,10 @@
     "stageNotConfigured": "Cette étape n'a pas encore de playbook.",
     "progressRail": "Progression du flux de livraison",
     "startOnFlow": "Démarrer ce projet sur le flux de livraison",
-    "startOnFlowHint": "Définit l'étape sur Intégration et crée ses tâches et documents."
+    "startOnFlowHint": "Définit l'étape sur Intégration et crée ses tâches et documents.",
+    "deliverables": "Livrables",
+    "convertToDeliverable": "Convertir en livrable",
+    "convertHint": "Cette tâche sera supprimée et un livrable prend sa place."
   },
   "Task": {
     "bucketOverdue": "En retard",
@@ -455,7 +458,11 @@
     "documentCreated": "a ajouté le document {title}",
     "documentUpdated": "a mis à jour {title}",
     "documentArchived": "a archivé {title}",
-    "documentRestored": "a restauré {title}"
+    "documentRestored": "a restauré {title}",
+    "deliverableCreated": "a ajouté le livrable {title}",
+    "deliverableStatusChanged": "a déplacé {title} vers {to}",
+    "deliverablePublished": "a publié {title}",
+    "deliverableConvertedFromTask": "a transformé {title} en livrable"
   },
   "ProjectStatus": {
     "planning": "En préparation",
@@ -1192,6 +1199,43 @@
     "errorForbidden": "Vous ne pouvez pas modifier ce document.",
     "errorAlreadyThere": "Il est déjà dans cet état.",
     "errorNoSections": "Un document a besoin d'au moins une section."
+  },
+  "DeliverableStatus": {
+    "producing": "En production",
+    "internal_review": "Revue interne",
+    "with_client": "Chez le client",
+    "revising": "En révision",
+    "published": "Publié",
+    "cancelled": "Annulé"
+  },
+  "Deliverable": {
+    "title": "Livrable",
+    "titlePlaceholder": "Carrousel de lancement — 6 slides",
+    "description": "Notes",
+    "descriptionPlaceholder": "De quoi il s'agit, les références, tout ce dont le monteur a besoin.",
+    "stage": "Étape",
+    "noStage": "Non rattaché à une étape",
+    "assignee": "Responsable",
+    "unassigned": "Non attribué",
+    "dueDate": "Échéance",
+    "noDueDate": "Aucune date",
+    "newDeliverable": "Nouveau livrable",
+    "create": "Créer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "edit": "Modifier",
+    "advance": "Avancer",
+    "sendBack": "Reculer",
+    "feedbackPrompt": "Qu'est-ce que le client a demandé de changer ?",
+    "feedbackRequired": "Ajoutez le retour du client avant de passer en révision.",
+    "empty": "Aucun livrable pour l'instant",
+    "emptyBody": "Un livrable est une chose que ce projet produit — un carrousel, une série de vidéos, un menu — qui part chez le client et revient pour révisions.",
+    "clientFeedback": "Le client a demandé",
+    "cancelledGroup": "Annulés",
+    "errorInvalid": "Vérifiez les champs en surbrillance.",
+    "errorNotFound": "Ce livrable n'existe plus.",
+    "errorForbidden": "Vous ne pouvez pas modifier ce livrable.",
+    "errorAlreadyThere": "Il est déjà dans cet état."
   },
   "Templates": {
     "title": "Modèles",

@@ -36,13 +36,14 @@ export function ProjectTabs({
   activity,
   meetings,
   docs,
+  deliverables,
   stageRail,
   stageControl,
   stageSetup,
   stageProcedure,
 }: {
   /** Which tab opens first. `tasks` when the URL names a task. */
-  defaultTab?: "overview" | "tasks" | "team" | "activity" | "docs";
+  defaultTab?: "overview" | "tasks" | "deliverables" | "team" | "activity" | "docs";
   description: string | null;
   priority: string;
   projectId: string;
@@ -64,6 +65,8 @@ export function ProjectTabs({
   meetings: React.ReactNode;
   /** The Docs tab's content -- server-rendered, handed in like `activity`. */
   docs: React.ReactNode;
+  /** The Deliverables tab's content -- a Client Component slot. */
+  deliverables: React.ReactNode;
   /** The eight-stage progress rail, server-rendered. */
   stageRail: React.ReactNode;
   /** The stage picker for the Overview panel -- a Client Component slot. */
@@ -80,6 +83,7 @@ export function ProjectTabs({
       <TabsList>
         <TabsTab value="overview">{t("overview")}</TabsTab>
         <TabsTab value="tasks">{t("tasks")}</TabsTab>
+        <TabsTab value="deliverables">{t("deliverables")}</TabsTab>
         <TabsTab value="docs">{t("docs")}</TabsTab>
         <TabsTab value="team">{t("team")}</TabsTab>
         <TabsTab value="activity">{t("activity")}</TabsTab>
@@ -122,6 +126,8 @@ export function ProjectTabs({
           canEditBoard={canEditBoard}
         />
       </TabsPanel>
+
+      <TabsPanel value="deliverables">{deliverables}</TabsPanel>
 
       <TabsPanel value="docs">{docs}</TabsPanel>
 

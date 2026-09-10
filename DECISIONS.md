@@ -876,6 +876,20 @@ would double up every time a project moved back and forth, and "the last task of
 done, propose the next stage" is a smarter trigger that belongs in its own pass, not bolted
 onto the drag.
 
+**A deliverable is not a task with a `kind`.** They have different lifecycles -- a task is
+todo/doing/done, a deliverable goes out to a client and back for revisions -- so they are
+different tables. A `kind` column on `tasks` would make every task query, board and bucket
+have to know the difference and filter for it, forever, to keep the two apart on screen.
+
+**Converting a task to a deliverable deletes the task.** A row cannot be both, and keeping the
+task alongside the new deliverable would show the same piece of work twice on every list. The
+conversion is one transaction; there is no undo beyond making a task again by hand.
+
+**The imported Notion tasks were not auto-reclassified.** Roughly twenty of them read as
+deliverables, but the `Task Type` property was blank on all but two, so there was no signal to
+split on -- only a fuzzy title match against live production data. Conversion is a deliberate,
+one-at-a-time action instead.
+
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the
   requirement is that everything runs on the local network.
 - **Restyling the existing Angular app** -- cheaper, but tenancy, permissions and the task schema

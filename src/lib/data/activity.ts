@@ -40,7 +40,8 @@ export type ActivityRow = {
     | "template"
     | "review"
     | "channel"
-    | "document";
+    | "document"
+    | "deliverable";
   subjectId: string;
   projectId: string | null;
   taskId: string | null;

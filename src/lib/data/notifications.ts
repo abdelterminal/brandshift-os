@@ -50,7 +50,8 @@ export type NotificationRow = {
     | "invoice"
     | "expense"
     | "channel"
-    | "document";
+    | "document"
+    | "deliverable";
   subjectId: string;
   actorName: string | null;
   taskId: string | null;

@@ -162,6 +162,13 @@
       "when": 1789046706494,
       "tag": "0022_huge_maria_hill",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1789048884662,
+      "tag": "0023_wandering_lake",
+      "breakpoints": true
     }
   ]
 }

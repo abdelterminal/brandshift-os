@@ -991,12 +991,28 @@ deploy.
       `stage = onboarding` and runs onboarding's setup in the same transaction, sharing
       `instantiateStage` with the button's path.
 
-### Phase 3 -- Deliverables
+### Phase 3 -- Deliverables  [DONE]
 
-A `deliverables` table distinct from `tasks`: a carrousel, a set of videos -- something that
-goes produced -> internal review -> sent to client -> revised -> published, with its own short
-status enum and a link to the stage that made it. Half the imported Notion "Tasks" read as
-deliverables, not tasks; this is where they belong on a second pass.
+- [x] **`deliverables`** -- a table distinct from `tasks`. A task is work; a deliverable is
+      an artifact with a client lifecycle: `deliverable_status` is
+      `producing → internal_review → with_client → revising → published`, with `cancelled`
+      off the line. `stage` records which phase produced it. `client_feedback` is set when it
+      goes to `revising`.
+- [x] **`src/lib/deliverables.ts`** -- the pure flow helper (`nextStatus` / `prevStatus` /
+      `isDeliverableOpen` / `compareByFlow`), unit-tested, the shape of `src/lib/due-date.ts`.
+- [x] **A sixth project tab, Deliverables** -- a list grouped by state, back/forward chevrons
+      per row (moving into `revising` prompts for the client feedback first), a create/edit
+      dialog, and "Convert to deliverable" (manager only) which turns a task into one in a
+      single transaction -- the task is deleted, a row cannot be both.
+- [x] authz: `deliverable.view` / `deliverable.work` open to everyone (the people doing the
+      work move it), `deliverable.convert` a manager's call. Migration `0023`.
+- [x] The imported Notion tasks were **not** auto-reclassified -- `Task Type` was blank on all
+      but two, so there was no signal. Conversion is one at a time from the tab.
+
+The three phases are the delivery system: a project has a stage, the playbook sets up that
+stage's tasks and document stubs, and its outputs are deliverables with a client lifecycle.
+Follow-ons, each its own plan: deliverables on Today and the pipeline board; a stage
+auto-proposing the next when its work is done; per-client-type playbooks.
 
 ---
 

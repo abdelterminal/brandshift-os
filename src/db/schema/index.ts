@@ -20,6 +20,7 @@ export * from "./sops";
 export * from "./documents";
 export * from "./templates";
 export * from "./playbook";
+export * from "./deliverables";
 export * from "./reviews";
 export * from "./mail";
 export * from "./relations";

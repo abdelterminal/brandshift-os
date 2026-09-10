@@ -20,7 +20,7 @@ for (const route of [...MEMBER_ROUTES, ...MANAGER_ROUTES]) {
 test("a project page is clean on every tab", async ({ page }) => {
   await page.goto("/en/work/NOR");
 
-  for (const tab of ["Overview", "Tasks", "Team", "Activity"]) {
+  for (const tab of ["Overview", "Tasks", "Deliverables", "Docs", "Team", "Activity"]) {
     await page.getByRole("tab", { name: tab }).click();
     await expectNoAxeViolations(page, `/en/work/NOR -- ${tab} tab`);
   }

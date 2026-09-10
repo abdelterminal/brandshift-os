@@ -268,7 +268,10 @@
     "stageNotConfigured": "This stage has no playbook yet.",
     "progressRail": "Delivery flow progress",
     "startOnFlow": "Start this project on the delivery flow",
-    "startOnFlowHint": "Sets the stage to Onboarding and creates its tasks and documents."
+    "startOnFlowHint": "Sets the stage to Onboarding and creates its tasks and documents.",
+    "deliverables": "Deliverables",
+    "convertToDeliverable": "Convert to deliverable",
+    "convertHint": "This task will be removed and a deliverable takes its place."
   },
   "Task": {
     "bucketOverdue": "Overdue",
@@ -455,7 +458,11 @@
     "documentCreated": "added the document {title}",
     "documentUpdated": "updated {title}",
     "documentArchived": "archived {title}",
-    "documentRestored": "restored {title}"
+    "documentRestored": "restored {title}",
+    "deliverableCreated": "added the deliverable {title}",
+    "deliverableStatusChanged": "moved {title} to {to}",
+    "deliverablePublished": "published {title}",
+    "deliverableConvertedFromTask": "made {title} a deliverable"
   },
   "ProjectStatus": {
     "planning": "Planning",
@@ -1192,6 +1199,43 @@
     "errorForbidden": "You cannot change this document.",
     "errorAlreadyThere": "It is already in that state.",
     "errorNoSections": "A document needs at least one section."
+  },
+  "DeliverableStatus": {
+    "producing": "Producing",
+    "internal_review": "Internal review",
+    "with_client": "With client",
+    "revising": "Revising",
+    "published": "Published",
+    "cancelled": "Cancelled"
+  },
+  "Deliverable": {
+    "title": "Deliverable",
+    "titlePlaceholder": "Launch carrousel — 6 slides",
+    "description": "Notes",
+    "descriptionPlaceholder": "What it is, references, anything the editor needs.",
+    "stage": "Stage",
+    "noStage": "Not tied to a stage",
+    "assignee": "Owner",
+    "unassigned": "Unassigned",
+    "dueDate": "Due",
+    "noDueDate": "No date",
+    "newDeliverable": "New deliverable",
+    "create": "Create",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "advance": "Move forward",
+    "sendBack": "Move back",
+    "feedbackPrompt": "What did the client ask to change?",
+    "feedbackRequired": "Add the client's feedback before moving it to Revising.",
+    "empty": "No deliverables yet",
+    "emptyBody": "A deliverable is a thing this project produces — a carrousel, a set of videos, a menu board — that goes out to the client and back for revisions.",
+    "clientFeedback": "Client asked for",
+    "cancelledGroup": "Cancelled",
+    "errorInvalid": "Check the highlighted fields.",
+    "errorNotFound": "That deliverable no longer exists.",
+    "errorForbidden": "You cannot change this deliverable.",
+    "errorAlreadyThere": "It is already in that state."
   },
   "Templates": {
     "title": "Templates",

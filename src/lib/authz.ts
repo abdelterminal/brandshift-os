@@ -67,6 +67,7 @@ export type Action =
   | "template.view"
   | "review.view"
   | "document.view"
+  | "deliverable.view"
   | "task.viewQueue"
   // Doing
   | "project.create"
@@ -88,6 +89,8 @@ export type Action =
   | "document.edit"
   | "document.archive"
   | "playbook.manage"
+  | "deliverable.work"
+  | "deliverable.convert"
   | "template.manage"
   | "review.manage"
   | "member.invite"
@@ -196,6 +199,11 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   // membership, the same split `channel.view` already makes.
   "document.view": () => true,
 
+  // A deliverable is the artifact a project produces. Seeing them is open;
+  // producing one and walking it through internal review, the client and
+  // revisions is `deliverable.work` below -- the people doing the work move it.
+  "deliverable.view": () => true,
+
   // The uncapped version of Today's own coordination queue -- the same
   // "needs a decision" work, just not capped at eight rows. Today already
   // gates that queue to managers inline; this is its formal `can()` rule,
@@ -247,6 +255,12 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   // Configuring what a stage sets up -- its template and its expected
   // documents -- is the same kind of decision as writing a template.
   "playbook.manage": (actor) => atLeast(actor, "manager"),
+
+  // Producing a deliverable and moving it through its life is the job, open
+  // to everyone the way `task.create` is. Converting a task into one is a
+  // manager's call -- it deletes the task and changes what the row is.
+  "deliverable.work": () => true,
+  "deliverable.convert": (actor) => atLeast(actor, "manager"),
 
   // Anyone may put a meeting in the diary; in an agency this size, needing
   // permission to ask four people for half an hour is the bottleneck, not the

@@ -71,6 +71,7 @@ import {
   sops,
   projectTemplates,
   templateTasks,
+  deliverables,
   weeklyReviews,
   reviewDecisions,
   type NewTask,
@@ -380,6 +381,60 @@ async function main() {
 
   const insertedTasks = await scope.insert(tasks, taskRows);
   console.log(`Created ${insertedTasks.length} tasks`);
+
+  // --- Deliverables ----------------------------------------------------
+  // A few on the Lumen campaign, one per state, so the tab and the e2e read
+  // as a real flow rather than an empty panel. No `moment()` / `randomInt()`
+  // here on purpose -- those draw from the seeded PRNG and would shift every
+  // value seeded after this block (see the note on `fixedDaysAgo`).
+  const lumen = projectByKey.get("LUM")!;
+  const deliverableRows = await scope.insert(deliverables, [
+    {
+      projectId: lumen.id,
+      title: "Launch carrousel — 6 slides",
+      status: "producing" as const,
+      stage: "production" as const,
+      assigneeUserId: userId("marc.dubois@brandshift.test"),
+      dueDate: day(6),
+      position: 0,
+      createdByUserId: userId("priya.raman@brandshift.test"),
+    },
+    {
+      projectId: lumen.id,
+      title: "Teaser cut — 20s vertical",
+      status: "internal_review" as const,
+      stage: "review" as const,
+      assigneeUserId: userId("priya.raman@brandshift.test"),
+      dueDate: day(3),
+      position: 1,
+      startedAt: fixedDaysAgo(4),
+      createdByUserId: userId("priya.raman@brandshift.test"),
+    },
+    {
+      projectId: lumen.id,
+      title: "Key visual — hero banner",
+      status: "revising" as const,
+      stage: "client_validation" as const,
+      assigneeUserId: userId("marc.dubois@brandshift.test"),
+      clientFeedback: "Warmer background, and make the logo bigger.",
+      dueDate: day(-2),
+      position: 2,
+      startedAt: fixedDaysAgo(9),
+      createdByUserId: userId("priya.raman@brandshift.test"),
+    },
+    {
+      projectId: lumen.id,
+      title: "Announcement post — static",
+      status: "published" as const,
+      stage: "publishing" as const,
+      assigneeUserId: userId("marc.dubois@brandshift.test"),
+      position: 3,
+      startedAt: fixedDaysAgo(14),
+      publishedAt: fixedDaysAgo(1),
+      createdByUserId: userId("priya.raman@brandshift.test"),
+    },
+  ]);
+  console.log(`Created ${deliverableRows.length} deliverables`);
 
   // --- Activity ----------------------------------------------------------
   // One event per project creation and per task that has actually moved. This

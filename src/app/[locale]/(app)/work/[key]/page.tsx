@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { ProjectMeetings } from "@/components/calendar/project-meetings";
 import { ActivityFeed } from "@/components/work/activity-feed";
+import { DeliverablesPanel } from "@/components/work/deliverables-panel";
 import { ProjectDocs } from "@/components/work/project-docs";
 import { ProjectStageControl } from "@/components/work/project-stage-control";
 import { ProjectTabs } from "@/components/work/project-tabs";
@@ -20,6 +21,7 @@ import { listProjectActivity } from "@/lib/data/activity";
 import { listProjectMeetings } from "@/lib/data/meetings";
 import { listAssignablePeople } from "@/lib/data/people";
 import { getProjectByKey, listProjectMembers } from "@/lib/data/projects";
+import { listProjectDeliverables } from "@/lib/data/deliverables";
 import { getPlaybook, stageSetupFor } from "@/lib/data/playbook";
 import { sopForStage } from "@/lib/data/sops";
 import { bucketTasks, listProjectTasks, organizationToday } from "@/lib/data/tasks";
@@ -84,6 +86,10 @@ export default async function ProjectPage({
     listProjectMeetings(session.actor, project.id),
     listAssignablePeople(session.actor),
   ]);
+
+  const deliverables = await listProjectDeliverables(session.actor, project.id);
+  const canWorkDeliverables = can(session.actor, "deliverable.work");
+  const canConvertDeliverables = can(session.actor, "deliverable.convert");
 
   const mayManageTemplates = can(session.actor, "template.manage");
   const canSetStage = can(session.actor, "project.setStage", {
@@ -228,6 +234,26 @@ export default async function ProjectPage({
             />
           }
           docs={<ProjectDocs actor={session.actor} projectId={project.id} />}
+          deliverables={
+            <DeliverablesPanel
+              projectId={project.id}
+              deliverables={deliverables.map((row) => ({
+                id: row.id,
+                title: row.title,
+                description: row.description,
+                status: row.status,
+                stage: row.stage,
+                assigneeUserId: row.assigneeUserId,
+                assigneeName: row.assigneeName,
+                clientFeedback: row.clientFeedback,
+                dueDate: row.dueDate,
+              }))}
+              assignablePeople={assignablePeople}
+              convertibleTasks={open.map((task) => ({ id: task.id, title: task.title }))}
+              canWork={canWorkDeliverables}
+              canConvert={canConvertDeliverables}
+            />
+          }
           stageRail={<StageRail current={project.stage} />}
           stageControl={
             <ProjectStageControl
