@@ -5,8 +5,10 @@ import { eq, ilike, isNull, or, type SQL } from "drizzle-orm";
 import { departments, users } from "@/db/schema/people";
 import { projectMembers, projects } from "@/db/schema/projects";
 import { withOrg } from "@/db/tenancy";
+import { isUuid } from "@/lib/uuid";
 
 import type { Actor } from "../authz";
+import type { ProjectStage } from "./pipeline";
 
 /** Project reads. */
 
@@ -18,6 +20,9 @@ export type ProjectRow = {
   name: string;
   description: string | null;
   status: ProjectStatus;
+  /** Where it is in the client delivery flow. `null` for internal projects. */
+  stage: ProjectStage | null;
+  stageChangedAt: Date | null;
   priority: "low" | "medium" | "high" | "urgent";
   startDate: string | null;
   dueDate: string | null;
@@ -33,6 +38,8 @@ const PROJECT_FIELDS = {
   name: projects.name,
   description: projects.description,
   status: projects.status,
+  stage: projects.stage,
+  stageChangedAt: projects.stageChangedAt,
   priority: projects.priority,
   startDate: projects.startDate,
   dueDate: projects.dueDate,
@@ -106,6 +113,13 @@ export async function getProjectByKey(actor: Actor, key: string): Promise<Projec
   )) as ProjectRow[];
 
   return rows[0] ?? null;
+}
+
+/** The raw row by id -- for an action that needs `ownerUserId` for a `can()` check. */
+export async function getProjectById(actor: Actor, projectId: string) {
+  if (!isUuid(projectId)) return null;
+  const [row] = await withOrg(actor.organizationId).select(projects, eq(projects.id, projectId));
+  return row ?? null;
 }
 
 export type ProjectMemberRow = {

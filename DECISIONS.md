@@ -833,6 +833,33 @@ state might as well be the same.
 requests made from here on, not a retroactive lockout of every channel every person had already
 joined the old way.
 
+## Added during the client-project flow
+
+**`stage` and `status` are two different columns.** A project's `status` is the health of the
+work (active, on hold, done); its `stage` is where it sits in the client delivery flow
+(onboarding … reporting). They move independently -- a project can be `active` in
+`client_validation` or `on_hold` in `production` -- and collapsing them into one enum would
+force a choice between describing health and describing phase.
+
+**Eight stages, and the list is closed.** The same rule as `deal_stage`: every pipeline that
+grows a tenth stage grows it because somebody wanted a report. The eight are the stages the SOP
+library already names. A project with **no** stage is deliberate and common -- an internal
+build does not run the client flow -- and it simply never appears on the pipeline board.
+
+**The pipeline board is not a sixth destination.** Every rail is already full at five, so
+`/work/pipeline` is a second view of Work reached from a toggle and from the command palette,
+the same call CRM makes between its list and its board.
+
+**A document is ordered sections, not a rich-text body.** The same decision as an SOP's steps,
+for the same reason -- it renders with no Markdown parser and is not an HTML-injection surface
+for text several people edit -- and the Notion pages it was imported from were already
+heading-sectioned, so nothing was lost by the shape.
+
+**The pipeline board *is* draggable, where the CRM board is not.** Moving a deal to Lost has to
+ask why; moving a project between delivery stages records nothing anyone has to explain, and
+every drag has a keyboard equal in the two chevrons on each card. So the reason the CRM board
+stayed read-only does not apply here.
+
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the
   requirement is that everything runs on the local network.
 - **Restyling the existing Angular app** -- cheaper, but tenancy, permissions and the task schema

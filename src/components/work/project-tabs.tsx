@@ -35,9 +35,12 @@ export function ProjectTabs({
   canEditBoard,
   activity,
   meetings,
+  docs,
+  stageControl,
+  stageProcedure,
 }: {
   /** Which tab opens first. `tasks` when the URL names a task. */
-  defaultTab?: "overview" | "tasks" | "team" | "activity";
+  defaultTab?: "overview" | "tasks" | "team" | "activity" | "docs";
   description: string | null;
   priority: string;
   projectId: string;
@@ -57,6 +60,12 @@ export function ProjectTabs({
    * the data behind it is `server-only`.
    */
   meetings: React.ReactNode;
+  /** The Docs tab's content -- server-rendered, handed in like `activity`. */
+  docs: React.ReactNode;
+  /** The stage picker for the Overview panel -- a Client Component slot. */
+  stageControl: React.ReactNode;
+  /** The "procedure for this stage" block, server-rendered, or null. */
+  stageProcedure: React.ReactNode;
 }) {
   const t = useTranslations("Work");
 
@@ -65,11 +74,14 @@ export function ProjectTabs({
       <TabsList>
         <TabsTab value="overview">{t("overview")}</TabsTab>
         <TabsTab value="tasks">{t("tasks")}</TabsTab>
+        <TabsTab value="docs">{t("docs")}</TabsTab>
         <TabsTab value="team">{t("team")}</TabsTab>
         <TabsTab value="activity">{t("activity")}</TabsTab>
       </TabsList>
 
       <TabsPanel value="overview">
+        <div className="mb-5 flex flex-wrap items-center gap-3">{stageControl}</div>
+
         {description ? (
           <p className="text-body-lg text-fg-default max-w-2xl whitespace-pre-line">
             {description}
@@ -80,6 +92,8 @@ export function ProjectTabs({
         <div className="mt-4 flex flex-wrap gap-2">
           <Badge>{priority}</Badge>
         </div>
+
+        {stageProcedure ? <div className="mt-6">{stageProcedure}</div> : null}
 
         {/* What is booked about this work, where somebody reading about the
             project will actually see it. */}
@@ -96,6 +110,8 @@ export function ProjectTabs({
           canEditBoard={canEditBoard}
         />
       </TabsPanel>
+
+      <TabsPanel value="docs">{docs}</TabsPanel>
 
       <TabsPanel value="team">
         {members.length === 0 ? (

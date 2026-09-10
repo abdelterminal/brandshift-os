@@ -940,6 +940,55 @@ Decisions worth knowing:
 
 ---
 
+## The client-project flow
+
+The retired Notion workspace was, read in order, a **pipeline**: every client project runs
+Onboarding -> Brief -> Strategy -> Planning -> Production -> Review -> Client Validation ->
+Publishing -> Reporting, and each phase produces an artifact (a brief, a marketing plan, a
+shoot plan). The app had projects, tasks, channels and SOPs but nothing tied them into a flow,
+and no home for a free-form document. Built in three phases; each is its own plan, gate and
+deploy.
+
+### Phase 1 -- Stages, Documents, and the Notion import  [DONE]
+
+- [x] **`projects.stage`** -- a closed eight-value enum, nullable (an internal project has no
+      stage). `projects.stage_changed_at` drives "in this stage for N days". Migration `0021`.
+- [x] **`sops.stage`** -- a procedure attaches to a stage, so a project sitting in `production`
+      surfaces the production procedure on its own page. Closes the standing gap "SOPs are not
+      linked to the work they describe".
+- [x] **`/work/pipeline`** -- columns are stages, cards are projects, drag or the two chevrons
+      on a card move one project one stage. One drop is one `setProjectStageAction`; no batching
+      and no Save, because a project has exactly one stage. Reached from a toggle on `/work` and
+      from the palette, not a sixth rail destination.
+- [x] **`documents` + `document_sections`** -- the `sops`/`sop_steps` shape without the review
+      cadence: `kind`, an optional `projectId`, ordered plain-text sections. `/documents` for
+      the organization-level ones (playbooks, references), a **Docs** tab on each project for
+      its own briefs and plans.
+- [x] **`db:import:notion`** (replaces `db:import:sops`) -- one re-runnable script pulls the
+      SOP Library, the 22 projects, the 39 tasks, the Team responsibilities and the
+      free-standing pages (the Mr Dyaf dossier, the HQ/wiki pages, the templates) into `sops`,
+      `projects`, `tasks`, `memberships.job_title` and `documents`. See `MIGRATION.md`.
+- [x] A stage change records a `project.stageChanged` activity event, so it reaches the project
+      channel through the same feed that carries task moves.
+
+### Phase 2 -- Playbook  [NEXT]
+
+A `playbooks` table: an ordered list of stages, each carrying its SOP, a task template
+(`project_templates`) and the document kinds it is expected to produce. Starting a client
+project from a playbook instantiates the lot -- first stage set, that stage's tasks created on
+the schedule, blank document stubs waiting to be filled -- and the project page grows a
+progress rail through the stages. This is the fourth path in the app from a definition to a
+task, after a quote's lines, an SOP's steps and a template's tasks.
+
+### Phase 3 -- Deliverables
+
+A `deliverables` table distinct from `tasks`: a carrousel, a set of videos -- something that
+goes produced -> internal review -> sent to client -> revised -> published, with its own short
+status enum and a link to the stage that made it. Half the imported Notion "Tasks" read as
+deliverables, not tasks; this is where they belong on a second pass.
+
+---
+
 ## Backups
 
 One machine, one Postgres volume, and everything anybody has typed into this app lives in it.

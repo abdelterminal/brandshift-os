@@ -22,6 +22,7 @@ export const MEMBER_ROUTES = [
   "/en/channels",
   "/en/channels/general",
   "/en/channels/northwind-e-commerce-replatform",
+  "/en/documents",
   "/en/settings",
   "/en/profile",
 ] as const;
@@ -43,6 +44,9 @@ export const MANAGER_ROUTES = [
   // single-bucket one `?bucket=` narrows Today's own "View all" down to.
   "/en/work/queue",
   "/en/work/queue?bucket=unassigned",
+  // The pipeline board -- the app's third horizontal scroller, so the overflow
+  // sweep matters here the same way it does for a project's task board.
+  "/en/work/pipeline",
 ] as const;
 
 /**

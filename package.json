@@ -19,7 +19,7 @@
     "db:seed": "tsx --env-file=.env --conditions=react-server src/db/seed.ts",
     "db:reset": "tsx --env-file=.env --conditions=react-server src/db/reset.ts",
     "db:migrate:mongo": "tsx --env-file=.env --conditions=react-server src/db/migrate/run.ts",
-    "db:import:sops": "tsx --env-file=.env --conditions=react-server src/db/import-sops/run.ts"
+    "db:import:notion": "tsx --env-file=.env --conditions=react-server src/db/import-notion/run.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

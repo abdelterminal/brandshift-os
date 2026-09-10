@@ -49,7 +49,8 @@ export type NotificationRow = {
     | "quote"
     | "invoice"
     | "expense"
-    | "channel";
+    | "channel"
+    | "document";
   subjectId: string;
   actorName: string | null;
   taskId: string | null;
@@ -235,7 +236,8 @@ async function recipientsFor(
     }
 
     // Being added to a project is news; creating one is not.
-    case "project.created": {
+    case "project.created":
+    case "project.stageChanged": {
       if (!event.projectId) break;
       const members = await scope.selectFields(
         projectMembers,

@@ -9,7 +9,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { sopStatusEnum } from "./enums";
+import { projectStageEnum, sopStatusEnum } from "./enums";
 import { organizations } from "./organizations";
 import { departments, users } from "./people";
 
@@ -41,6 +41,13 @@ export const sops = pgTable(
     /** One or two sentences: what this is for, and when to reach for it. */
     summary: text("summary"),
     status: sopStatusEnum("status").notNull().default("draft"),
+    /**
+     * The delivery-flow stage this procedure belongs to, if any. A project
+     * sitting at `production` surfaces the procedure whose `stage` is
+     * `production`. `null` means it is a procedure that is not tied to one
+     * phase -- an onboarding checklist, a reporting cadence.
+     */
+    stage: projectStageEnum("stage"),
     departmentId: uuid("department_id").references(() => departments.id, {
       onDelete: "set null",
     }),
@@ -71,6 +78,7 @@ export const sops = pgTable(
   (t) => [
     uniqueIndex("sops_org_slug_key").on(t.organizationId, t.slug),
     index("sops_org_status_idx").on(t.organizationId, t.status),
+    index("sops_org_stage_idx").on(t.organizationId, t.stage),
     index("sops_org_department_idx").on(t.organizationId, t.departmentId),
     index("sops_org_reviewed_idx").on(t.organizationId, t.lastReviewedOn),
   ],

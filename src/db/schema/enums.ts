@@ -38,6 +38,26 @@ export const priorityEnum = pgEnum("priority", ["low", "medium", "high", "urgent
 export const projectRoleEnum = pgEnum("project_role", ["lead", "contributor", "viewer"]);
 
 /**
+ * Where a client project has got to in the delivery flow.
+ *
+ * Closed and short, the same discipline as `deal_stage`: every pipeline that
+ * grows a tenth stage grows it because somebody wanted a report. These are the
+ * stages the SOP library already describes -- a procedure attaches to one, and
+ * a project sitting at a stage shows that procedure. `null` on a project means
+ * it is internal work that does not run the client flow at all.
+ */
+export const projectStageEnum = pgEnum("project_stage", [
+  "onboarding",
+  "strategy",
+  "planning",
+  "production",
+  "review",
+  "client_validation",
+  "publishing",
+  "reporting",
+]);
+
+/**
  * Where a deal has got to.
  *
  * One vocabulary, and a short one. Every pipeline that grows a tenth stage
@@ -172,6 +192,25 @@ export const objectiveOutcomeEnum = pgEnum("objective_outcome", [
  * to point at.
  */
 export const sopStatusEnum = pgEnum("sop_status", ["draft", "published", "retired"]);
+
+/**
+ * What a document is.
+ *
+ * A document is prose that belongs to a project or to the organization -- a
+ * client brief, a marketing plan, a shoot plan, a case study, a playbook, a
+ * reference page. Distinct from a procedure (`sops`), which is an ordered list
+ * of steps for doing a job. The list is closed for the same reason `sop_status`
+ * is: a kind nobody can define the boundary of is a kind nobody files under.
+ */
+export const documentKindEnum = pgEnum("document_kind", [
+  "brief",
+  "marketing_system",
+  "pre_production",
+  "case_study",
+  "playbook",
+  "reference",
+  "note",
+]);
 /**
  * Where a message is in its life.
  *
@@ -207,4 +246,5 @@ export const activitySubjectEnum = pgEnum("activity_subject", [
   "template",
   "review",
   "channel",
+  "document",
 ]);

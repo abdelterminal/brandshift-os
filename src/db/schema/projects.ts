@@ -8,7 +8,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { priorityEnum, projectRoleEnum, projectStatusEnum } from "./enums";
+import { priorityEnum, projectRoleEnum, projectStageEnum, projectStatusEnum } from "./enums";
 import { organizations } from "./organizations";
 import { departments, users } from "./people";
 
@@ -25,6 +25,15 @@ export const projects = pgTable(
     name: text("name").notNull(),
     description: text("description"),
     status: projectStatusEnum("status").notNull().default("planning"),
+    /**
+     * Where the project is in the client delivery flow. `null` is deliberate
+     * and common: an internal project (the SaaS build, the website) does not
+     * run the client pipeline, so it has no stage and never appears on the
+     * pipeline board. `status` is the health of the work; `stage` is the phase.
+     */
+    stage: projectStageEnum("stage"),
+    /** When `stage` last changed -- drives "in this stage for 3 days" on the board. */
+    stageChangedAt: timestamp("stage_changed_at", { withTimezone: true }),
     priority: priorityEnum("priority").notNull().default("medium"),
     departmentId: uuid("department_id").references(() => departments.id, {
       onDelete: "set null",
@@ -44,6 +53,7 @@ export const projects = pgTable(
   (t) => [
     uniqueIndex("projects_org_key_key").on(t.organizationId, t.key),
     index("projects_org_status_idx").on(t.organizationId, t.status),
+    index("projects_org_stage_idx").on(t.organizationId, t.stage),
     index("projects_org_due_idx").on(t.organizationId, t.dueDate),
     index("projects_org_department_idx").on(t.organizationId, t.departmentId),
   ],

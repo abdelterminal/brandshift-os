@@ -6,6 +6,7 @@ import type { PgColumn, PgInsertValue, PgTable, PgUpdateSetSource } from "drizzl
 import { activityEvents } from "./schema/activity";
 import { channelMembers, channels, messages } from "./schema/channels";
 import { companies, contacts, deals } from "./schema/crm";
+import { documents, documentSections } from "./schema/documents";
 import { expenses, invoiceLines, invoices, quoteLines, quotes } from "./schema/finance";
 import { objectives, keyResults, keyResultCheckpoints } from "./schema/objectives";
 import { sops, sopSteps } from "./schema/sops";
@@ -74,6 +75,8 @@ export const TENANT_TABLES = {
   keyResultCheckpoints,
   sops,
   sopSteps,
+  documents,
+  documentSections,
   projectTemplates,
   templateTasks,
   weeklyReviews,

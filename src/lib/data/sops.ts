@@ -8,6 +8,7 @@ import { departments, sopSteps, sops, users } from "@/db/schema";
 import { withOrg } from "@/db/tenancy";
 import { isUuid } from "@/lib/uuid";
 import type { Actor } from "@/lib/authz";
+import type { ProjectStage } from "@/lib/data/pipeline";
 import { slugify } from "@/lib/slug";
 import { compareByUrgency, reviewDueOn, reviewState, type ReviewState } from "@/lib/sops";
 
@@ -29,6 +30,8 @@ export type SopView = {
   title: string;
   summary: string | null;
   status: "draft" | "published" | "retired";
+  /** The delivery-flow stage this procedure is the procedure for, if any. */
+  stage: ProjectStage | null;
   departmentId: string | null;
   departmentName: string | null;
   ownerUserId: string | null;
@@ -56,6 +59,7 @@ const SOP_FIELDS = {
   title: sops.title,
   summary: sops.summary,
   status: sops.status,
+  stage: sops.stage,
   departmentId: sops.departmentId,
   departmentName: departments.name,
   ownerUserId: sops.ownerUserId,
@@ -81,6 +85,7 @@ async function decorate(
     title: string;
     summary: string | null;
     status: SopView["status"];
+    stage: SopView["stage"];
     departmentId: string | null;
     departmentName: string | null;
     ownerUserId: string | null;
@@ -321,6 +326,37 @@ export async function setSopStatus(
   );
 
   return updated.length > 0;
+}
+
+/**
+ * The procedure for a delivery-flow stage, if one is assigned to it.
+ *
+ * Used on a project's page: a project sitting in `production` shows the
+ * procedure whose `stage` is `production`, so "how is this phase done" is one
+ * click from "which phase is this". Returns the first three step titles for a
+ * preview -- the whole thing lives on `/sops/<slug>`.
+ */
+export async function sopForStage(
+  actor: Actor,
+  stage: ProjectStage,
+): Promise<{ slug: string; title: string; stepTitles: string[] } | null> {
+  const [row] = await withOrg(actor.organizationId).selectFields(
+    sops,
+    { id: sops.id, slug: sops.slug, title: sops.title },
+    eq(sops.stage, stage),
+    ne(sops.status, "retired"),
+  );
+  if (!row) return null;
+
+  const steps = await withOrg(actor.organizationId).select(sopSteps, eq(sopSteps.sopId, row.id));
+  return {
+    slug: row.slug,
+    title: row.title,
+    stepTitles: steps
+      .sort((a, b) => a.position - b.position)
+      .slice(0, 3)
+      .map((step) => step.title),
+  };
 }
 
 export async function getSopById(actor: Actor, sopId: string) {

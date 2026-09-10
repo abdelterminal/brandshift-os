@@ -6,6 +6,7 @@ import { CountBadge, StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/feedback";
 import { ProjectFilters } from "@/components/work/project-filters";
+import { WorkViewToggle } from "@/components/work/view-toggle";
 import {
   Table,
   TableBody,
@@ -89,7 +90,8 @@ export default async function WorkPage({ searchParams }: PageProps<"/[locale]/wo
         ) : null}
       </header>
 
-      <div className="mt-6">
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <WorkViewToggle current="list" />
         <ProjectFilters departments={departments} />
       </div>
 

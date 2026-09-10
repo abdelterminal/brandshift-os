@@ -66,9 +66,11 @@ export type Action =
   | "sop.view"
   | "template.view"
   | "review.view"
+  | "document.view"
   | "task.viewQueue"
   // Doing
   | "project.create"
+  | "project.setStage"
   | "task.create"
   | "channel.post"
   | "channel.manageMembers"
@@ -82,6 +84,9 @@ export type Action =
   | "objective.record"
   | "sop.manage"
   | "sop.review"
+  | "document.create"
+  | "document.edit"
+  | "document.archive"
   | "template.manage"
   | "review.manage"
   | "member.invite"
@@ -184,6 +189,12 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   // a meeting held in a corridor.
   "review.view": () => true,
 
+  // A brief, a plan, a playbook -- the prose the work runs on. Readable by
+  // everyone in the org, the same as a procedure. Whether a project-scoped
+  // document's content is visible is a data-layer question about project
+  // membership, the same split `channel.view` already makes.
+  "document.view": () => true,
+
   // The uncapped version of Today's own coordination queue -- the same
   // "needs a decision" work, just not capped at eight rows. Today already
   // gates that queue to managers inline; this is its formal `can()` rule,
@@ -217,6 +228,20 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
 
   "project.create": (actor) => atLeast(actor, "manager"),
   "task.create": () => true,
+
+  // Moving a project along the delivery flow. A manager may, and so may the
+  // project's own owner -- the same "the person running it, or someone above"
+  // shape `meeting.manage` uses, pointed at `projects.ownerUserId`.
+  "project.setStage": (actor, resource) =>
+    atLeast(actor, "manager") || resource?.ownerUserId === actor.userId,
+
+  // Writing and editing documents is a manager's job, or anybody holding
+  // `people` -- the same rule as `sop.manage`, because a brief and a
+  // procedure are the same kind of shared knowledge. Archiving one is an
+  // admin's call, as retiring things generally is here.
+  "document.create": (actor) => atLeast(actor, "manager") || hasModule(actor, "people"),
+  "document.edit": (actor) => atLeast(actor, "manager") || hasModule(actor, "people"),
+  "document.archive": (actor) => atLeast(actor, "admin"),
 
   // Anyone may put a meeting in the diary; in an agency this size, needing
   // permission to ask four people for half an hour is the bottleneck, not the

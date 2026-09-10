@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 
 import { ProjectMeetings } from "@/components/calendar/project-meetings";
 import { ActivityFeed } from "@/components/work/activity-feed";
+import { ProjectDocs } from "@/components/work/project-docs";
+import { ProjectStageControl } from "@/components/work/project-stage-control";
 import { ProjectTabs } from "@/components/work/project-tabs";
 import { CaptureTemplateButton } from "@/components/templates/controls";
 import { PersonAvatar } from "@/components/ui/avatar";
@@ -16,6 +18,7 @@ import { listProjectActivity } from "@/lib/data/activity";
 import { listProjectMeetings } from "@/lib/data/meetings";
 import { listAssignablePeople } from "@/lib/data/people";
 import { getProjectByKey, listProjectMembers } from "@/lib/data/projects";
+import { sopForStage } from "@/lib/data/sops";
 import { bucketTasks, listProjectTasks, organizationToday } from "@/lib/data/tasks";
 
 /**
@@ -80,6 +83,12 @@ export default async function ProjectPage({
   ]);
 
   const mayManageTemplates = can(session.actor, "template.manage");
+  const canSetStage = can(session.actor, "project.setStage", {
+    ownerUserId: project.ownerUserId ?? undefined,
+  });
+  const stageProcedure = project.stage
+    ? await sopForStage(session.actor, project.stage)
+    : null;
   // Only this project's own lead or contributor may drag a card on its board
   // -- "viewer" exists as a role but nothing assigns it today, named here
   // rather than assumed so the day something does, it is excluded on purpose.
@@ -206,6 +215,34 @@ export default async function ProjectPage({
               projectId={project.id}
               timeZone={session.organization.timezone}
             />
+          }
+          docs={<ProjectDocs actor={session.actor} projectId={project.id} />}
+          stageControl={
+            <ProjectStageControl
+              projectId={project.id}
+              stage={project.stage}
+              canSet={canSetStage}
+            />
+          }
+          stageProcedure={
+            stageProcedure ? (
+              <div className="border-border rounded-card border p-4">
+                <p className="text-caption text-fg-muted">{t("procedureForStage")}</p>
+                <Link
+                  href={`/sops/${stageProcedure.slug}`}
+                  className="text-body text-fg-default mt-1 inline-block font-medium hover:underline"
+                >
+                  {stageProcedure.title}
+                </Link>
+                {stageProcedure.stepTitles.length > 0 ? (
+                  <ol className="text-caption text-fg-muted mt-2 list-decimal space-y-0.5 pl-4">
+                    {stageProcedure.stepTitles.map((step, index) => (
+                      <li key={index}>{step}</li>
+                    ))}
+                  </ol>
+                ) : null}
+              </div>
+            ) : null
           }
         />
       </div>
