@@ -8,6 +8,7 @@ export * from "./people";
 export * from "./sessions";
 export * from "./projects";
 export * from "./tasks";
+export * from "./task-links";
 export * from "./activity";
 export * from "./notifications";
 export * from "./channels";

@@ -5,6 +5,7 @@ import { Breadcrumbs } from "@/components/shell/breadcrumbs";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { CommandPalette } from "@/components/shell/command-palette";
 import { LiveSync } from "@/components/shell/live-sync";
+import { NotificationToasts } from "@/components/shell/notification-toasts";
 import { Sidebar } from "@/components/shell/sidebar";
 import { Tour } from "@/components/shell/tour";
 import { AccountMenu, LocaleSwitcher, OrgSwitcher } from "@/components/shell/switchers";
@@ -14,7 +15,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { bottomNavFor, destinationsFor, railFor, withChannels, withDepartments } from "@/lib/navigation";
 import { listJoinedChannels } from "@/lib/data/channels";
 import { listDepartments } from "@/lib/data/people";
-import { unreadCount } from "@/lib/data/notifications";
+import { listNotifications, unreadCount } from "@/lib/data/notifications";
 import { paletteIndex } from "@/lib/palette";
 import { requireUser } from "@/lib/auth/guards";
 
@@ -48,12 +49,31 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
   ]);
   const { actor, user, membership, organization, organizations } = session;
 
-  const [entries, inboxUnread, channels, departments] = await Promise.all([
+  const [entries, inboxUnread, channels, departments, recent] = await Promise.all([
     paletteIndex(actor),
     unreadCount(actor),
     listJoinedChannels(actor),
     listDepartments(actor),
+    listNotifications(actor, 15),
   ]);
+
+  // The unread ones, for the corner toasts. Serialised to the fields the copy
+  // helpers need -- no dates cross the boundary.
+  const toastItems = recent
+    .filter((row) => row.readAt === null)
+    .map((row) => ({
+      id: row.id,
+      verb: row.verb,
+      metadata: row.metadata,
+      subjectType: row.subjectType,
+      subjectId: row.subjectId,
+      actorName: row.actorName,
+      taskId: row.taskId,
+      taskTitle: row.taskTitle,
+      projectKey: row.projectKey,
+      projectName: row.projectName,
+      channelSlug: row.channelSlug,
+    }));
 
   // Every number on the rail is a count of rows you can go and act on -- never
   // a badge meaning "something happened somewhere". Channels are keyed by their
@@ -158,6 +178,8 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
         {/* One SSE connection for the whole shell: other people's changes land
             on the page without a refresh. */}
         <LiveSync />
+        {/* New notifications, popped into the corner as they arrive. */}
+        <NotificationToasts items={toastItems} />
       </ToastProvider>
     </TooltipProvider>
   );

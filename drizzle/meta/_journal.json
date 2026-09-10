@@ -169,6 +169,13 @@
       "when": 1789048884662,
       "tag": "0023_wandering_lake",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1789063486383,
+      "tag": "0024_fresh_wildside",
+      "breakpoints": true
     }
   ]
 }

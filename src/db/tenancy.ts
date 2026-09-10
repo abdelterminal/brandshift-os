@@ -22,6 +22,7 @@ import { organizations } from "./schema/organizations";
 import { departments, memberships } from "./schema/people";
 import { projectMembers, projects } from "./schema/projects";
 import { tasks } from "./schema/tasks";
+import { taskLinks } from "./schema/task-links";
 import { db, type Database } from "./client";
 import { publishLiveChange } from "@/lib/realtime/live-bus";
 import { topicForTable } from "@/lib/realtime/live-topics";
@@ -58,6 +59,7 @@ export const TENANT_TABLES = {
   projects,
   projectMembers,
   tasks,
+  taskLinks,
   activityEvents,
   notifications,
   channels,

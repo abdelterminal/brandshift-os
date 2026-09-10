@@ -28,6 +28,7 @@ import { assignTask, clearBlocker, completeTask, reportBlocker, startTask } from
 import type { AssignablePerson, TaskRow } from "@/lib/data/task-types";
 
 import { STATUS_TONE } from "./task-list";
+import { TaskHandoffs } from "./task-handoffs";
 
 type ComboboxOption = { value: string; label: string };
 
@@ -228,6 +229,13 @@ export function TaskDrawer({
               </div>
             ) : null}
           </dl>
+
+          <TaskHandoffs
+            key={task.id}
+            taskId={task.id}
+            canWork={canWork}
+            onChanged={() => router.refresh()}
+          />
 
           {blockerOpen ? (
             <Field>

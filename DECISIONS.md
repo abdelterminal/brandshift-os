@@ -979,3 +979,34 @@ more of that task or that person is exposed. See `task-links.ts`.
 
 **The calendar, objectives, weekly reviews and channels are deliberately left open** for now --
 narrowing them is a follow-up, recorded in `KNOWN-GAPS.md` rather than half-done here.
+
+## Added with the handoff link and the corner toasts
+
+**A handoff is a row in `task_links`, not a status on the task.** "The thumbnail is waiting on the
+video edit" is a relationship between two tasks, so it is its own table -- `blocked_task_id`
+needs `blocking_task_id` first. Both are on the same project (a cross-project link wants a task
+search that does not exist yet). It is created by the person on the waiting task, or a manager --
+you declare your own dependency -- and the check lives in the actions, next to `mayWorkOn`, not
+in `authz.ts`.
+
+**The link is the one thread that reaches across the member silo.** Through it a member sees a
+single upstream or downstream task as a title, a status and a name -- nothing else, and nothing
+about that person beyond the name. Everywhere else a member sees only their own work; here they
+see just enough to know whether they are unblocked and who to chase.
+
+**The nudge is `task.nudged`, rate-limited by the row itself.** `last_nudged_at` gates it to once
+every twelve hours, so a reminder stays a reminder. It fans out to the assignee of the task that
+is holding things up; `task.completed` now also notifies the assignees of everything that task
+was blocking, so the person waiting hears it moved without being nudged back. Auto-nudging an
+overdue upstream task is a separate plan -- it needs the scheduler half a dozen gaps wait on.
+
+**The corner toasts reuse everything.** The bottom-right viewport is the one an action
+confirmation already uses; the wording comes from the same `describeNotification` the inbox
+list uses, so an event is never phrased two ways. `NotificationToasts` does not open a third
+SSE connection -- it reads the unread list the shell hands it, kept current by `LiveSync`'s
+refresh, and pops what is new. Its first render only remembers what is already there, and a
+page reload does the same, so coming back to a tab does not replay a morning of notifications.
+
+- **A toast is now more than "you did a thing"** -- the component's doc said it was only for the
+  result of an action the viewer took. Pushed notifications now use it too; state the viewer did
+  not cause is exactly what a toast in the corner is for when it is something they should see now.

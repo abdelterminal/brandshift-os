@@ -44,6 +44,7 @@ export type LiveTopic = (typeof LIVE_TOPICS)[number];
  */
 export const TABLE_TOPIC: Readonly<Record<string, LiveTopic>> = {
   tasks: "tasks",
+  task_links: "tasks",
   projects: "projects",
   project_members: "projects",
   deliverables: "deliverables",

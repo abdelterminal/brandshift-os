@@ -13,6 +13,8 @@ import { Link } from "@/i18n/navigation";
 import { markAllNotificationsRead, markNotificationRead } from "@/lib/actions/notifications";
 import { cn } from "@/lib/utils";
 
+import { describeNotification, notificationHref } from "./notification-copy";
+
 /**
  * Serialisable shape. The row type itself lives in a `server-only` module, and
  * dates cross the boundary as ISO strings because a Date does not survive it.
@@ -58,44 +60,8 @@ export function NotificationList({ items }: { items: InboxItem[] }) {
     );
   }
 
-  /**
-   * `task.assigned` in the database becomes `taskAssigned` as a message key --
-   * next-intl reads a dot as nesting and refuses a key containing one.
-   */
-  const messageKey = (verb: string) =>
-    verb
-      .split(".")
-      .map((part, index) => (index === 0 ? part : part[0]!.toUpperCase() + part.slice(1)))
-      .join("");
-
-  function describe(item: InboxItem) {
-    const metadata = item.metadata as Record<string, string | undefined>;
-    // The event's own metadata first. It records what the thing was called at
-    // the time, and it is the only source for anything that is neither a task
-    // nor a project -- a meeting title, for one.
-    const title = metadata.title ?? item.taskTitle ?? item.projectName ?? n("aTask");
-    try {
-      return n(messageKey(item.verb) as "taskAssigned", { title, to: metadata.to ?? "" });
-    } catch {
-      return n("unknown");
-    }
-  }
-
-  /** Where it takes you. A notification you cannot act on is just noise. */
-  function href(item: InboxItem): string {
-    if (item.subjectType === "meeting") return `/calendar/${item.subjectId}`;
-    // A leave request has no page of its own: it is a row on the time-off
-    // screen, which is where both halves of the conversation happen.
-    if (item.subjectType === "leave") return "/leave";
-    // A join request, its approval and its decline all point at the channel
-    // itself -- the request lands you on the pending-requests panel there if
-    // you can act on it, and the answer lands you on the conversation you can
-    // now (or still can't) see.
-    if (item.subjectType === "channel" && item.channelSlug) return `/channels/${item.channelSlug}`;
-    if (item.projectKey && item.taskId) return `/work/${item.projectKey}?task=${item.taskId}`;
-    if (item.projectKey) return `/work/${item.projectKey}`;
-    return "/today";
-  }
+  const describe = (item: InboxItem) => describeNotification(item, n);
+  const href = notificationHref;
 
   const today = new Date().toDateString();
   const groups = [

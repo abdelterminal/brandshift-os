@@ -10,9 +10,10 @@ import { focusRing, transition } from "./styles";
 /**
  * Toast -- confirmation that something happened, and the chance to undo it.
  *
- * Reserved for the result of an action the person took. It is not a place to
- * report state they did not cause; that belongs on the screen itself. Anything
- * carrying an Undo should stay long enough to actually be undone.
+ * Mostly the result of an action the person took. The exception is a pushed
+ * notification (`NotificationToasts`): state they did not cause, but should
+ * see now rather than on their next trip to the inbox. Anything carrying an
+ * Undo should stay long enough to actually be undone.
  *
  * Base UI's viewport already handles focus and hover-to-pause, so a toast
  * cannot vanish out from under someone reading it.

@@ -62,6 +62,7 @@ import {
   projects,
   sessions,
   tasks,
+  taskLinks,
   users,
   type NewActivityEvent,
   keyResultCheckpoints,
@@ -381,6 +382,29 @@ async function main() {
 
   const insertedTasks = await scope.insert(tasks, taskRows);
   console.log(`Created ${insertedTasks.length} tasks`);
+
+  // --- Handoffs ------------------------------------------------------------
+  // A couple of real dependencies so the drawer's "Waiting on" / "Blocks"
+  // section is not empty on a fresh database. `taskId` looks a task up by its
+  // project and exact title.
+  const taskId = (projectKey: string, title: string): string => {
+    const project = projectByKey.get(projectKey)!;
+    const row = insertedTasks.find((task) => task.projectId === project.id && task.title === title);
+    if (!row) throw new Error(`Seed handoff: no task "${title}" on ${projectKey}`);
+    return row.id;
+  };
+  await scope.insert(taskLinks, [
+    {
+      blockedTaskId: taskId("LUM", "Social cutdowns, nine by sixteen"),
+      blockingTaskId: taskId("LUM", "Storyboard and shot list"),
+      createdByUserId: userId("priya.raman@brandshift.test"),
+    },
+    {
+      blockedTaskId: taskId("HAR", "Wireframe the new welcome sequence"),
+      blockingTaskId: taskId("HAR", "Define the first ten minutes we are actually fixing"),
+      createdByUserId: userId("elena.rossi@brandshift.test"),
+    },
+  ]);
 
   // --- Deliverables ----------------------------------------------------
   // A few on the Lumen campaign, one per state, so the tab and the e2e read

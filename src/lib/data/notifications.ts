@@ -228,11 +228,25 @@ async function recipientsFor(
       break;
     }
 
-    // The person waiting on it hears that it moved.
+    // The person waiting on it hears that it moved -- the project's owner, and
+    // anyone whose own task was linked as waiting on this one.
     case "task.unblocked":
     case "task.completed": {
-      const owner = await projectOwner();
+      const { downstreamAssignees } = await import("./task-links");
+      const [owner, waiting] = await Promise.all([
+        projectOwner(),
+        event.taskId ? downstreamAssignees(actor, event.taskId, executor) : Promise.resolve([]),
+      ]);
       if (owner) recipients.add(owner);
+      for (const userId of waiting) recipients.add(userId);
+      break;
+    }
+
+    // A nudge goes to the one person who can clear the handoff: whoever holds
+    // the task that is holding things up.
+    case "task.nudged": {
+      const assignee = await taskAssignee();
+      if (assignee) recipients.add(assignee);
       break;
     }
 
