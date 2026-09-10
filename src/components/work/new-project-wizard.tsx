@@ -56,6 +56,7 @@ export function NewProjectWizard({
 }) {
   const t = useTranslations("NewProject");
   const ui = useTranslations("Ui");
+  const work = useTranslations("Work");
   const stepRef = useRef<HTMLHeadingElement>(null);
   const priorities = useTranslations("Priority");
 
@@ -73,6 +74,7 @@ export function NewProjectWizard({
     ownerUserId: "",
     memberIds: [] as string[],
     deliverables: "",
+    startOnFlow: false,
   });
 
   useEffect(() => { stepRef.current?.focus(); }, [step]);
@@ -109,6 +111,7 @@ export function NewProjectWizard({
           .split("\n")
           .map((line) => line.trim())
           .filter((line) => line.length >= 2),
+        startOnFlow: form.startOnFlow,
       });
 
       // A successful create redirects, so reaching here means it failed.
@@ -456,6 +459,23 @@ export function NewProjectWizard({
                   </ul>
                 )}
               </div>
+
+              <label className="border-border mt-6 flex items-start gap-2.5 rounded-card border p-3">
+                <input
+                  type="checkbox"
+                  checked={form.startOnFlow}
+                  onChange={(event) =>
+                    setForm((previous) => ({ ...previous, startOnFlow: event.target.checked }))
+                  }
+                  className="mt-0.5 size-4 rounded-[4px]"
+                />
+                <span>
+                  <span className="text-body text-fg-default block">{work("startOnFlow")}</span>
+                  <span className="text-caption text-fg-muted mt-0.5 block">
+                    {work("startOnFlowHint")}
+                  </span>
+                </span>
+              </label>
             </div>
           ) : null}
         </CardContent>

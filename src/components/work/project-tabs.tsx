@@ -36,7 +36,9 @@ export function ProjectTabs({
   activity,
   meetings,
   docs,
+  stageRail,
   stageControl,
+  stageSetup,
   stageProcedure,
 }: {
   /** Which tab opens first. `tasks` when the URL names a task. */
@@ -62,8 +64,12 @@ export function ProjectTabs({
   meetings: React.ReactNode;
   /** The Docs tab's content -- server-rendered, handed in like `activity`. */
   docs: React.ReactNode;
+  /** The eight-stage progress rail, server-rendered. */
+  stageRail: React.ReactNode;
   /** The stage picker for the Overview panel -- a Client Component slot. */
   stageControl: React.ReactNode;
+  /** The "set up this stage" button / done note -- a Client Component slot. */
+  stageSetup: React.ReactNode;
   /** The "procedure for this stage" block, server-rendered, or null. */
   stageProcedure: React.ReactNode;
 }) {
@@ -80,7 +86,13 @@ export function ProjectTabs({
       </TabsList>
 
       <TabsPanel value="overview">
-        <div className="mb-5 flex flex-wrap items-center gap-3">{stageControl}</div>
+        <div className="mb-5 space-y-3">
+          {stageRail}
+          <div className="flex flex-wrap items-center gap-3">
+            {stageControl}
+            {stageSetup}
+          </div>
+        </div>
 
         {description ? (
           <p className="text-body-lg text-fg-default max-w-2xl whitespace-pre-line">

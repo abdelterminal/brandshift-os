@@ -38,6 +38,7 @@ export type NavIconName =
   | "sops"
   | "documents"
   | "pipeline"
+  | "playbook"
   | "templates"
   | "reviews";
 
@@ -252,6 +253,7 @@ export const ALL_DESTINATIONS: Destination[] = [
   // Like Objectives and SOPs: reached deliberately, not lived in. The pipeline
   // board is a second view of Work; documents are the prose that hangs off it.
   { id: "pipeline", href: "/work/pipeline", icon: "pipeline", requires: "work.view" },
+  { id: "playbook", href: "/playbook", icon: "playbook", requires: "playbook.manage" },
   { id: "documents", href: "/documents", icon: "documents", requires: "document.view" },
   { id: "templates", href: "/templates", icon: "templates", requires: "template.view" },
   { id: "reviews", href: "/reviews", icon: "reviews", requires: "review.view" },

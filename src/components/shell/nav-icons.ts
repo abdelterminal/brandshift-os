@@ -16,6 +16,7 @@ import {
   CalendarCheck,
   FileText,
   Workflow,
+  Route,
   Sun,
   Users,
   type LucideIcon,
@@ -49,6 +50,7 @@ export const NAV_ICONS: Record<NavIconName, LucideIcon> = {
   sops: BookOpenCheck,
   documents: FileText,
   pipeline: Workflow,
+  playbook: Route,
   templates: Copy,
   reviews: CalendarCheck,
 };

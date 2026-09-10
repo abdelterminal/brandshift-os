@@ -971,14 +971,25 @@ deploy.
 - [x] A stage change records a `project.stageChanged` activity event, so it reaches the project
       channel through the same feed that carries task moves.
 
-### Phase 2 -- Playbook  [NEXT]
+### Phase 2 -- Playbook  [DONE]
 
-A `playbooks` table: an ordered list of stages, each carrying its SOP, a task template
-(`project_templates`) and the document kinds it is expected to produce. Starting a client
-project from a playbook instantiates the lot -- first stage set, that stage's tasks created on
-the schedule, blank document stubs waiting to be filled -- and the project page grows a
-progress rail through the stages. This is the fourth path in the app from a definition to a
-task, after a quote's lines, an SOP's steps and a template's tasks.
+- [x] **`stage_playbook`** -- one row per stage per org, not a table of named playbooks: the
+      eight-stage enum *is* the flow. Each row is a task template (`project_templates`) and a
+      list of expected document kinds; the procedure is `sops.stage`, read live.
+- [x] **`project_stage_setup`** -- the marker that a stage was instantiated for a project, so
+      "Set up this stage" offers once and a second run is refused.
+- [x] **`setUpStage`** -- one transaction: the template's tasks on the schedule (anchored on
+      the day the stage is entered, not the project's start), a blank `documents` stub per
+      expected kind, the marker row. The fourth path from a definition to a task, after a
+      quote's lines, an SOP's steps and a template's tasks -- and it reuses `scheduleFor` from
+      the templates milestone.
+- [x] **`/playbook`** -- the eight stages, each with a template picker and document-kind
+      checkboxes, `playbook.manage` (manager). Palette-reachable, not a rail.
+- [x] **Project page** -- a progress rail through the eight stages on the Overview panel, and a
+      "Set up this stage" button when the current stage has a playbook and has not been run.
+- [x] **The wizard's "start on the delivery flow" checkbox** -- `createProject` sets
+      `stage = onboarding` and runs onboarding's setup in the same transaction, sharing
+      `instantiateStage` with the button's path.
 
 ### Phase 3 -- Deliverables
 

@@ -87,6 +87,7 @@ export type Action =
   | "document.create"
   | "document.edit"
   | "document.archive"
+  | "playbook.manage"
   | "template.manage"
   | "review.manage"
   | "member.invite"
@@ -242,6 +243,10 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   "document.create": (actor) => atLeast(actor, "manager") || hasModule(actor, "people"),
   "document.edit": (actor) => atLeast(actor, "manager") || hasModule(actor, "people"),
   "document.archive": (actor) => atLeast(actor, "admin"),
+
+  // Configuring what a stage sets up -- its template and its expected
+  // documents -- is the same kind of decision as writing a template.
+  "playbook.manage": (actor) => atLeast(actor, "manager"),
 
   // Anyone may put a meeting in the diary; in an agency this size, needing
   // permission to ask four people for half an hour is the bottleneck, not the

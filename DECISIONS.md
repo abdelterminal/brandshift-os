@@ -860,6 +860,22 @@ ask why; moving a project between delivery stages records nothing anyone has to 
 every drag has a keyboard equal in the two chevrons on each card. So the reason the CRM board
 stayed read-only does not apply here.
 
+**One implicit playbook, not a table of them.** The organisation runs one delivery flow -- the
+eight-stage enum *is* the flow, the SOP library *is* its procedures. So `stage_playbook` is one
+row per stage, no name and no slug. A second client-type that needs its own flow is a later
+table; building it now would be a config screen for a choice nobody is making.
+
+**A stage's schedule anchors on entry, not on the project's start.** When "Set up this stage"
+runs, the template's `offsetDays` are counted from that day. A stage's clock starts when you
+reach it -- a production template that says "shoot on day 14" means fourteen days after
+production begins, not after the project did, which could be months earlier.
+
+**Setup is manual, and runs once.** Reaching a stage does not automatically create its tasks --
+a button does, and `project_stage_setup` stops it running twice. Auto-firing on stage change
+would double up every time a project moved back and forth, and "the last task of a stage is
+done, propose the next stage" is a smarter trigger that belongs in its own pass, not bolted
+onto the drag.
+
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the
   requirement is that everything runs on the local network.
 - **Restyling the existing Angular app** -- cheaper, but tenancy, permissions and the task schema

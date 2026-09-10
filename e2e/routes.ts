@@ -35,6 +35,7 @@ export const MANAGER_ROUTES = [
   "/en/objectives",
   "/en/sops",
   "/en/templates",
+  "/en/playbook",
   "/en/reviews",
   "/en/work/new",
   // A project page, because the board inside it is the app's other horizontal

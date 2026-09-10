@@ -19,6 +19,7 @@ export * from "./objectives";
 export * from "./sops";
 export * from "./documents";
 export * from "./templates";
+export * from "./playbook";
 export * from "./reviews";
 export * from "./mail";
 export * from "./relations";

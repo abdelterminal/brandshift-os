@@ -6,13 +6,18 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { stagePlaybook, projectStageSetup } from "@/db/schema/playbook";
 import { projectMembers, projects } from "@/db/schema/projects";
 import { tasks } from "@/db/schema/tasks";
 import { withOrg } from "@/db/tenancy";
 import { db } from "@/db/client";
 import { requirePermissionForAction } from "@/lib/auth/guards";
+import { dayKey } from "@/lib/calendar-dates";
 import { recordActivity } from "@/lib/data/activity";
 import { ensureProjectChannel } from "@/lib/data/channels";
+import type { DocumentKind } from "@/lib/data/document-kinds";
+import { uniqueDocumentSlug } from "@/lib/data/documents";
+import { documentStubTitle, instantiateStage } from "@/lib/data/playbook";
 
 /**
  * Creating a project.
@@ -42,6 +47,8 @@ const createProjectSchema = z.object({
   memberIds: z.array(z.uuid()).default([]),
   /** One deliverable per line, becoming the project's first tasks. */
   deliverables: z.array(z.string().trim().min(2).max(200)).default([]),
+  /** Put the project on the delivery flow and run onboarding's setup. */
+  startOnFlow: z.boolean().default(false),
 });
 
 export type CreateProjectInput = z.input<typeof createProjectSchema>;
@@ -74,6 +81,27 @@ export async function createProject(input: CreateProjectInput): Promise<CreatePr
     return { ok: false, error: "invalid", fieldErrors: { key: "keyTaken" } };
   }
 
+  // If the project starts on the flow, resolve onboarding's playbook and the
+  // document-stub slugs before the transaction opens -- `uniqueDocumentSlug`
+  // reads outside it.
+  const anchorIso = data.dueDate || dayKey(new Date(), session.organization.timezone);
+  const onboarding = data.startOnFlow
+    ? (
+        await scope.selectFields(
+          stagePlaybook,
+          { templateId: stagePlaybook.templateId, docKinds: stagePlaybook.expectedDocKinds },
+          eq(stagePlaybook.stage, "onboarding"),
+        )
+      )[0] ?? null
+    : null;
+  const stubs: { slug: string; title: string; kind: DocumentKind }[] = [];
+  if (onboarding) {
+    for (const kind of (onboarding.docKinds ?? []) as DocumentKind[]) {
+      const title = `${documentStubTitle(kind)} — ${data.name}`.slice(0, 200);
+      stubs.push({ slug: await uniqueDocumentSlug(session.actor, title), title, kind });
+    }
+  }
+
   const created = await db.transaction(async (tx) => {
     const txScope = withOrg(session.actor.organizationId, tx);
 
@@ -82,6 +110,8 @@ export async function createProject(input: CreateProjectInput): Promise<CreatePr
       name: data.name,
       description: data.description || null,
       status: "planning",
+      stage: data.startOnFlow ? "onboarding" : null,
+      stageChangedAt: data.startOnFlow ? new Date() : null,
       priority: data.priority,
       departmentId: data.departmentId || null,
       ownerUserId: data.ownerUserId || session.actor.userId,
@@ -120,6 +150,25 @@ export async function createProject(input: CreateProjectInput): Promise<CreatePr
     // In the same transaction as the team it is built from, so a project can
     // never exist with members and no place for them to talk.
     await ensureProjectChannel(session.actor, project!, tx);
+
+    // Onboarding's playbook, run in the same transaction: its template's tasks
+    // on the schedule and a blank document per expected kind.
+    if (onboarding && (onboarding.templateId || stubs.length > 0)) {
+      const counts = await instantiateStage(txScope, {
+        projectId: project!.id,
+        templateId: onboarding.templateId,
+        anchorIso,
+        stubs,
+        actorUserId: session.actor.userId,
+      });
+      await txScope.insert(projectStageSetup, {
+        projectId: project!.id,
+        stage: "onboarding",
+        taskCount: counts.taskCount,
+        documentCount: counts.documentCount,
+        setUpByUserId: session.actor.userId,
+      });
+    }
 
     return project!;
   });

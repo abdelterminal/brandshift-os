@@ -33,6 +33,7 @@
     "objectives": "Objectifs",
     "sops": "Procédures",
     "pipeline": "Flux de livraison",
+    "playbook": "Playbook",
     "documents": "Documents",
     "templates": "Modèles",
     "reviews": "Revues"
@@ -260,7 +261,14 @@
     "docs": "Docs",
     "newDocument": "Nouveau document",
     "noDocs": "Aucun document sur ce projet",
-    "noDocsBody": "Un brief, un plan, une étude de cas — tout ce qui est écrit et rattaché à ce projet."
+    "noDocsBody": "Un brief, un plan, une étude de cas — tout ce qui est écrit et rattaché à ce projet.",
+    "setUpStage": "Préparer cette étape",
+    "stageSetUp": "{tasks} tâches et {documents} documents ajoutés",
+    "stageAlreadySetUp": "Cette étape a été préparée.",
+    "stageNotConfigured": "Cette étape n'a pas encore de playbook.",
+    "progressRail": "Progression du flux de livraison",
+    "startOnFlow": "Démarrer ce projet sur le flux de livraison",
+    "startOnFlowHint": "Définit l'étape sur Intégration et crée ses tâches et documents."
   },
   "Task": {
     "bucketOverdue": "En retard",
@@ -443,6 +451,7 @@
     "invoiceVoided": "a annulé {number}",
     "departmentCreated": "a ajouté le département {name}",
     "projectStageChanged": "a déplacé {title} vers {to}",
+    "projectStageSetUp": "a préparé l'étape {to} sur {title}",
     "documentCreated": "a ajouté le document {title}",
     "documentUpdated": "a mis à jour {title}",
     "documentArchived": "a archivé {title}",
@@ -1126,6 +1135,18 @@
     "overdueCount": "{count} en retard",
     "moveForbidden": "Seul le responsable du projet ou un manager peut le déplacer.",
     "moved": "Déplacé vers {stage}."
+  },
+  "Playbook": {
+    "title": "Playbook",
+    "subtitle": "Ce que la mise en place de chaque étape crée : la procédure, un modèle de tâches et les documents à produire",
+    "stageProcedure": "Procédure",
+    "noProcedure": "Aucune procédure assignée à cette étape",
+    "taskTemplate": "Modèle de tâches",
+    "noTemplate": "Aucune tâche",
+    "expectedDocuments": "Documents attendus",
+    "save": "Enregistrer",
+    "saved": "Enregistré",
+    "manageHint": "Définissez un modèle et des types de documents par étape. Les projets sur le flux de livraison les récupèrent en atteignant l'étape."
   },
   "DocumentKind": {
     "brief": "Brief",

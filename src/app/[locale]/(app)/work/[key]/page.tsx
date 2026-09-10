@@ -7,6 +7,8 @@ import { ActivityFeed } from "@/components/work/activity-feed";
 import { ProjectDocs } from "@/components/work/project-docs";
 import { ProjectStageControl } from "@/components/work/project-stage-control";
 import { ProjectTabs } from "@/components/work/project-tabs";
+import { StageRail } from "@/components/work/stage-rail";
+import { StageSetupButton } from "@/components/work/stage-setup-button";
 import { CaptureTemplateButton } from "@/components/templates/controls";
 import { PersonAvatar } from "@/components/ui/avatar";
 import { CountBadge, StatusPill } from "@/components/ui/badge";
@@ -18,6 +20,7 @@ import { listProjectActivity } from "@/lib/data/activity";
 import { listProjectMeetings } from "@/lib/data/meetings";
 import { listAssignablePeople } from "@/lib/data/people";
 import { getProjectByKey, listProjectMembers } from "@/lib/data/projects";
+import { getPlaybook, stageSetupFor } from "@/lib/data/playbook";
 import { sopForStage } from "@/lib/data/sops";
 import { bucketTasks, listProjectTasks, organizationToday } from "@/lib/data/tasks";
 
@@ -86,9 +89,17 @@ export default async function ProjectPage({
   const canSetStage = can(session.actor, "project.setStage", {
     ownerUserId: project.ownerUserId ?? undefined,
   });
-  const stageProcedure = project.stage
-    ? await sopForStage(session.actor, project.stage)
-    : null;
+  const [stageProcedure, playbook, setupDone] = await Promise.all([
+    project.stage ? sopForStage(session.actor, project.stage) : Promise.resolve(null),
+    getPlaybook(session.actor),
+    stageSetupFor(session.actor, project.id),
+  ]);
+  const stageConfigured = project.stage
+    ? Boolean(
+        playbook.find((row) => row.stage === project.stage)?.templateId ||
+          (playbook.find((row) => row.stage === project.stage)?.docKinds.length ?? 0) > 0,
+      )
+    : false;
   // Only this project's own lead or contributor may drag a card on its board
   // -- "viewer" exists as a role but nothing assigns it today, named here
   // rather than assumed so the day something does, it is excluded on purpose.
@@ -217,12 +228,24 @@ export default async function ProjectPage({
             />
           }
           docs={<ProjectDocs actor={session.actor} projectId={project.id} />}
+          stageRail={<StageRail current={project.stage} />}
           stageControl={
             <ProjectStageControl
               projectId={project.id}
               stage={project.stage}
               canSet={canSetStage}
             />
+          }
+          stageSetup={
+            project.stage ? (
+              <StageSetupButton
+                projectId={project.id}
+                stage={project.stage}
+                configured={stageConfigured}
+                alreadySetUp={setupDone.has(project.stage)}
+                canSetUp={canSetStage}
+              />
+            ) : null
           }
           stageProcedure={
             stageProcedure ? (

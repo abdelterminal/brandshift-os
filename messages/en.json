@@ -33,6 +33,7 @@
     "objectives": "Objectives",
     "sops": "Procedures",
     "pipeline": "Delivery flow",
+    "playbook": "Playbook",
     "documents": "Documents",
     "templates": "Templates",
     "reviews": "Reviews"
@@ -260,7 +261,14 @@
     "docs": "Docs",
     "newDocument": "New document",
     "noDocs": "No documents on this project yet",
-    "noDocsBody": "A brief, a plan, a case study — anything written down that belongs to this project."
+    "noDocsBody": "A brief, a plan, a case study — anything written down that belongs to this project.",
+    "setUpStage": "Set up this stage",
+    "stageSetUp": "Added {tasks} tasks and {documents} documents",
+    "stageAlreadySetUp": "This stage has been set up.",
+    "stageNotConfigured": "This stage has no playbook yet.",
+    "progressRail": "Delivery flow progress",
+    "startOnFlow": "Start this project on the delivery flow",
+    "startOnFlowHint": "Sets the stage to Onboarding and creates its tasks and documents."
   },
   "Task": {
     "bucketOverdue": "Overdue",
@@ -443,6 +451,7 @@
     "invoiceVoided": "voided {number}",
     "departmentCreated": "added the {name} department",
     "projectStageChanged": "moved {title} to {to}",
+    "projectStageSetUp": "set up the {to} stage on {title}",
     "documentCreated": "added the document {title}",
     "documentUpdated": "updated {title}",
     "documentArchived": "archived {title}",
@@ -1126,6 +1135,18 @@
     "overdueCount": "{count} overdue",
     "moveForbidden": "Only the project owner or a manager can move it.",
     "moved": "Moved to {stage}."
+  },
+  "Playbook": {
+    "title": "Playbook",
+    "subtitle": "What reaching each stage sets up: the procedure, a task template, and the documents it should produce",
+    "stageProcedure": "Procedure",
+    "noProcedure": "No procedure assigned to this stage yet",
+    "taskTemplate": "Task template",
+    "noTemplate": "No tasks",
+    "expectedDocuments": "Expected documents",
+    "save": "Save",
+    "saved": "Saved",
+    "manageHint": "Set a template and document kinds per stage. Projects on the delivery flow pick these up when they reach the stage."
   },
   "DocumentKind": {
     "brief": "Brief",

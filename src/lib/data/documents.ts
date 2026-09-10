@@ -194,7 +194,7 @@ export async function getDocumentById(actor: Actor, documentId: string) {
 
 export type SectionInput = { title: string; detail: string | null };
 
-async function uniqueSlug(actor: Actor, title: string): Promise<string> {
+export async function uniqueDocumentSlug(actor: Actor, title: string): Promise<string> {
   const base = slugify(title, "document");
   const existing = await withOrg(actor.organizationId).selectFields(documents, {
     slug: documents.slug,
@@ -220,7 +220,7 @@ export async function createDocument(
     sections: SectionInput[];
   },
 ): Promise<{ id: string; slug: string } | null> {
-  const slug = await uniqueSlug(actor, input.title);
+  const slug = await uniqueDocumentSlug(actor, input.title);
 
   return db.transaction(async (tx) => {
     const scope = withOrg(actor.organizationId, tx);
