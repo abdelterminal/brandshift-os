@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 
 import { TaskBoard } from "./task-board";
 import { TaskList } from "./task-list";
+import type { TaskDrawerViewer } from "./task-drawer";
 
 /**
  * A project's tabs.
@@ -31,6 +32,7 @@ export function ProjectTabs({
   todayIso,
   allTasks,
   assignablePeople,
+  viewer,
   members,
   canEditBoard,
   activity,
@@ -53,6 +55,7 @@ export function ProjectTabs({
   allTasks: TaskRow[];
   /** Passed straight through to the drawer's own reassignment picker. */
   assignablePeople: AssignablePerson[];
+  viewer: TaskDrawerViewer;
   members: Array<{ userId: string; name: string; avatarUrl: string | null; role: string }>;
   /** Whether the signed-in person is this project's own lead or contributor -- see the page. */
   canEditBoard: boolean;
@@ -123,6 +126,7 @@ export function ProjectTabs({
           todayIso={todayIso}
           allTasks={allTasks}
           assignablePeople={assignablePeople}
+          viewer={viewer}
           canEditBoard={canEditBoard}
         />
       </TabsPanel>
@@ -165,6 +169,7 @@ function TasksPanel({
   todayIso,
   allTasks,
   assignablePeople,
+  viewer,
   canEditBoard,
 }: {
   projectId: string;
@@ -172,6 +177,7 @@ function TasksPanel({
   todayIso: string;
   allTasks: TaskRow[];
   assignablePeople: AssignablePerson[];
+  viewer: TaskDrawerViewer;
   canEditBoard: boolean;
 }) {
   const t = useTranslations("Work");
@@ -219,6 +225,7 @@ function TasksPanel({
           emptyBody={t("noTasksBody")}
           todayIso={todayIso}
           assignablePeople={assignablePeople}
+          viewer={viewer}
         />
       ) : (
         <TaskBoard
@@ -226,6 +233,7 @@ function TasksPanel({
           projectId={projectId}
           canEditBoard={canEditBoard}
           assignablePeople={assignablePeople}
+          viewer={viewer}
         />
       )}
     </div>

@@ -301,6 +301,7 @@
     "titleRequired": "Give the task a title.",
     "create": "Create task",
     "notFound": "That task no longer exists.",
+    "workRestricted": "Only the assignee or someone on this project's team can change this.",
     "openTask": "Open task",
     "closeTask": "Close",
     "noTasks": "Nothing here",
@@ -1235,7 +1236,8 @@
     "errorInvalid": "Check the highlighted fields.",
     "errorNotFound": "That deliverable no longer exists.",
     "errorForbidden": "You cannot change this deliverable.",
-    "errorAlreadyThere": "It is already in that state."
+    "errorAlreadyThere": "It is already in that state.",
+    "workRestricted": "Only the assignee or someone on this project's team can change this."
   },
   "Templates": {
     "title": "Templates",

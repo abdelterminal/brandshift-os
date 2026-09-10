@@ -14,6 +14,7 @@ import {
   updateDeliverable,
 } from "@/lib/data/deliverables";
 import { PROJECT_STAGES } from "@/lib/data/pipeline-stages";
+import { mayWorkOn } from "@/lib/data/project-access";
 import { DELIVERABLE_STATUSES } from "@/lib/deliverables";
 
 /**
@@ -50,6 +51,9 @@ export async function createDeliverableAction(
   if (!parsed.success) return { ok: false, error: "invalid" };
 
   const session = await requirePermissionForAction("deliverable.work");
+  if (!(await mayWorkOn(session.actor, { projectId: parsed.data.projectId, assigneeUserId: null }))) {
+    return { ok: false, error: "forbidden" };
+  }
 
   const created = await createDeliverable(session.actor, {
     projectId: parsed.data.projectId,
@@ -91,6 +95,7 @@ export async function updateDeliverableAction(
   const session = await requirePermissionForAction("deliverable.work");
   const existing = await getDeliverableById(session.actor, parsed.data.id);
   if (!existing) return { ok: false, error: "notFound" };
+  if (!(await mayWorkOn(session.actor, existing))) return { ok: false, error: "forbidden" };
 
   const done = await updateDeliverable(session.actor, parsed.data.id, {
     title: parsed.data.title,
@@ -127,6 +132,7 @@ export async function setDeliverableStatusAction(
   const session = await requirePermissionForAction("deliverable.work");
   const existing = await getDeliverableById(session.actor, parsed.data.id);
   if (!existing) return { ok: false, error: "notFound" };
+  if (!(await mayWorkOn(session.actor, existing))) return { ok: false, error: "forbidden" };
 
   const moved = await setDeliverableStatus(
     session.actor,

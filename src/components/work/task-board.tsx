@@ -58,7 +58,7 @@ import type { AssignablePerson, TaskRow } from "@/lib/data/task-types";
 import { cn } from "@/lib/utils";
 
 import { STATUS_TONE } from "./task-list";
-import { TaskDrawer } from "./task-drawer";
+import { TaskDrawer, type TaskDrawerViewer } from "./task-drawer";
 
 /**
  * The interactive board: drag to move a card, small chevrons to do the same
@@ -82,15 +82,17 @@ export function TaskBoard({
   projectId,
   canEditBoard,
   assignablePeople,
+  viewer,
 }: {
   tasks: TaskRow[];
   projectId: string;
   canEditBoard: boolean;
   /** Passed straight through to the drawer's own reassignment picker. */
   assignablePeople: AssignablePerson[];
+  viewer: TaskDrawerViewer;
 }) {
   if (!canEditBoard) return <ReadOnlyBoard tasks={tasks} />;
-  return <EditableBoard tasks={tasks} projectId={projectId} assignablePeople={assignablePeople} />;
+  return <EditableBoard tasks={tasks} projectId={projectId} assignablePeople={assignablePeople} viewer={viewer} />;
 }
 
 /** What everyone who is not on the project's team still sees -- unchanged. */
@@ -158,10 +160,12 @@ function EditableBoard({
   tasks,
   projectId,
   assignablePeople,
+  viewer,
 }: {
   tasks: TaskRow[];
   projectId: string;
   assignablePeople: AssignablePerson[];
+  viewer: TaskDrawerViewer;
 }) {
   const statuses = useTranslations("Status");
   const t = useTranslations("Work");
@@ -436,6 +440,7 @@ function EditableBoard({
       <TaskDrawer
         task={openTask}
         assignablePeople={assignablePeople}
+        viewer={viewer}
         onClose={() => setOpenTaskId(null)}
       />
     </div>

@@ -14,7 +14,7 @@ import type { AssignablePerson, TaskBucket, TaskRow } from "@/lib/data/task-type
 import { dueDateLabel, isOverdue } from "@/lib/due-date";
 import { cn } from "@/lib/utils";
 
-import { TaskDrawer } from "./task-drawer";
+import { TaskDrawer, type TaskDrawerViewer } from "./task-drawer";
 
 /**
  * The prioritised task list.
@@ -59,6 +59,7 @@ export function TaskList({
   emptyBody,
   todayIso,
   assignablePeople,
+  viewer,
 }: {
   buckets: Partial<Record<TaskBucket, TaskRow[]>>;
   order: TaskBucket[];
@@ -75,6 +76,7 @@ export function TaskList({
   todayIso?: string;
   /** Passed straight through to the drawer's own reassignment picker. */
   assignablePeople: AssignablePerson[];
+  viewer: TaskDrawerViewer;
 }) {
   const t = useTranslations("Task");
   const router = useRouter();
@@ -148,6 +150,7 @@ export function TaskList({
       <TaskDrawer
         task={openTask}
         assignablePeople={assignablePeople}
+        viewer={viewer}
         onClose={() => setOpenTask(null)}
       />
     </>
@@ -297,6 +300,7 @@ export function TaskListFlat({
   todayIso,
   showBlockedReason,
   assignablePeople,
+  viewer,
 }: {
   tasks: TaskRow[];
   emptyTitle: string;
@@ -308,6 +312,7 @@ export function TaskListFlat({
   showBlockedReason?: boolean;
   /** Passed straight through to the drawer's own reassignment picker. */
   assignablePeople: AssignablePerson[];
+  viewer: TaskDrawerViewer;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -344,6 +349,7 @@ export function TaskListFlat({
       <TaskDrawer
         task={openTask}
         assignablePeople={assignablePeople}
+        viewer={viewer}
         onClose={() => setOpenTask(null)}
       />
     </>

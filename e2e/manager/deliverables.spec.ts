@@ -12,8 +12,9 @@ import { expect, test, type Page } from "@playwright/test";
  *    without it.
  * 3. **A deliverable can be created**, and **a task can be converted** into one
  *    -- the task leaves Tasks and a deliverable takes its place.
- * 4. Converting is a manager's action; a member can still move a deliverable's
- *    state.
+ * 4. Converting is a manager's action; a member who is on the work -- its
+ *    assignee, or a contributor on its project -- can still move its state.
+ *    (A member who is on neither cannot: see `work-access.spec.ts`.)
  */
 
 const main = (page: Page) => page.locator("#main");
@@ -109,8 +110,11 @@ test("a deliverable can be created and a task converted into one", async ({ page
   await expect(main(page).getByText(taskTitle!.trim())).toBeVisible();
 });
 
-test("a member can move a deliverable but cannot convert", async ({ browser }) => {
-  const context = await browser.newContext({ storageState: "e2e/.auth/member.json" });
+test("a member on the work can move a deliverable but cannot convert", async ({ browser }) => {
+  // Marc is a plain member -- no manager role, no flags. His only claim on
+  // "Launch carrousel — 6 slides" is that he is its assignee and a contributor
+  // on LUM, which is exactly what the state gate opens the chevrons for.
+  const context = await browser.newContext({ storageState: "e2e/.auth/assignee.json" });
   const page = await context.newPage();
 
   await page.goto("/en/work/LUM");

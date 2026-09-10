@@ -301,6 +301,7 @@
     "titleRequired": "Donnez un titre à la tâche.",
     "create": "Créer la tâche",
     "notFound": "Cette tâche n'existe plus.",
+    "workRestricted": "Seul l'attributaire ou un membre de l'équipe de ce projet peut le modifier.",
     "openTask": "Ouvrir la tâche",
     "closeTask": "Fermer",
     "noTasks": "Rien ici",
@@ -1235,7 +1236,8 @@
     "errorInvalid": "Vérifiez les champs en surbrillance.",
     "errorNotFound": "Ce livrable n'existe plus.",
     "errorForbidden": "Vous ne pouvez pas modifier ce livrable.",
-    "errorAlreadyThere": "Il est déjà dans cet état."
+    "errorAlreadyThere": "Il est déjà dans cet état.",
+    "workRestricted": "Seul l'attributaire ou un membre de l'équipe de ce projet peut le modifier."
   },
   "Templates": {
     "title": "Modèles",

@@ -45,20 +45,28 @@ type ComboboxOption = { value: string; label: string };
  * three it does not close the drawer on success, since picking a different
  * person is not "done with this task" the way completing it is.
  *
- * Shown to anyone who can already open the drawer, with no further
- * project-membership check -- the same as Start/Complete/Report blocker,
- * which have never had one either (`KNOWN-GAPS.md`). Gating this one field
- * more tightly than its neighbors would be a new inconsistency, not a fix of
- * the old one.
+ * All four are shown only to someone who may actually make them -- the task's
+ * assignee, a lead/contributor on its project, or a manager (`viewer` +
+ * `mayWorkOn` on the server). Everyone else sees the drawer read-only: the
+ * status, the blocker, the description, but no buttons.
  */
+export type TaskDrawerViewer = {
+  userId: string;
+  isManager: boolean;
+  /** Projects the viewer is a non-`viewer` member of. */
+  projectIds: string[];
+};
+
 export function TaskDrawer({
   task,
   assignablePeople,
+  viewer,
   onClose,
 }: {
   task: TaskRow | null;
   /** Everyone who can be assigned work -- `listAssignablePeople()`, org-wide. */
   assignablePeople: AssignablePerson[];
+  viewer: TaskDrawerViewer;
   onClose: () => void;
 }) {
   const t = useTranslations("Task");
@@ -108,6 +116,10 @@ export function TaskDrawer({
 
   const isDone = task.status === "done";
   const isBlocked = task.status === "blocked";
+  const canWork =
+    viewer.isManager ||
+    task.assigneeUserId === viewer.userId ||
+    (task.projectId != null && viewer.projectIds.includes(task.projectId));
   const assigneeOptions: ComboboxOption[] = assignablePeople.map((person) => ({
     value: person.userId,
     label: person.name,
@@ -156,31 +168,40 @@ export function TaskDrawer({
             <p className="text-body text-fg-muted whitespace-pre-line">{task.description}</p>
           ) : null}
 
-          <Field>
-            <FieldLabel>{t("assignee")}</FieldLabel>
-            <Combobox
-              items={assigneeOptions}
-              value={currentAssignee}
-              onValueChange={(selected) => assign(selected ? selected.value : null)}
-            >
-              <ComboboxInput
-                placeholder={t("unassigned")}
-                disabled={assignPending}
-                clearLabel={t("assigneeClear")}
-                openLabel={t("assigneeOpen")}
-              />
-              <ComboboxContent emptyMessage={t("assigneeEmpty")}>
-                <ComboboxList>
-                  {(item: ComboboxOption) => (
-                    <ComboboxItem key={item.value} value={item}>
-                      {item.label}
-                    </ComboboxItem>
-                  )}
-                </ComboboxList>
-              </ComboboxContent>
-            </Combobox>
-            {assignError ? <FieldError match>{t("notFound")}</FieldError> : null}
-          </Field>
+          {canWork ? (
+            <Field>
+              <FieldLabel>{t("assignee")}</FieldLabel>
+              <Combobox
+                items={assigneeOptions}
+                value={currentAssignee}
+                onValueChange={(selected) => assign(selected ? selected.value : null)}
+              >
+                <ComboboxInput
+                  placeholder={t("unassigned")}
+                  disabled={assignPending}
+                  clearLabel={t("assigneeClear")}
+                  openLabel={t("assigneeOpen")}
+                />
+                <ComboboxContent emptyMessage={t("assigneeEmpty")}>
+                  <ComboboxList>
+                    {(item: ComboboxOption) => (
+                      <ComboboxItem key={item.value} value={item}>
+                        {item.label}
+                      </ComboboxItem>
+                    )}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
+              {assignError ? <FieldError match>{t("notFound")}</FieldError> : null}
+            </Field>
+          ) : (
+            <div>
+              <dt className="text-caption text-fg-muted">{t("assignee")}</dt>
+              <dd className="text-body text-fg-default mt-1">
+                {task.assigneeName ?? t("unassigned")}
+              </dd>
+            </div>
+          )}
 
           <dl className="grid grid-cols-2 gap-4">
             <div>
@@ -233,7 +254,9 @@ export function TaskDrawer({
         </DrawerBody>
 
         <DrawerFooter>
-          {blockerOpen ? (
+          {!canWork ? (
+            <p className="text-caption text-fg-muted">{t("workRestricted")}</p>
+          ) : blockerOpen ? (
             <>
               <Button
                 variant="primary"

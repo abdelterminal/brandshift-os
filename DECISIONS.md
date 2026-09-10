@@ -890,6 +890,18 @@ deliverables, but the `Task Type` property was blank on all but two, so there wa
 split on -- only a fuzzy title match against live production data. Conversion is a deliberate,
 one-at-a-time action instead.
 
+**Changing a piece of work's state is gated to the people on it, and the gate lives in the data
+layer.** Starting, completing, blocking, unblocking or reassigning a task -- and walking a
+deliverable along its line -- is now the task's assignee, a lead or contributor on its project,
+or a manager. Not assignee-only: a lead has to be able to finish or unblock something for a
+colleague who is away. The check is `mayWorkOn()` in `src/lib/data/project-access.ts`, not a
+rule in `authz.ts`, for the same reason `saveBoardChanges`, `markChannelRead` and `joinChannel`
+scope themselves there -- "am I on this project's team" is a `project_members` join, and
+`can()`'s `Resource` knows a single owner, not a membership table. The drawer and the
+deliverables panel hide the controls the same way, so a hidden button and a refused action
+cannot disagree. Overdue work that chases someone is explicitly a separate plan: it needs the
+scheduler and mail transport this deployment still lacks (see `KNOWN-GAPS.md`).
+
 - **Supabase / managed Postgres** -- would have given Realtime and RLS for free, but the
   requirement is that everything runs on the local network.
 - **Restyling the existing Angular app** -- cheaper, but tenancy, permissions and the task schema

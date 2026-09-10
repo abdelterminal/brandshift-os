@@ -16,13 +16,14 @@ import { CountBadge, StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { requireUser } from "@/lib/auth/guards";
-import { can } from "@/lib/authz";
+import { atLeast, can } from "@/lib/authz";
 import { listProjectActivity } from "@/lib/data/activity";
 import { listProjectMeetings } from "@/lib/data/meetings";
 import { listAssignablePeople } from "@/lib/data/people";
 import { getProjectByKey, listProjectMembers } from "@/lib/data/projects";
 import { listProjectDeliverables } from "@/lib/data/deliverables";
 import { getPlaybook, stageSetupFor } from "@/lib/data/playbook";
+import { listWorkableProjectIds } from "@/lib/data/project-access";
 import { sopForStage } from "@/lib/data/sops";
 import { bucketTasks, listProjectTasks, organizationToday } from "@/lib/data/tasks";
 
@@ -88,8 +89,22 @@ export default async function ProjectPage({
   ]);
 
   const deliverables = await listProjectDeliverables(session.actor, project.id);
-  const canWorkDeliverables = can(session.actor, "deliverable.work");
   const canConvertDeliverables = can(session.actor, "deliverable.convert");
+
+  const viewer = {
+    userId: session.actor.userId,
+    isManager: atLeast(session.actor, "manager"),
+    projectIds: await listWorkableProjectIds(session.actor),
+  };
+  // Only this project's own lead or contributor may drag a card on its board
+  // -- "viewer" exists as a role but nothing assigns it today, named here
+  // rather than assumed so the day something does, it is excluded on purpose.
+  const canEditBoard = members.some(
+    (member) => member.userId === session.actor.userId && member.role !== "viewer",
+  );
+  // "On this project's team, or a manager" -- the same gate the server applies.
+  // A deliverable's own assignee is handled per-row inside the panel.
+  const canWorkDeliverables = canEditBoard || viewer.isManager;
 
   const mayManageTemplates = can(session.actor, "template.manage");
   const canSetStage = can(session.actor, "project.setStage", {
@@ -106,12 +121,6 @@ export default async function ProjectPage({
           (playbook.find((row) => row.stage === project.stage)?.docKinds.length ?? 0) > 0,
       )
     : false;
-  // Only this project's own lead or contributor may drag a card on its board
-  // -- "viewer" exists as a role but nothing assigns it today, named here
-  // rather than assumed so the day something does, it is excluded on purpose.
-  const canEditBoard = members.some(
-    (member) => member.userId === session.actor.userId && member.role !== "viewer",
-  );
 
   const open = tasks.filter(
     (task) => task.status === "todo" || task.status === "in_progress" || task.status === "blocked",
@@ -214,6 +223,7 @@ export default async function ProjectPage({
           description={project.description}
           priority={priorities(project.priority)}
           projectId={project.id}
+          viewer={viewer}
           buckets={buckets}
           todayIso={todayIso}
           allTasks={tasks}
@@ -250,6 +260,7 @@ export default async function ProjectPage({
               }))}
               assignablePeople={assignablePeople}
               convertibleTasks={open.map((task) => ({ id: task.id, title: task.title }))}
+              viewerUserId={session.actor.userId}
               canWork={canWorkDeliverables}
               canConvert={canConvertDeliverables}
             />

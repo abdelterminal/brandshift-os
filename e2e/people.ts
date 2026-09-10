@@ -50,3 +50,19 @@ export const MEMBER = {
   /** Member: gets Now / Next / Later, and no Insights. */
   role: "member",
 } as const;
+
+/**
+ * A member who is *on* the Lumen campaign and holds one of its deliverables.
+ *
+ * The suite already has a member who is on nothing that matters (Lukas); it
+ * also needs one who is connected to a specific piece of work, to show the
+ * state gate lets the people doing the work move it while keeping everyone
+ * else out. Marc leads no department and holds no module flag -- his access
+ * to "Launch carrousel — 6 slides" is only that he is its assignee and a
+ * contributor on LUM.
+ */
+export const ASSIGNEE = {
+  email: "marc.dubois@brandshift.test",
+  name: "Marc Dubois",
+  role: "member",
+} as const;

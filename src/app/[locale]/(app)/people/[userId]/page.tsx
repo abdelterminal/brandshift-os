@@ -5,10 +5,11 @@ import { ActivityFeed } from "@/components/work/activity-feed";
 import { PersonTabs } from "@/components/people/person-tabs";
 import { PersonAvatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { can } from "@/lib/authz";
+import { atLeast, can } from "@/lib/authz";
 import { requireUser } from "@/lib/auth/guards";
 import { listPersonActivity } from "@/lib/data/activity";
 import { getPerson, listAssignablePeople } from "@/lib/data/people";
+import { listWorkableProjectIds } from "@/lib/data/project-access";
 import { listProjectsForUser } from "@/lib/data/projects";
 import { listTaskBuckets, organizationToday } from "@/lib/data/tasks";
 
@@ -41,6 +42,7 @@ export default async function PersonPage({ params }: PageProps<"/[locale]/people
     listPersonActivity(session.actor, userId),
     listAssignablePeople(session.actor),
   ]);
+  const viewer = { userId: session.actor.userId, isManager: atLeast(session.actor, "manager"), projectIds: await listWorkableProjectIds(session.actor) };
 
   const openCount =
     buckets.overdue.length +
@@ -85,6 +87,7 @@ export default async function PersonPage({ params }: PageProps<"/[locale]/people
           buckets={buckets}
           todayIso={todayIso}
           assignablePeople={assignablePeople}
+          viewer={viewer}
           projects={projects.map((project) => ({
             id: project.id,
             key: project.key,

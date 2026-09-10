@@ -78,6 +78,7 @@ export function DeliverablesPanel({
   deliverables,
   assignablePeople,
   convertibleTasks,
+  viewerUserId,
   canWork,
   canConvert,
 }: {
@@ -86,6 +87,9 @@ export function DeliverablesPanel({
   assignablePeople: AssignablePerson[];
   /** The project's open tasks, for the "convert a task" dialog. */
   convertibleTasks: { id: string; title: string }[];
+  /** The signed-in person -- a deliverable's own assignee may always move it. */
+  viewerUserId: string;
+  /** True when the viewer is on this project's team, or a manager. */
   canWork: boolean;
   canConvert: boolean;
 }) {
@@ -135,6 +139,12 @@ export function DeliverablesPanel({
     rows: deliverables.filter((row) => row.status === status),
   })).filter((group) => group.rows.length > 0 || group.status !== "cancelled");
 
+  // A deliverable the viewer holds is still theirs to move even when the
+  // panel-wide controls are off -- so only say "read only" when there is not
+  // a single row they can touch.
+  const anyRowWorkable =
+    canWork || deliverables.some((row) => row.assigneeUserId === viewerUserId);
+
   return (
     <div>
       {canWork ? (
@@ -149,6 +159,8 @@ export function DeliverablesPanel({
             {t("newDeliverable")}
           </Button>
         </div>
+      ) : !anyRowWorkable && deliverables.length > 0 ? (
+        <p className="text-caption text-fg-muted mb-4">{t("workRestricted")}</p>
       ) : null}
 
       {deliverables.length === 0 ? (
@@ -167,19 +179,25 @@ export function DeliverablesPanel({
                 <p className="text-caption text-fg-subtle">--</p>
               ) : (
                 <ul className="border-border divide-border bg-surface-raised divide-y rounded-card border">
-                  {group.rows.map((row) => (
+                  {group.rows.map((row) => {
+                    const canRowWork = canWork || row.assigneeUserId === viewerUserId;
+                    return (
                     <li key={row.id} className="flex items-start gap-3 px-4 py-3">
                       <div className="min-w-0 flex-1">
-                        <button
-                          type="button"
-                          onClick={() => setDialog({ mode: "edit", row })}
-                          className={cn(
-                            "text-body text-fg-default text-left hover:underline",
-                            focusRing,
-                          )}
-                        >
-                          {row.title}
-                        </button>
+                        {canRowWork ? (
+                          <button
+                            type="button"
+                            onClick={() => setDialog({ mode: "edit", row })}
+                            className={cn(
+                              "text-body text-fg-default text-left hover:underline",
+                              focusRing,
+                            )}
+                          >
+                            {row.title}
+                          </button>
+                        ) : (
+                          <p className="text-body text-fg-default">{row.title}</p>
+                        )}
                         <div className="text-caption text-fg-muted mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                           {row.assigneeName ? (
                             <span className="inline-flex items-center gap-1">
@@ -207,7 +225,7 @@ export function DeliverablesPanel({
                         ) : null}
                       </div>
 
-                      {canWork ? (
+                      {canRowWork ? (
                         <div className="flex shrink-0 items-center gap-0.5">
                           <button
                             type="button"
@@ -242,7 +260,8 @@ export function DeliverablesPanel({
                         </Badge>
                       )}
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
             </section>

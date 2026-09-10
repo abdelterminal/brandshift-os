@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { focusRing, transition } from "@/components/ui/styles";
 import { TaskList } from "@/components/work/task-list";
+import type { TaskDrawerViewer } from "@/components/work/task-drawer";
 import { Link } from "@/i18n/navigation";
 import { updateMemberRole } from "@/lib/actions/people";
 import type { ModulePermissions, Role } from "@/db/schema/people";
@@ -31,6 +32,7 @@ export function PersonTabs({
   buckets,
   todayIso,
   assignablePeople,
+  viewer,
   projects,
   canEditRole,
   isSelf,
@@ -50,6 +52,7 @@ export function PersonTabs({
   todayIso: string;
   /** Passed straight through to the drawer's own reassignment picker. */
   assignablePeople: AssignablePerson[];
+  viewer: TaskDrawerViewer;
   projects: Array<{ id: string; key: string; name: string; status: keyof typeof PROJECT_STATUS_TONE }>;
   canEditRole: boolean;
   isSelf: boolean;
@@ -142,6 +145,7 @@ export function PersonTabs({
           emptyBody={t("noOpenWorkBody")}
           todayIso={todayIso}
           assignablePeople={assignablePeople}
+          viewer={viewer}
         />
       </TabsPanel>
 

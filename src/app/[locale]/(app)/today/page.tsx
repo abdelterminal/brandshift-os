@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/feedback";
 import { Link } from "@/i18n/navigation";
 import { atLeast } from "@/lib/authz";
+import { listWorkableProjectIds } from "@/lib/data/project-access";
 import { requireUser } from "@/lib/auth/guards";
 import { dayKey } from "@/lib/calendar-dates";
 import { nextMeetingsFor } from "@/lib/data/meetings";
@@ -51,6 +52,7 @@ async function CoordinationQueue() {
     nextMeetingsFor(session.actor, new Date()),
     listAssignablePeople(session.actor),
   ]);
+  const viewer = { userId: session.actor.userId, isManager: atLeast(session.actor, "manager"), projectIds: await listWorkableProjectIds(session.actor) };
   const todayIso = organizationToday();
 
   const nothingToDo =
@@ -115,6 +117,7 @@ async function CoordinationQueue() {
                     max={8}
                     todayIso={todayIso}
                     assignablePeople={assignablePeople}
+                    viewer={viewer}
                   />
                 )}
               </CardContent>
@@ -146,6 +149,7 @@ async function MyDay({ name }: { name: string }) {
     nextMeetingsFor(session.actor, new Date()),
     listAssignablePeople(session.actor),
   ]);
+  const viewer = { userId: session.actor.userId, isManager: atLeast(session.actor, "manager"), projectIds: await listWorkableProjectIds(session.actor) };
 
   // Now is what is late or due today; Next is the rest of the week; Later is
   // everything else. Three horizons, so the first one is short enough to act on.
@@ -219,6 +223,7 @@ async function MyDay({ name }: { name: string }) {
                     todayIso={todayIso}
                     showBlockedReason
                     assignablePeople={assignablePeople}
+                    viewer={viewer}
                   />
                 </div>
               </section>

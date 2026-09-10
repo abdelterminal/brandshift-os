@@ -17,6 +17,8 @@ import {
   type BoardStatus,
 } from "@/lib/board";
 import { recordActivity } from "@/lib/data/activity";
+import { mayWorkOn } from "@/lib/data/project-access";
+import type { Actor } from "@/lib/authz";
 
 /**
  * Task mutations.
@@ -25,6 +27,11 @@ import { recordActivity } from "@/lib/data/activity";
  * whole vocabulary of moving work along, and none of them asks for a password.
  * They are routine writes; the re-auth window is for destructive acts only.
  *
+ * Who may make them is not "anyone signed in": it is the task's assignee, a
+ * lead or contributor on its project, or a manager -- the same gate
+ * `saveBoardChanges` uses for a drag, checked here so the drawer and the board
+ * cannot disagree.
+ *
  * Every one of them writes an activity event in the same transaction as the
  * change, so the feed cannot disagree with the record.
  */
@@ -32,6 +39,25 @@ import { recordActivity } from "@/lib/data/activity";
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
 const idSchema = z.uuid();
+
+/**
+ * Load the two facts the access check needs, and run it. Returns `null` when
+ * the task is gone or the actor may not touch it -- the caller turns that into
+ * `notFound` / `forbidden` without a second query.
+ */
+async function assertMayWork(
+  actor: Actor,
+  taskId: string,
+): Promise<{ ok: true } | { ok: false; error: "notFound" | "forbidden" }> {
+  const [row] = await withOrg(actor.organizationId).selectFields(
+    tasks,
+    { projectId: tasks.projectId, assigneeUserId: tasks.assigneeUserId },
+    eq(tasks.id, taskId),
+  );
+  if (!row) return { ok: false, error: "notFound" };
+  if (!(await mayWorkOn(actor, row))) return { ok: false, error: "forbidden" };
+  return { ok: true };
+}
 
 /** Revalidate everywhere a task can be seen, since it appears on several screens. */
 function revalidateTaskViews() {
@@ -45,6 +71,8 @@ export async function startTask(taskId: string): Promise<ActionResult> {
   if (!parsed.success) return { ok: false, error: "notFound" };
 
   const session = await requireUserForAction();
+  const gate = await assertMayWork(session.actor, parsed.data);
+  if (!gate.ok) return gate;
   const scope = withOrg(session.actor.organizationId);
 
   const [updated] = await scope.update(
@@ -80,6 +108,8 @@ export async function completeTask(taskId: string): Promise<ActionResult> {
   if (!parsed.success) return { ok: false, error: "notFound" };
 
   const session = await requireUserForAction();
+  const gate = await assertMayWork(session.actor, parsed.data);
+  if (!gate.ok) return gate;
   const scope = withOrg(session.actor.organizationId);
   const now = new Date();
 
@@ -126,6 +156,8 @@ export async function reportBlocker(taskId: string, reason: string): Promise<Act
   if (!parsed.success) return { ok: false, error: "blockerReasonRequired" };
 
   const session = await requireUserForAction();
+  const gate = await assertMayWork(session.actor, parsed.data.taskId);
+  if (!gate.ok) return gate;
   const now = new Date();
 
   const [updated] = await withOrg(session.actor.organizationId).update(
@@ -160,6 +192,8 @@ export async function clearBlocker(taskId: string): Promise<ActionResult> {
   if (!parsed.success) return { ok: false, error: "notFound" };
 
   const session = await requireUserForAction();
+  const gate = await assertMayWork(session.actor, parsed.data);
+  if (!gate.ok) return gate;
 
   const [updated] = await withOrg(session.actor.organizationId).update(
     tasks,
@@ -195,6 +229,8 @@ export async function assignTask(
   if (!parsed.success) return { ok: false, error: "notFound" };
 
   const session = await requireUserForAction();
+  const gate = await assertMayWork(session.actor, parsed.data.taskId);
+  if (!gate.ok) return gate;
   const assignee = parsed.data.assigneeUserId || null;
 
   const [updated] = await withOrg(session.actor.organizationId).update(
@@ -238,6 +274,18 @@ export async function createTask(formData: FormData): Promise<ActionResult> {
   });
 
   if (!parsed.success) return { ok: false, error: "titleRequired" };
+
+  // Adding a task to a project you are not on is the same overreach as
+  // completing one there. A personal task (no project) is always your own.
+  if (
+    parsed.data.projectId &&
+    !(await mayWorkOn(session.actor, {
+      projectId: parsed.data.projectId,
+      assigneeUserId: null,
+    }))
+  ) {
+    return { ok: false, error: "forbidden" };
+  }
 
   const [created] = await withOrg(session.actor.organizationId).insert(tasks, {
     title: parsed.data.title,

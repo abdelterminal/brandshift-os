@@ -7,6 +7,8 @@ import { focusRing } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
 import { requirePermission } from "@/lib/auth/guards";
 import { listAssignablePeople } from "@/lib/data/people";
+import { listWorkableProjectIds } from "@/lib/data/project-access";
+import { atLeast } from "@/lib/authz";
 import { coordinationQueue, organizationToday } from "@/lib/data/tasks";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +59,7 @@ export default async function WorkQueuePage({
     listAssignablePeople(session.actor),
   ]);
   const todayIso = organizationToday();
+  const viewer = { userId: session.actor.userId, isManager: atLeast(session.actor, "manager"), projectIds: await listWorkableProjectIds(session.actor) };
 
   const columns = (
     [
@@ -96,6 +99,7 @@ export default async function WorkQueuePage({
                 emptyBody={t(`${column.key}Body`)}
                 todayIso={todayIso}
                 assignablePeople={assignablePeople}
+                viewer={viewer}
               />
             </CardContent>
           </Card>
