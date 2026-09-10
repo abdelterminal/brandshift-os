@@ -108,13 +108,20 @@ export type TaskSource = {
   notionId: string;
   title: string;
   projectNotionId: string | null;
+  /** The Team page the Notion "Responsable" relation points at, if any. */
+  responsableNotionId: string | null;
   status: string;
   priority: string;
   dueDate: string | null;
   done: boolean;
 };
 
-export type TeamSource = { notionId: string; name: string; role: string; responsibilities: string };
+export type TeamSource = {
+  notionId: string;
+  name: string;
+  role: string;
+  responsibilities: string;
+};
 
 export type DocumentSource = {
   notionId: string;
@@ -232,6 +239,7 @@ export function readNotionExport(filePath: string): NotionSource {
       notionId: String(page.id ?? ""),
       title: titleOf(page),
       projectNotionId: firstRelationId(properties.Project),
+      responsableNotionId: firstRelationId(properties.Responsable),
       status: done ? "done" : (NOTION_TASK_STATUS[selectName(properties.Status)] ?? "todo"),
       priority: NOTION_PRIORITY[selectName(properties.Priority)] ?? "medium",
       dueDate: dateStart(properties.Deadline),
@@ -240,6 +248,9 @@ export function readNotionExport(filePath: string): NotionSource {
   });
 
   // -- Team --------------------------------------------------------
+  // All seven, unfiltered: `run.ts` uses the page id to resolve a task's
+  // Responsable to a real person, and separately uses the responsibilities
+  // text (where there is any) for the job-title pass.
   const team: TeamSource[] = rowsOf(root, "Team")
     .map((page) => {
       const properties = asObject(page.properties);
@@ -250,7 +261,7 @@ export function readNotionExport(filePath: string): NotionSource {
         responsibilities: richTextOf(properties.Responsibilities),
       };
     })
-    .filter((member) => member.name && member.responsibilities);
+    .filter((member) => member.name);
 
   // -- Documents (free-standing pages) --------------------------------
   const pages = asObject(root.pages);

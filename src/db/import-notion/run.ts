@@ -9,6 +9,7 @@ import {
   documents,
   memberships,
   organizations,
+  projectMembers,
   projects,
   sopSteps,
   sops,
@@ -17,6 +18,21 @@ import {
 } from "../schema";
 import { deterministicId } from "./identity";
 import { readNotionExport, type NotionSource } from "./read";
+
+/**
+ * Notion Team member (by first name, lower-cased) -> the email of the person
+ * they are in the app. Confirmed with the org owner. Names the importer cannot
+ * place -- "Ayoub", "Freelance Editor" -- are simply absent; their tasks (if
+ * any) stay unassigned. On an org whose people are not these addresses (the
+ * local seed), every lookup misses and nothing is assigned, which is correct.
+ */
+const NOTION_ASSIGNEE: Record<string, string> = {
+  mohammed: "mohammed@mediastcreative.com",
+  youssef: "youssef@mediastcreative.com",
+  zayneb: "zayneb@mediastcreative.com",
+  yassin: "yacine@mediastcreative.com",
+  abdeltif: "abdellatif@mediastcreative.com",
+};
 
 /**
  * Bring the retired Notion workspace across.
@@ -96,6 +112,7 @@ type Plan = {
   documentRows: (typeof documents.$inferInsert)[];
   documentSectionRows: Map<string, (typeof documentSections.$inferInsert)[]>;
   membershipUpdates: { id: string; jobTitle: string }[];
+  projectMemberRows: (typeof projectMembers.$inferInsert)[];
 };
 
 async function planImport(
@@ -134,11 +151,29 @@ async function planImport(
       .from(documents)
       .where(eq(documents.organizationId, found.id)),
     db
-      .select({ id: memberships.id, userId: memberships.userId, name: users.name, jobTitle: memberships.jobTitle })
+      .select({
+        id: memberships.id,
+        userId: memberships.userId,
+        name: users.name,
+        email: users.email,
+        jobTitle: memberships.jobTitle,
+      })
       .from(memberships)
       .innerJoin(users, eq(users.id, memberships.userId))
       .where(eq(memberships.organizationId, found.id)),
   ]);
+
+  // Notion Team page id -> app user id, via the confirmed name map.
+  const emailToUserId = new Map(
+    existingMembers.map((m) => [m.email.toLowerCase(), m.userId]),
+  );
+  const teamPageToUserId = new Map<string, string>();
+  for (const member of source.team) {
+    const first = member.name.trim().split(/\s+/)[0]!.toLowerCase();
+    const email = NOTION_ASSIGNEE[first];
+    const userId = email ? emailToUserId.get(email) : undefined;
+    if (userId) teamPageToUserId.set(member.notionId, userId);
+  }
 
   const sopSlugs = new Set(existingSops.map((r) => r.slug));
   const sopIds = new Set(existingSops.map((r) => r.id));
@@ -222,7 +257,10 @@ async function planImport(
 
   // -- Tasks -------------------------------------------------------
   const taskRows: (typeof tasks.$inferInsert)[] = [];
+  // (projectId, userId) pairs -- each assignee becomes a project contributor.
+  const memberPairs = new Set<string>();
   let orphanTasks = 0;
+  let assignedTasks = 0;
   source.tasks.forEach((task, index) => {
     if (!task.title) return;
     const projectId = task.projectNotionId
@@ -232,6 +270,13 @@ async function planImport(
       orphanTasks += 1;
       return;
     }
+    const assigneeUserId = task.responsableNotionId
+      ? teamPageToUserId.get(task.responsableNotionId) ?? null
+      : null;
+    if (assigneeUserId) {
+      assignedTasks += 1;
+      memberPairs.add(`${projectId}:${assigneeUserId}`);
+    }
     taskRows.push({
       id: deterministicId("task", task.notionId),
       organizationId: orgId,
@@ -239,18 +284,33 @@ async function planImport(
       title: clamp(task.title, CAPS.title, "task title", report),
       status: task.status as (typeof tasks.$inferInsert)["status"],
       priority: task.priority as (typeof tasks.$inferInsert)["priority"],
+      assigneeUserId,
       dueDate: task.dueDate,
       position: index,
       createdByUserId: authorUserId,
     });
   });
   report.carry("tasks", taskRows.length);
+  report.carry("tasks assigned to a person", assignedTasks);
   report.note(
     `${orphanTasks} tasks skipped -- their Notion project is not one of the imported ones.`,
   );
+
+  const projectMemberRows: (typeof projectMembers.$inferInsert)[] = [...memberPairs].map((pair) => {
+    const [projectId, userId] = pair.split(":");
+    return {
+      organizationId: orgId,
+      projectId: projectId!,
+      userId: userId!,
+      role: "contributor" as const,
+    };
+  });
+  report.carry("project memberships", projectMemberRows.length);
   report.note(
-    "Tasks come across with no assignee: the Notion \"Responsable\" points at a Team page, " +
-      "not a person in this org. Assign them on the board.",
+    "A task's assignee comes from its Notion \"Responsable\" via the confirmed name map " +
+      "(Mohammed, Youssef, Zayneb, Yassin->Yacine, Abdeltif->Abdellatif). A Responsable the " +
+      "map does not cover leaves the task unassigned. Each assignee is also added as a " +
+      "contributor on the projects they have a task in.",
   );
 
   // -- Team responsibilities -> jobTitle ----------------------------
@@ -341,6 +401,7 @@ async function planImport(
       documentRows,
       documentSectionRows,
       membershipUpdates,
+      projectMemberRows,
     },
   };
 }
@@ -365,8 +426,20 @@ async function write(plan: Plan) {
         .values(row)
         .onConflictDoUpdate({
           target: tasks.id,
-          set: { title: row.title, status: row.status, priority: row.priority, dueDate: row.dueDate },
+          set: {
+            title: row.title,
+            status: row.status,
+            priority: row.priority,
+            assigneeUserId: row.assigneeUserId,
+            dueDate: row.dueDate,
+          },
         });
+    }
+
+    for (const row of plan.projectMemberRows) {
+      // A person who is already on the project (the owner, an earlier run) stays
+      // as they are -- the unique (project_id, user_id) index makes this a no-op.
+      await tx.insert(projectMembers).values(row).onConflictDoNothing();
     }
 
     for (const update of plan.membershipUpdates) {
