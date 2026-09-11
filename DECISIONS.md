@@ -1084,12 +1084,19 @@ scrolls the whole row -- rail included -- because there is nothing else to scrol
 internal parts (`<ul className="... overflow-y-auto">`) had always been built correctly for a
 fixed-height shell; the shell just never gave them one. It is `h-dvh overflow-hidden` now, with
 `<main>` carrying `overflow-y-auto` as the one thing that actually scrolls -- the change the
-composer's own `KNOWN-GAPS.md` row already named as its prerequisite. Checked against every
-`position: sticky` and `IntersectionObserver` use in the app (the section nav on Settings, table
-headers, the wizard's and composer's own sticky footers, the channel feed's read-marker): none of
-them name an explicit scroll root, so all of them simply adopt the new one -- CSS `sticky` sticks
-to its nearest scrolling ancestor, and an unrooted `IntersectionObserver` still clips its target
-against every ancestor's own `overflow`, whichever element that ends up being.
+composer's own `KNOWN-GAPS.md` row already named as its prerequisite.
+
+Checked against every `position: sticky` and `IntersectionObserver` use in the app. Most needed
+nothing: table headers, the wizard's and composer's own sticky footers, and the channel feed's
+read-marker all name no explicit scroll root, so `sticky` simply sticks to whichever ancestor is
+now the scrolling one, and an unrooted `IntersectionObserver` still clips its target against
+every ancestor's own `overflow` regardless of which element that turns out to be. Settings' own
+section nav (`SectionNav`) was the one exception, and it took a second pass to find: it named an
+explicit offset, `sticky top-14`, sized to clear the app header when the two of them shared one
+scroll box. Once the header moved outside `<main>`'s box entirely, that offset became a header's
+height of *dead space* between the real header and this nav's stuck position, rather than the gap
+disappearing -- the nav is `sticky top-0` now, flush against whatever is actually above it, which
+after this change is nothing it needs to clear at all.
 
 **Settings and Profile needed a click before they would scroll, because the account menu never
 actually closed when you chose one.** Base UI's `Menu.LinkItem` defaults to `closeOnClick={false}`
