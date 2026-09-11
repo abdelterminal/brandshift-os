@@ -114,7 +114,6 @@ function useColumnWidths(ids: ColumnId[]) {
   const persistedWidths = parseWidths(stored, ids);
 
   const [liveWidths, setLiveWidths] = useState<Record<ColumnId, number> | null>(null);
-  const [draggingId, setDraggingId] = useState<ColumnId | null>(null);
   const widths = liveWidths ?? persistedWidths;
 
   const resizeBy = useCallback(
@@ -134,7 +133,6 @@ function useColumnWidths(ids: ColumnId[]) {
       const startX = event.clientX;
       const startWidth = persistedWidths[id];
       let current = { ...persistedWidths };
-      setDraggingId(id);
       setLiveWidths(current);
 
       function onMove(moveEvent: PointerEvent) {
@@ -147,7 +145,6 @@ function useColumnWidths(ids: ColumnId[]) {
       function onUp() {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
-        setDraggingId(null);
         setLiveWidths(null);
         writeStoredWidths(current);
       }
@@ -157,7 +154,7 @@ function useColumnWidths(ids: ColumnId[]) {
     [persistedWidths],
   );
 
-  return { widths, draggingId, onPointerDown, resizeBy };
+  return { widths, onPointerDown, resizeBy };
 }
 
 /**
@@ -195,7 +192,7 @@ export function PeopleTable({
     ...(isCoordinator ? [{ id: "workload" as const, label: t("workload") }] : []),
   ];
 
-  const { widths, draggingId, onPointerDown, resizeBy } = useColumnWidths(
+  const { widths, onPointerDown, resizeBy } = useColumnWidths(
     columns.map((column) => column.id),
   );
 
@@ -216,7 +213,6 @@ export function PeopleTable({
                   {!isLast ? (
                     <ResizeHandle
                       className="-right-1.5"
-                      dragging={draggingId === column.id}
                       label={ui("resizeColumn")}
                       valueNow={widths[column.id]}
                       valueMin={MIN_WIDTH}

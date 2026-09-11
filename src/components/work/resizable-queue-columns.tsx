@@ -109,7 +109,6 @@ export function ResizableQueueColumns({
   const persistedWidths = parseWidths(stored, resizableCount, defaultWidth);
 
   const [liveWidths, setLiveWidths] = useState<number[] | null>(null);
-  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const widths = liveWidths ?? persistedWidths;
 
   const resizeBy = useCallback(
@@ -127,7 +126,6 @@ export function ResizableQueueColumns({
       const startX = event.clientX;
       const startWidth = persistedWidths[index];
       let current = [...persistedWidths];
-      setDraggingIndex(index);
       setLiveWidths(current);
 
       function onMove(moveEvent: PointerEvent) {
@@ -138,7 +136,6 @@ export function ResizableQueueColumns({
       function onUp() {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
-        setDraggingIndex(null);
         setLiveWidths(null);
         writeStored(storageKey, JSON.stringify(current));
       }
@@ -166,8 +163,7 @@ export function ResizableQueueColumns({
             {child}
             {!isLast ? (
               <ResizeHandle
-                className="-right-1.5 hidden lg:flex"
-                dragging={draggingIndex === index}
+                className="-right-1.5 hidden lg:block"
                 label={t("resizeColumn")}
                 valueNow={widths[index]}
                 valueMin={MIN_WIDTH}
