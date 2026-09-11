@@ -1199,3 +1199,18 @@ it exactly as if it had been added from that project's own Tasks tab, assignee r
 manager picking a project gets the assignee field, a member does not. `createTask` re-checks
 project membership on the server regardless of what the picker happens to offer, so this is a
 convenience, not a new door.
+
+## Status and access change notifications, put to sleep on request
+
+**A project's stage moving notified every member of it, and a member's role changing notified
+them directly -- both by design, both now switched off.** Requested as a temporary quieting of
+the inbox, with an explicit "later we may activate it," not a judgment that either notification
+was wrong to build. `NOTIFY_STATUS_AND_ACCESS_CHANGES` in `src/lib/data/notifications.ts` gates
+both `case`s in `recipientsFor` -- set to `false`, the recipients logic for each stays exactly as
+it was, just short-circuited before it runs, rather than deleted and left to be re-derived later.
+See `KNOWN-GAPS.md`.
+
+**Only the personal inbox and the corner toast are affected.** Both events still write to
+`activityEvents` exactly as before, so a project's own Activity tab and any channel that
+surfaces its activity are untouched -- this is about what lands in one person's queue, not
+about whether the event happened.

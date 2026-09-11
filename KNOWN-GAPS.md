@@ -61,6 +61,22 @@ trigger -- the honest answer to that today is that the app cannot send them.
 
 ---
 
+## Asleep: status and access change notifications
+
+Turned off on request, not removed -- see `DECISIONS.md`. `NOTIFY_STATUS_AND_ACCESS_CHANGES` in
+`src/lib/data/notifications.ts` is `false`, and the two `case`s it guards keep their
+`recipientsFor` logic exactly as it was before the flag existed.
+
+Wakes up by flipping that one constant back to `true`. No rework needed -- it was never broken,
+just judged too noisy for now.
+
+| Thing | Why |
+|---|---|
+| A project's stage moving does not reach anyone's inbox | `project.stageChanged` used to notify every member of the project ("moved {title} to {to}"). Still recorded to the project's own Activity tab and any channel that names it -- only the personal inbox and corner toast are silenced. |
+| A member's role changing does not reach their own inbox | `member.roleChanged` used to tell the person directly ("changed your role to {to}"). Still recorded to activity; only the personal inbox and corner toast are silenced. |
+
+---
+
 ## Asleep: file storage
 
 Deferred deliberately, and written up in `DECISIONS.md`. The storage was never the hard

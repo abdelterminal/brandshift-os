@@ -175,6 +175,15 @@ type EventWithAssignee = {
 };
 
 /**
+ * Off for now: a project's stage moving and a member's role changing.
+ * Requested as a temporary quieting of the inbox, not a removal -- the
+ * `case` for each stays below with its recipients worked out exactly as
+ * before, just short-circuited, so turning it back on later is flipping
+ * this one flag rather than re-deriving who should hear about either.
+ */
+const NOTIFY_STATUS_AND_ACCESS_CHANGES = false;
+
+/**
  * Who should hear about this event.
  *
  * Kept as one readable table rather than scattered through the actions,
@@ -251,9 +260,20 @@ async function recipientsFor(
     }
 
     // Being added to a project is news; creating one is not.
-    case "project.created":
-    case "project.stageChanged": {
+    case "project.created": {
       if (!event.projectId) break;
+      const members = await scope.selectFields(
+        projectMembers,
+        { userId: projectMembers.userId },
+        eq(projectMembers.projectId, event.projectId),
+      );
+      for (const member of members) recipients.add(member.userId);
+      break;
+    }
+
+    // A project's status/stage moving -- see NOTIFY_STATUS_AND_ACCESS_CHANGES.
+    case "project.stageChanged": {
+      if (!NOTIFY_STATUS_AND_ACCESS_CHANGES || !event.projectId) break;
       const members = await scope.selectFields(
         projectMembers,
         { userId: projectMembers.userId },
@@ -352,8 +372,9 @@ async function recipientsFor(
       break;
     }
 
-    // What you may do has changed, which you should not have to discover.
+    // A member's access changing -- see NOTIFY_STATUS_AND_ACCESS_CHANGES.
     case "member.roleChanged": {
+      if (!NOTIFY_STATUS_AND_ACCESS_CHANGES) break;
       recipients.add(event.subjectId);
       break;
     }
