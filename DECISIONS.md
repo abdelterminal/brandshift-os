@@ -963,13 +963,23 @@ is the job.
 it lives in the data layer.** Not `authz.ts`: this is a "which rows" question, not a "may I"
 question, the same reason project-membership checks are in the data layer. What it narrows:
 
-- `/people` -> teammates on shared projects only, names not links.
+- `/people` -> **unchanged**: the whole roster, same as before the silo. This is the org chart --
+  who works here -- not a window onto anyone's work, so it stays open. What it drops for a
+  member is a link into anyone else's page (names other than your own render as text, not a
+  link) and the department column and filter, which are a coordinator's view of how the org is
+  organized rather than part of a roster. Corrected after the first pass narrowed this to
+  teammates on shared projects only, which turned out to read as "can't see the team" rather
+  than as privacy.
 - `/people/<someone else>` -> `notFound()`. Your own page still works.
+- The sidebar's department rows (nested under People/Team) -> gone for a member, for the same
+  reason the directory drops the column: it is org structure, not a roster.
 - `/work` -> only projects you are on; per-project counts are of your own work.
 - `/work/<key>` you are not on -> `notFound()`.
 - A project's Tasks and Deliverables -> your own only. Its Activity tab -> gone. Its Team tab
   stays, as names without roles.
-- The command palette -> your projects, your teammates, no department views.
+- The command palette's *people* entries stay teammates-only, unlike the directory: a palette
+  entry is a jump to a page, and a non-teammate's page still 404s for a member, so listing it
+  there would be a dead link the plain roster never promises to open. No department entries.
 - `listAssignablePeople` -> your teammates, so the reassignment picker is not a way around it.
 
 **The one crack in the wall is the handoff link.** A member may see a single upstream or

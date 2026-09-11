@@ -18,7 +18,7 @@ import { PeoplePagination } from "@/components/people/people-pagination";
 import { Link } from "@/i18n/navigation";
 import { atLeast, can } from "@/lib/authz";
 import { requireUser } from "@/lib/auth/guards";
-import { listDepartments, listPeople, listTeammates } from "@/lib/data/people";
+import { listDepartments, listPeople } from "@/lib/data/people";
 import { listOpenTasks, organizationToday, workloadFrom } from "@/lib/data/tasks";
 import type { Role } from "@/db/schema/people";
 
@@ -29,9 +29,12 @@ import type { Role } from "@/db/schema/people";
  * shared and the screen behaves the same at twelve people as at four hundred
  * -- for a coordinator. A plain member gets a simpler version of the same
  * screen: filtering, paging and workload all exist to help someone *manage*
- * a directory, and a member has no such job. They see a roster instead --
- * who's on the team, their role, their department, how to reach them -- with
- * nothing that only makes sense from the other side of an assignment.
+ * a directory, and a member has no such job. They still see everyone on the
+ * team, though -- this is the org chart, and "who works here" is not the
+ * thing the member silo is about. What it does not show them is the
+ * department structure (that is a coordinator's view of the org, not a
+ * roster) or a way into anyone else's own page, where their tasks and
+ * activity live.
  *
  * Workload stays for a coordinator because it is the thing they are actually
  * scanning for: not who exists, but who has room.
@@ -55,18 +58,16 @@ export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/
     getTranslations("People"),
     getTranslations("Roles"),
     listDepartments(session.actor),
-    // A coordinator gets the whole directory, paged. A member gets only the
-    // people they share a project with -- names, not a window onto everyone's
-    // work -- in one page, since the pagination control is coordinator-shaped
-    // too.
-    isCoordinator
-      ? listPeople(session.actor, { query, role, departmentId, page })
-      : listTeammates(session.actor).then((rows) => ({
-          rows,
-          total: rows.length,
-          page: 1,
-          pageSize: rows.length,
-        })),
+    // A coordinator gets the whole directory, paged and filterable. A member
+    // sees everyone too, just in one page -- the pagination control is
+    // coordinator-shaped, not the roster itself.
+    listPeople(session.actor, {
+      query,
+      role,
+      departmentId,
+      page,
+      pageSize: isCoordinator ? undefined : 100,
+    }),
     // Nobody who cannot see workload should pay for computing it either.
     isCoordinator ? listOpenTasks(session.actor) : Promise.resolve([]),
   ]);
@@ -76,11 +77,15 @@ export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/
   const filtered = Boolean(query || role || departmentId);
   const mayInvite = can(session.actor, "member.invite");
 
-  // A member's roster is names, not links: a teammate's own page is where
-  // their tasks and activity live, and that is exactly what a member does not
-  // see. Their own row still links, to their own page.
+  // A member's roster is names, not links: somebody's own page is where their
+  // tasks and activity live, and that is exactly what a member does not see.
+  // Their own row still links, to their own page.
   const linksToPerson = (userId: string) =>
     isCoordinator || userId === session.actor.userId;
+
+  // The department structure is a coordinator's view of the org -- how the
+  // company is organized -- not part of a roster of "who works here".
+  const showDepartment = isCoordinator;
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8">
@@ -120,7 +125,7 @@ export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/
                       <span className="text-body text-fg-default font-medium">{person.name}</span>
                     )}
                     <p className="text-caption text-fg-muted mt-1 break-all">{person.email}</p>
-                    <p className="text-caption text-fg-muted mt-1">{[roles(person.role), person.departmentName, person.jobTitle].filter(Boolean).join(" · ")}</p>
+                    <p className="text-caption text-fg-muted mt-1">{[roles(person.role), showDepartment ? person.departmentName : null, person.jobTitle].filter(Boolean).join(" · ")}</p>
                     {person.status === "invited" ? <Badge tone="attention" size="sm">{t("pending")}</Badge> : null}
                   </div>
                 </div>
@@ -139,7 +144,9 @@ export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/
                 <TableRow>
                   <TableHead>{t("name")}</TableHead>
                   <TableHead className="hidden sm:table-cell">{t("role")}</TableHead>
-                  <TableHead className="hidden md:table-cell">{t("department")}</TableHead>
+                  {showDepartment ? (
+                    <TableHead className="hidden md:table-cell">{t("department")}</TableHead>
+                  ) : null}
                   <TableHead className="hidden lg:table-cell">{t("jobTitle")}</TableHead>
                   {isCoordinator ? <TableHead>{t("workload")}</TableHead> : null}
                 </TableRow>
@@ -189,9 +196,11 @@ export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/
                         </Badge>
                       </TableCell>
 
-                      <TableCell className="text-fg-muted hidden md:table-cell">
-                        {person.departmentName ?? "--"}
-                      </TableCell>
+                      {showDepartment ? (
+                        <TableCell className="text-fg-muted hidden md:table-cell">
+                          {person.departmentName ?? "--"}
+                        </TableCell>
+                      ) : null}
 
                       <TableCell className="text-fg-muted hidden lg:table-cell">
                         {person.jobTitle ?? "--"}

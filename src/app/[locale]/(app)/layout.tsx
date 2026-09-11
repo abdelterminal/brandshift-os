@@ -16,6 +16,7 @@ import { bottomNavFor, destinationsFor, railFor, withChannels, withDepartments }
 import { listJoinedChannels } from "@/lib/data/channels";
 import { listDepartments } from "@/lib/data/people";
 import { listNotifications, unreadCount } from "@/lib/data/notifications";
+import { seesOnlyOwnWork } from "@/lib/data/visibility";
 import { paletteIndex } from "@/lib/palette";
 import { requireUser } from "@/lib/auth/guards";
 
@@ -81,7 +82,14 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
   const counts: Record<string, number> = { inbox: inboxUnread };
   for (const channel of channels) counts[channel.id] = channel.unread;
 
-  const rail = withDepartments(withChannels(railFor(actor), channels, nav("allChannels")), departments.map(d => ({ ...d, name: departmentLabel(d, departments) })));
+  // The department structure is a coordinator's view of the org, not part of
+  // a member's own rail -- they get the team roster on People/Team, not how
+  // it is organized.
+  const departmentsForRail = seesOnlyOwnWork(actor) ? [] : departments;
+  const rail = withDepartments(
+    withChannels(railFor(actor), channels, nav("allChannels")),
+    departmentsForRail.map((d) => ({ ...d, name: departmentLabel(d, departments) })),
+  );
 
   return (
     <TooltipProvider delay={400}>

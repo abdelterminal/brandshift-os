@@ -115,24 +115,6 @@ export async function listPeople(
   };
 }
 
-/**
- * The people a member is allowed to see: everyone on a project they are also
- * on, themselves included. A manager gets the whole directory from `listPeople`
- * instead -- this is the narrowed roster, not a filter on top of that one.
- */
-export async function listTeammates(actor: Actor): Promise<PersonRow[]> {
-  const ids = await teammateIds(actor);
-  const rows = (await withOrg(actor.organizationId).selectJoined(
-    memberships,
-    PERSON_FIELDS,
-    PERSON_JOINS,
-    inArray(memberships.userId, ids),
-    or(eq(memberships.status, "active"), eq(memberships.status, "invited")),
-  )) as PersonRow[];
-
-  return rows.sort((a, b) => a.name.localeCompare(b.name));
-}
-
 /** One person's membership in this organization, or null if they are not in it. */
 export async function getPerson(actor: Actor, userId: string): Promise<PersonRow | null> {
   // A malformed id is a missing row, not a server error -- see `isUuid`.
