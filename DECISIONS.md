@@ -1107,3 +1107,30 @@ that is still "open" as far as its own state is concerned keeps the scroll lock 
 some unrelated click counted as dismissing it. `closeOnClick` now defaults to `true` on this
 app's own `MenuLinkItem` wrapper, which is the right default for every current use (Profile,
 Settings) and can still be overridden the day a link-like menu item genuinely wants to stay open.
+
+## `quietLinkHover`: a real hover for a link that is already underlined
+
+**A cross-reference in running text -- which company a deal is with, where a meeting is, a
+website -- is underlined permanently, not just on hover.** Constant underline is deliberate: it
+is a link you need to notice while scanning, not one you find by accident with the cursor. But a
+handful of these, copy-pasted across a dozen pages, never got a real hover state to go with it:
+some had none at all, one had `hover:text-fg-default` sitting on a link that was already
+`text-fg-default` -- a hover that changes nothing, which reads as no hover at rest and looks like
+the bug the checked-in class list claims it isn't.
+
+**Two constraints ruled out the obvious fixes.** There is no neutral bolder than `fg-default` to
+hover into -- it is already the boldest token this app has, so "make it stand out more" has
+nowhere to go. And the brand accent (`#FF3B22`) is reserved for primary action, active nav,
+destructive action, and blocked/overdue -- "you are hovering a link" is not a fifth meaning to
+give it, even briefly. `hover:opacity-*` was rejected too, on the same reasoning the account
+menu's own trigger was built against: dimming a control that contains text is a contrast failure
+wearing a hover state, not a hover state.
+
+**The fix is `quietLinkHover` in `styles.ts`: the same quiet background every other secondary
+control in this app already hovers to** (`bg-surface-hover`, used in forty-odd other places),
+with padding balanced by a negative margin so it does not nudge the words sitting next to it in
+the sentence. Applied everywhere the pattern was missing it, plus the two other unrelated gaps
+the same sweep turned up: the composer's own "preview" tab-link, and Today's whole
+`UnplannedBanner`-as-a-project-link, which had no hover of any kind because the card inside it
+already owns a border and a background -- that one gets `group-hover:border-border-hover`
+instead of a second layer of background on top of the first.

@@ -11,7 +11,7 @@ import type { Letterhead } from "@/lib/data/organization";
 import type { DocumentLine } from "@/lib/data/finance";
 import { addInvoice, addQuote } from "@/lib/actions/finance";
 import { lineTotal, parseMoney, parseQuantity, totalsFor } from "@/lib/money";
-import { focusRing } from "@/components/ui/styles";
+import { focusRing, quietLinkHover, transition } from "@/components/ui/styles";
 import { cn } from "@/lib/utils";
 
 export function DocumentComposer({ kind, companies, projects = [], letterhead, currency, today, dueDefault = "", defaultCompanyId = "" }: {
@@ -86,13 +86,13 @@ export function DocumentComposer({ kind, companies, projects = [], letterhead, c
         </div>
         <LineEditor lines={lines} setLines={setLines} currency={currency} />
         {error ? <div ref={errorRef} role="alert" tabIndex={-1} className="text-body text-blocked-text border-blocked-border bg-blocked-bg rounded-control border p-3 outline-none">
-          <p>{error}</p><a className="mt-2 inline-block underline" href="#document-title">{ui("formError")}</a>
+          <p>{error}</p><a className={cn("mt-2 inline-block rounded-[6px] underline", quietLinkHover, focusRing, transition)} href="#document-title">{ui("formError")}</a>
         </div> : null}
         <footer className="wizard-actions bg-surface-base border-border sticky z-20 flex flex-wrap gap-3 rounded-card border p-3">
           {!ready ? <p id="document-requirements" className="text-caption text-fg-muted w-full">{ui("formRequirements")}</p> : null}
           <Button type="submit" variant="primary" loading={pending} disabled={!ready} aria-describedby={!ready ? "document-requirements" : undefined}>{pending ? t("creating") : t("create")}</Button>
           <Button render={<Link href={back} />}>{t("cancel")}</Button>
-          <a href="#document-preview" className={cn("text-label text-fg-muted rounded-control px-2 py-2 xl:hidden", focusRing)}>{ui("preview")}</a>
+          <a href="#document-preview" className={cn("text-label text-fg-muted hover:bg-surface-hover hover:text-fg-default rounded-control px-2 py-2 xl:hidden", focusRing, transition)}>{ui("preview")}</a>
         </footer>
       </form>
       <aside id="document-preview" className="ui-section min-w-0">

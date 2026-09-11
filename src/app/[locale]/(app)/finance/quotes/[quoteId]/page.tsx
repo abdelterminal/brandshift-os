@@ -7,7 +7,7 @@ import { DocumentLines } from "@/components/finance/document";
 import { QuoteControls } from "@/components/finance/document-controls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { focusRing, transition } from "@/components/ui/styles";
+import { focusRing, quietLinkHover, transition } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
 import { requirePermission } from "@/lib/auth/guards";
 import { getQuote, listQuoteLines, type QuoteStatus } from "@/lib/data/finance";
@@ -68,6 +68,7 @@ export default async function QuotePage({ params }: PageProps<"/[locale]/finance
                 href={`/crm/companies/${quote.companySlug}`}
                 className={cn(
                   "text-fg-default rounded-[6px] font-medium underline underline-offset-2",
+                  quietLinkHover,
                   focusRing,
                   transition,
                 )}

@@ -6,7 +6,7 @@ import { DocumentLines } from "@/components/finance/document";
 import { InvoiceControls } from "@/components/finance/document-controls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { focusRing, transition } from "@/components/ui/styles";
+import { focusRing, quietLinkHover, transition } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
 import { requirePermission } from "@/lib/auth/guards";
 import { dayKey } from "@/lib/calendar-dates";
@@ -84,6 +84,7 @@ export default async function InvoicePage({
                 href={`/crm/companies/${invoice.companySlug}`}
                 className={cn(
                   "text-fg-default rounded-[6px] font-medium underline underline-offset-2",
+                  quietLinkHover,
                   focusRing,
                   transition,
                 )}

@@ -6,7 +6,7 @@ import { WeekChart } from "@/components/insights/week-chart";
 import { PersonAvatar } from "@/components/ui/avatar";
 import { Badge, CountBadge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/feedback";
-import { focusRingInset, transition } from "@/components/ui/styles";
+import { focusRingInset, quietLinkHover, transition } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
 import { requirePermission } from "@/lib/auth/guards";
 import { can } from "@/lib/authz";
@@ -204,6 +204,7 @@ export default async function InsightsPage() {
           href="/objectives"
           className={cn(
             "text-body text-accent-text mt-3 inline-block underline underline-offset-2 rounded-[6px]",
+            quietLinkHover,
             focusRingInset,
             transition,
           )}
@@ -254,6 +255,7 @@ export default async function InsightsPage() {
             href="/finance"
             className={cn(
               "text-body text-accent-text mt-3 inline-block underline underline-offset-2 rounded-[6px]",
+              quietLinkHover,
               focusRingInset,
               transition,
             )}
@@ -303,6 +305,7 @@ export default async function InsightsPage() {
                       href={`/people/${person.userId}`}
                       className={cn(
                         "flex items-center gap-2 rounded-[6px]",
+                        quietLinkHover,
                         focusRingInset,
                         transition,
                       )}

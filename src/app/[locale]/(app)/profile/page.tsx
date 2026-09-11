@@ -6,7 +6,7 @@ import { ProfileForm } from "@/components/account/profile-form";
 import { PersonAvatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { focusRing, transition } from "@/components/ui/styles";
+import { focusRing, quietLinkHover, transition } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
 import { requireUser } from "@/lib/auth/guards";
 import { getPerson } from "@/lib/data/people";
@@ -144,6 +144,7 @@ export default async function ProfilePage() {
                     href={item.href}
                     className={cn(
                       "text-body text-accent-text rounded-[6px] underline underline-offset-2",
+                      quietLinkHover,
                       focusRing,
                       transition,
                     )}

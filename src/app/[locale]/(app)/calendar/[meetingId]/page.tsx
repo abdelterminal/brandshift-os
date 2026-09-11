@@ -10,7 +10,7 @@ import {
 } from "@/components/calendar/meeting-controls";
 import { PersonAvatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { focusRing, transition } from "@/components/ui/styles";
+import { focusRing, quietLinkHover, transition } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
 import { requirePermission } from "@/lib/auth/guards";
 import { can } from "@/lib/authz";
@@ -138,6 +138,7 @@ export default async function MeetingPage({ params }: PageProps<"/[locale]/calen
                   rel="noreferrer noopener"
                   className={cn(
                     "text-fg-default rounded-[6px] break-all underline underline-offset-2",
+                    quietLinkHover,
                     focusRing,
                     transition,
                   )}
@@ -167,6 +168,7 @@ export default async function MeetingPage({ params }: PageProps<"/[locale]/calen
                 href={`/work/${meeting.projectKey}`}
                 className={cn(
                   "text-fg-default rounded-[6px] font-medium underline underline-offset-2",
+                  quietLinkHover,
                   focusRing,
                   transition,
                 )}

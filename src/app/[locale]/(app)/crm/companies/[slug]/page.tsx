@@ -6,7 +6,7 @@ import { CompanyNotes } from "@/components/crm/stage-control";
 import { PersonAvatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/feedback";
-import { focusRing, focusRingInset, transition } from "@/components/ui/styles";
+import { focusRing, focusRingInset, quietLinkHover, transition } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
 import { requirePermission } from "@/lib/auth/guards";
 import {
@@ -93,6 +93,7 @@ export default async function CompanyPage({ params }: PageProps<"/[locale]/crm/c
                 rel="noreferrer noopener"
                 className={cn(
                   "text-fg-default rounded-[6px] underline underline-offset-2",
+                  quietLinkHover,
                   focusRing,
                   transition,
                 )}

@@ -7,7 +7,7 @@ import { PersonAvatar } from "@/components/ui/avatar";
 import { DealEdit } from "@/components/crm/deal-edit";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { focusRing, transition } from "@/components/ui/styles";
+import { focusRing, quietLinkHover, transition } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
 import { requirePermission } from "@/lib/auth/guards";
 import { can } from "@/lib/authz";
@@ -76,6 +76,7 @@ export default async function DealPage({ params }: PageProps<"/[locale]/crm/deal
                 href={`/crm/companies/${deal.companySlug}`}
                 className={cn(
                   "text-fg-default rounded-[6px] font-medium underline underline-offset-2",
+                  quietLinkHover,
                   focusRing,
                   transition,
                 )}

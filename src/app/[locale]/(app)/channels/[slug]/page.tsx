@@ -15,7 +15,7 @@ import {
   readChannelFeed,
 } from "@/lib/data/channels";
 import { viewersOf } from "@/lib/realtime/presence";
-import { focusRing, transition } from "@/components/ui/styles";
+import { focusRing, quietLinkHover, transition } from "@/components/ui/styles";
 import { cn } from "@/lib/utils";
 
 /**
@@ -109,9 +109,12 @@ export default async function ChannelPage({ params }: PageProps<"/[locale]/chann
                   // Underlined, not red. Red means primary action, active nav,
                   // destructive or blocked, and a link to somewhere else is
                   // none of those -- spending the 5% budget on it would make
-                  // every one of those four mean slightly less.
+                  // every one of those four mean slightly less. The hover is
+                  // a quiet background rather than a colour change for the
+                  // same reason -- see `quietLinkHover`.
                   className={cn(
-                    "text-fg-default hover:text-fg-default rounded-[6px] font-medium underline underline-offset-2",
+                    "text-fg-default rounded-[6px] font-medium underline underline-offset-2",
+                    quietLinkHover,
                     focusRing,
                     transition,
                   )}

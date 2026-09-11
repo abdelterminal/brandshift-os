@@ -41,3 +41,17 @@ export const transitionOpacity =
 /** Popup surfaces: menus, selects, tooltips, popovers. */
 export const popupSurface =
   "bg-surface-overlay border-border rounded-card border shadow-popover";
+
+/**
+ * Hover for a link that already reads as one at rest -- a cross-reference
+ * inside running text or a `<dd>` (which company a deal is with, where a
+ * meeting is), underlined permanently rather than only on hover, so it needs
+ * its own real hover cue on top of that. Two constraints rule out the usual
+ * options: there is no neutral bolder than `fg-default` to hover into (it is
+ * already the boldest token this app has), and the brand accent is reserved
+ * for actions -- "you are over a link" is not one of the four things red is
+ * allowed to mean. So the cue is the same quiet background every other
+ * secondary control already hovers to. The padding is matched by a negative
+ * margin so it does not nudge the text sitting next to it.
+ */
+export const quietLinkHover = "hover:bg-surface-hover px-1 -mx-1 py-0.5 -my-0.5";

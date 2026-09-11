@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CountBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/feedback";
+import { focusRing, transition } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
 import { atLeast } from "@/lib/authz";
 import { listWorkableProjectIds } from "@/lib/data/project-access";
@@ -18,6 +19,7 @@ import { dayKey } from "@/lib/calendar-dates";
 import { nextMeetingsFor } from "@/lib/data/meetings";
 import { listAssignablePeople } from "@/lib/data/people";
 import { listUnplannedMembers, planningGraceHours } from "@/lib/data/planning";
+import { cn } from "@/lib/utils";
 import {
   coordinationQueue,
   listTaskBuckets,
@@ -250,7 +252,11 @@ async function MyDay({ name }: { name: string }) {
       {myUnplanned.length > 0 ? (
         <div className="mt-6 flex flex-col gap-2">
           {myUnplanned.map((row) => (
-            <Link key={row.projectId} href={`/work/${row.projectKey}`} className="block">
+            <Link
+              key={row.projectId}
+              href={`/work/${row.projectKey}`}
+              className={cn("group block rounded-control", focusRing, transition)}
+            >
               <p className="text-caption text-fg-muted mb-1">{row.projectName}</p>
               <UnplannedBanner
                 title={tWork("noPlanYet")}

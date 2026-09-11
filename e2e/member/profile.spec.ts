@@ -86,8 +86,17 @@ test("points at the neighbouring screens rather than repeating them", async ({ p
 
   // Devices and passwords live in Settings and are not duplicated here.
   await expect(page.getByLabel("Current password")).toHaveCount(0);
-  await expect(
-    main(page).getByRole("link", { name: "Signed-in devices and password" }),
-  ).toBeVisible();
+  const devicesLink = main(page).getByRole("link", { name: "Signed-in devices and password" });
+  await expect(devicesLink).toBeVisible();
   await expect(main(page).getByRole("link", { name: "Your time off" })).toBeVisible();
+
+  // Underlined at rest so it always reads as a link -- but that alone is not
+  // a hover state, and this one has none to hover into. It gets a real one:
+  // a quiet background, since there is no bolder neutral and the brand
+  // accent is not "you are over a link" (see `quietLinkHover`).
+  const restBg = await devicesLink.evaluate((el) => getComputedStyle(el).backgroundColor);
+  await devicesLink.hover();
+  await expect
+    .poll(() => devicesLink.evaluate((el) => getComputedStyle(el).backgroundColor))
+    .not.toBe(restBg);
 });
