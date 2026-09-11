@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requirePermissionForAction } from "@/lib/auth/guards";
+import { atLeast } from "@/lib/authz";
 import { recordActivity } from "@/lib/data/activity";
 import {
   convertTaskToDeliverable,
@@ -23,6 +24,13 @@ import { DELIVERABLE_STATUSES } from "@/lib/deliverables";
  * Producing one and walking it through its states is `deliverable.work` --
  * open to everyone, the same as `task.create`. Turning a task into a
  * deliverable is `deliverable.convert`, a manager's call: it deletes the task.
+ *
+ * Deciding who a deliverable is assigned to is narrower still, the same rule
+ * `assignTask` uses for tasks: only a manager, admin or owner may set it to
+ * anyone but the person creating or editing it. A member's own submitted
+ * `assigneeUserId` is never trusted for this -- creating one always assigns
+ * it to them, and editing one leaves whoever already held it exactly where
+ * they were.
  */
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -55,12 +63,14 @@ export async function createDeliverableAction(
     return { ok: false, error: "forbidden" };
   }
 
+  const isManager = atLeast(session.actor, "manager");
+
   const created = await createDeliverable(session.actor, {
     projectId: parsed.data.projectId,
     title: parsed.data.title,
     description: parsed.data.description || null,
     stage: parsed.data.stage || null,
-    assigneeUserId: parsed.data.assigneeUserId || null,
+    assigneeUserId: isManager ? parsed.data.assigneeUserId || null : session.actor.userId,
     dueDate: parsed.data.dueDate || null,
   });
   if (!created) return { ok: false, error: "invalid" };
@@ -97,11 +107,17 @@ export async function updateDeliverableAction(
   if (!existing) return { ok: false, error: "notFound" };
   if (!(await mayWorkOn(session.actor, existing))) return { ok: false, error: "forbidden" };
 
+  // Everything but who it is assigned to is theirs to edit if they may work
+  // on it at all. The assignee only ever moves on a manager's own submission
+  // -- anyone else's edit leaves it exactly where it was, whatever the form
+  // happened to carry (the dialog does not offer them a way to change it).
+  const isManager = atLeast(session.actor, "manager");
+
   const done = await updateDeliverable(session.actor, parsed.data.id, {
     title: parsed.data.title,
     description: parsed.data.description || null,
     stage: parsed.data.stage || null,
-    assigneeUserId: parsed.data.assigneeUserId || null,
+    assigneeUserId: isManager ? parsed.data.assigneeUserId || null : existing.assigneeUserId,
     dueDate: parsed.data.dueDate || null,
   });
   if (!done) return { ok: false, error: "notFound" };

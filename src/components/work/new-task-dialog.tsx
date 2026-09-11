@@ -35,20 +35,25 @@ const PRIORITIES = ["low", "medium", "high", "urgent"] as const;
  *
  * The button anyone connected to a project's work sees -- the same population
  * `mayWorkOn()` lets start, complete or block a task, because adding one is
- * the same kind of ordinary write. For a project task the assignee defaults to
- * whoever opened the dialog; for a personal one (`projectId === null`, from
- * Today) there is no assignee field at all -- a to-do with no project is
- * always your own, and the action enforces that server-side too.
+ * the same kind of ordinary write. For a personal task (`projectId === null`,
+ * from Today) there is no assignee field at all -- it is always your own.
+ *
+ * On a project task, *who* it is assigned to is a narrower question than
+ * *whether you may add one* -- a manager's call, the same as reassigning an
+ * existing task. A member sees no assignee field at all and gets their own
+ * task; a manager gets the picker, defaulting to themselves.
  */
 export function NewTaskDialog({
   projectId,
   assignablePeople,
   currentUserId,
+  isManager,
 }: {
   projectId: string | null;
-  /** Only asked for on a project task. */
+  /** Only asked for on a project task, and only for a manager. */
   assignablePeople: AssignablePerson[];
   currentUserId: string;
+  isManager: boolean;
 }) {
   const t = useTranslations("Task");
   const priorities = useTranslations("Priority");
@@ -103,7 +108,7 @@ export function NewTaskDialog({
           </Field>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            {projectId ? (
+            {projectId && isManager ? (
               <Field>
                 <FieldLabel htmlFor="task-assignee">{t("assignee")}</FieldLabel>
                 <select

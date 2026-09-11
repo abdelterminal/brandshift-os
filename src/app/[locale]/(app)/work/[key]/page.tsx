@@ -308,6 +308,7 @@ export default async function ProjectPage({
               viewerUserId={session.actor.userId}
               canWork={canWorkDeliverables}
               canConvert={canConvertDeliverables}
+              isManager={viewer.isManager}
             />
           }
           stageRail={<StageRail current={project.stage} />}

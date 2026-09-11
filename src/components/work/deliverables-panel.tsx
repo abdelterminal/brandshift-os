@@ -81,6 +81,7 @@ export function DeliverablesPanel({
   viewerUserId,
   canWork,
   canConvert,
+  isManager,
 }: {
   projectId: string;
   deliverables: DeliverableRow[];
@@ -92,6 +93,8 @@ export function DeliverablesPanel({
   /** True when the viewer is on this project's team, or a manager. */
   canWork: boolean;
   canConvert: boolean;
+  /** Only a manager may set or change who a deliverable is assigned to. */
+  isManager: boolean;
 }) {
   const t = useTranslations("Deliverable");
   const work = useTranslations("Work");
@@ -274,6 +277,7 @@ export function DeliverablesPanel({
           projectId={projectId}
           assignablePeople={assignablePeople}
           initial={dialog.mode === "edit" ? dialog.row : null}
+          isManager={isManager}
           onClose={() => setDialog(null)}
           onSaved={() => {
             setDialog(null);
@@ -390,12 +394,15 @@ function DeliverableDialog({
   projectId,
   assignablePeople,
   initial,
+  isManager,
   onClose,
   onSaved,
 }: {
   projectId: string;
   assignablePeople: AssignablePerson[];
   initial: DeliverableRow | null;
+  /** Only asked for when true -- see `updateDeliverableAction`'s own doc. */
+  isManager: boolean;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -456,22 +463,32 @@ function DeliverableDialog({
             />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field>
-              <FieldLabel htmlFor="assigneeUserId">{t("assignee")}</FieldLabel>
-              <select
-                id="assigneeUserId"
-                name="assigneeUserId"
-                className={selectClass}
-                defaultValue={initial?.assigneeUserId ?? ""}
-              >
-                <option value="">{t("unassigned")}</option>
-                {assignablePeople.map((person) => (
-                  <option key={person.userId} value={person.userId}>
-                    {person.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
+            {isManager ? (
+              <Field>
+                <FieldLabel htmlFor="assigneeUserId">{t("assignee")}</FieldLabel>
+                <select
+                  id="assigneeUserId"
+                  name="assigneeUserId"
+                  className={selectClass}
+                  defaultValue={initial?.assigneeUserId ?? ""}
+                >
+                  <option value="">{t("unassigned")}</option>
+                  {assignablePeople.map((person) => (
+                    <option key={person.userId} value={person.userId}>
+                      {person.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            ) : initial ? (
+              <div>
+                <dt className="text-caption text-fg-muted">{t("assignee")}</dt>
+                <dd className="text-body text-fg-default mt-1">
+                  {initial.assigneeName ?? t("unassigned")}
+                </dd>
+                <p className="text-caption text-fg-muted mt-1">{t("assigneeManagerOnly")}</p>
+              </div>
+            ) : null}
             <Field>
               <FieldLabel htmlFor="dueDate">{t("dueDate")}</FieldLabel>
               <Input id="dueDate" name="dueDate" type="date" defaultValue={initial?.dueDate ?? ""} />

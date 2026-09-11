@@ -312,6 +312,7 @@
     "genericError": "Une erreur s'est produite. Réessayez.",
     "notFound": "Cette tâche n'existe plus.",
     "workRestricted": "Seul l'attributaire ou un membre de l'équipe de ce projet peut le modifier.",
+    "assigneeManagerOnly": "Seul un manager peut réattribuer cette tâche.",
     "openTask": "Ouvrir la tâche",
     "closeTask": "Fermer",
     "noTasks": "Rien ici",
@@ -1274,7 +1275,8 @@
     "errorNotFound": "Ce livrable n'existe plus.",
     "errorForbidden": "Vous ne pouvez pas modifier ce livrable.",
     "errorAlreadyThere": "Il est déjà dans cet état.",
-    "workRestricted": "Seul l'attributaire ou un membre de l'équipe de ce projet peut le modifier."
+    "workRestricted": "Seul l'attributaire ou un membre de l'équipe de ce projet peut le modifier.",
+    "assigneeManagerOnly": "Seul un manager peut réattribuer ce livrable."
   },
   "Templates": {
     "title": "Modèles",

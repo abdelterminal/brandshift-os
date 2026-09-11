@@ -73,14 +73,14 @@ test("a project they are on shows their own work, and no activity feed", async (
   await page.getByRole("tab", { name: "Team" }).click();
   await expect(main(page).getByText("Priya Raman").first()).toBeVisible();
 
-  // The Tasks tab is the member's own work: opening a row shows the
-  // reassignment picker rather than a read-only assignee, which the drawer
-  // only renders for a task that is theirs (or a project they run).
+  // The Tasks tab is the member's own work: opening a row lets him work it
+  // (he is a contributor on NOR), but reassigning is a manager's call, so the
+  // drawer shows a read-only assignee, not the picker.
   await page.getByRole("tab", { name: "Tasks" }).click();
   const openTaskButtons = page.getByRole("button", { name: "Open task" });
   expect(await openTaskButtons.count()).toBeGreaterThan(0);
   await openTaskButtons.first().click();
-  await expect(
-    page.getByRole("dialog").getByRole("combobox", { name: "Assignee" }),
-  ).toBeVisible();
+  const drawer = page.getByRole("dialog");
+  await expect(drawer.getByRole("combobox", { name: "Assignee" })).toHaveCount(0);
+  await expect(drawer.getByText("Only a manager can reassign this.")).toBeVisible();
 });

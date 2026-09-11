@@ -4,12 +4,15 @@ import { expect, test, type Page } from "@playwright/test";
  * Who may change a piece of work's state.
  *
  * Reading a task or a deliverable is open to the whole organization. Moving one
- * -- starting it, completing it, reporting or clearing a blocker, reassigning
- * it, walking a deliverable along its line -- is not: it is the task's
- * assignee, a lead or contributor on its project, or a manager. The drawer and
- * the deliverables panel hide the controls for everyone else, and the Server
- * Actions refuse them, so a hidden button and a refused action never disagree
- * (`mayWorkOn`, and `CLAUDE.md`'s rule on that).
+ * -- starting it, completing it, reporting or clearing a blocker, walking a
+ * deliverable along its line -- is not: it is the task's assignee, a lead or
+ * contributor on its project, or a manager. Reassigning is narrower still,
+ * and does not follow that same population: only a manager may change who a
+ * task or deliverable belongs to, whatever else they may do to it. The
+ * drawer and the deliverables panel hide the controls for everyone else, and
+ * the Server Actions refuse them, so a hidden button and a refused action
+ * never disagree (`mayWorkOn`, `atLeast(actor, "manager")`, and
+ * `CLAUDE.md`'s rule on that).
  *
  * The assignee-who-is-a-plain-member case is covered next door, in
  * `deliverables.spec.ts` ("a member on the work can move a deliverable"), which
@@ -45,19 +48,21 @@ test("a member cannot open a project they are not on", async ({ browser }) => {
   await context.close();
 });
 
-test("a contributor on the project keeps the task actions", async ({ browser }) => {
+test("a contributor on the project keeps the task actions, but not reassignment", async ({ browser }) => {
   const context = await browser.newContext({ storageState: "e2e/.auth/member.json" });
   const page = await context.newPage();
 
   // Lukas is a contributor on NOR -- that membership, not assignment, is what
-  // opens the drawer up. The reassignment picker (in place of a plain-text
-  // assignee) and the absence of the note are the status-independent tells
-  // that the actions are his; which mover shows depends on the task's state.
+  // opens the drawer's actions up. But reassigning is a manager's call, not a
+  // contributor's, so the picker is gone in favor of a plain-text assignee
+  // and a note explaining why -- shown alongside active buttons, not instead
+  // of them, since he can still work the task itself.
   await openFirstTask(page, "NOR");
   const drawer = page.getByRole("dialog");
 
   await expect(drawer.getByText(RESTRICTED)).toHaveCount(0);
-  await expect(drawer.getByRole("combobox", { name: "Assignee" })).toBeVisible();
+  await expect(drawer.getByRole("combobox", { name: "Assignee" })).toHaveCount(0);
+  await expect(drawer.getByText("Only a manager can reassign this.")).toBeVisible();
 
   await context.close();
 });

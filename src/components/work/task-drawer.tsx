@@ -42,14 +42,19 @@ type ComboboxOption = { value: string; label: string };
  *
  * Three actions, which are the whole vocabulary of moving work along: Start,
  * Complete, Report blocker. None of them asks for a password -- they are
- * routine writes. Reassigning is a fourth, quieter one: unlike the other
- * three it does not close the drawer on success, since picking a different
- * person is not "done with this task" the way completing it is.
- *
- * All four are shown only to someone who may actually make them -- the task's
- * assignee, a lead/contributor on its project, or a manager (`viewer` +
+ * routine writes. They are shown only to someone who may actually make them
+ * -- the task's assignee, a lead/contributor on its project, or a manager
+ * (`viewer.isManager` / `task.assigneeUserId` / `viewer.projectIds` +
  * `mayWorkOn` on the server). Everyone else sees the drawer read-only: the
  * status, the blocker, the description, but no buttons.
+ *
+ * Reassigning is a separate, narrower call: unlike the three above, only a
+ * manager may make it, whether or not they are otherwise connected to the
+ * task -- see `assignTask`'s own doc. Unlike the other three it also does not
+ * close the drawer on success, since picking a different person is not "done
+ * with this task" the way completing it is. Everyone who is not a manager
+ * sees a plain-text assignee instead of the picker, with a note when they can
+ * otherwise work the task, so the lock reads as deliberate.
  */
 export type TaskDrawerViewer = {
   userId: string;
@@ -169,7 +174,16 @@ export function TaskDrawer({
             <p className="text-body text-fg-muted whitespace-pre-line">{task.description}</p>
           ) : null}
 
-          {canWork ? (
+          {/*
+            Reassigning is narrower than everything else here: `canWork`
+            covers doing the task, but deciding who it belongs to is a
+            manager's call, whoever is holding it today. Someone who can
+            work the task but not reassign it still sees the picker as a
+            plain read-only value, with a line saying why -- otherwise the
+            buttons below being active and this field being locked reads as
+            inconsistent rather than deliberate.
+          */}
+          {viewer.isManager ? (
             <Field>
               <FieldLabel>{t("assignee")}</FieldLabel>
               <Combobox
@@ -201,6 +215,9 @@ export function TaskDrawer({
               <dd className="text-body text-fg-default mt-1">
                 {task.assigneeName ?? t("unassigned")}
               </dd>
+              {canWork ? (
+                <p className="text-caption text-fg-muted mt-1">{t("assigneeManagerOnly")}</p>
+              ) : null}
             </div>
           )}
 

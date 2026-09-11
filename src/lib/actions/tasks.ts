@@ -18,7 +18,7 @@ import {
 } from "@/lib/board";
 import { recordActivity } from "@/lib/data/activity";
 import { mayWorkOn } from "@/lib/data/project-access";
-import type { Actor } from "@/lib/authz";
+import { atLeast, type Actor } from "@/lib/authz";
 
 /**
  * Task mutations.
@@ -31,6 +31,13 @@ import type { Actor } from "@/lib/authz";
  * lead or contributor on its project, or a manager -- the same gate
  * `saveBoardChanges` uses for a drag, checked here so the drawer and the board
  * cannot disagree.
+ *
+ * Deciding *who* does the work is a different question from doing it, though,
+ * and stays narrower: only a manager, admin or owner may reassign a task, full
+ * stop -- being the current assignee, or a lead or contributor on the project,
+ * is not on its own enough. A member creating their own task never runs into
+ * this: it is always assigned to them, and the assignee field is not offered
+ * as something to hand to someone else at the same moment.
  *
  * Every one of them writes an activity event in the same transaction as the
  * change, so the feed cannot disagree with the record.
@@ -229,8 +236,9 @@ export async function assignTask(
   if (!parsed.success) return { ok: false, error: "notFound" };
 
   const session = await requireUserForAction();
-  const gate = await assertMayWork(session.actor, parsed.data.taskId);
-  if (!gate.ok) return gate;
+  // Deciding who a task belongs to is a manager's call -- not the assignee's,
+  // not a lead's or contributor's, whatever else they may do to the task.
+  if (!atLeast(session.actor, "manager")) return { ok: false, error: "forbidden" };
   const assignee = parsed.data.assigneeUserId || null;
 
   const [updated] = await withOrg(session.actor.organizationId).update(
@@ -289,13 +297,16 @@ export async function createTask(formData: FormData): Promise<ActionResult> {
     return { ok: false, error: "forbidden" };
   }
 
-  // A personal task (no project) is always your own -- nothing scopes the
-  // assignee otherwise, since there is no project to check membership
-  // against, and assigning your own personal to-do to someone else is not a
-  // real case.
-  const assigneeUserId = parsed.data.projectId
-    ? parsed.data.assigneeUserId || null
-    : session.actor.userId;
+  // A personal task (no project) is always your own. On a project task,
+  // deciding who it belongs to is the same manager-only call `assignTask`
+  // makes -- a member creating a task gets it assigned to themselves,
+  // whatever the submitted field says, because the dialog does not offer
+  // them anyone else to begin with.
+  const isManager = atLeast(session.actor, "manager");
+  const assigneeUserId =
+    parsed.data.projectId && isManager
+      ? parsed.data.assigneeUserId || null
+      : session.actor.userId;
 
   const [created] = await withOrg(session.actor.organizationId).insert(tasks, {
     title: parsed.data.title,

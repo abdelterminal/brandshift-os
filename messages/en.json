@@ -312,6 +312,7 @@
     "genericError": "Something went wrong. Try again.",
     "notFound": "That task no longer exists.",
     "workRestricted": "Only the assignee or someone on this project's team can change this.",
+    "assigneeManagerOnly": "Only a manager can reassign this.",
     "openTask": "Open task",
     "closeTask": "Close",
     "noTasks": "Nothing here",
@@ -1274,7 +1275,8 @@
     "errorNotFound": "That deliverable no longer exists.",
     "errorForbidden": "You cannot change this deliverable.",
     "errorAlreadyThere": "It is already in that state.",
-    "workRestricted": "Only the assignee or someone on this project's team can change this."
+    "workRestricted": "Only the assignee or someone on this project's team can change this.",
+    "assigneeManagerOnly": "Only a manager can reassign this."
   },
   "Templates": {
     "title": "Templates",

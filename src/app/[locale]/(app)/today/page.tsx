@@ -233,7 +233,12 @@ async function MyDay({ name }: { name: string }) {
           </p>
         </div>
         {/* No project: a personal to-do, always the creator's own. */}
-        <NewTaskDialog projectId={null} assignablePeople={[]} currentUserId={session.actor.userId} />
+        <NewTaskDialog
+          projectId={null}
+          assignablePeople={[]}
+          currentUserId={session.actor.userId}
+          isManager={atLeast(session.actor, "manager")}
+        />
       </header>
 
       {/*

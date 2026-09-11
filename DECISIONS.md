@@ -1134,3 +1134,30 @@ the same sweep turned up: the composer's own "preview" tab-link, and Today's who
 `UnplannedBanner`-as-a-project-link, which had no hover of any kind because the card inside it
 already owns a border and a background -- that one gets `group-hover:border-border-hover`
 instead of a second layer of background on top of the first.
+
+## Reassigning a task or deliverable is a manager's call, not the assignee's
+
+**`mayWorkOn` answers "may this person move this piece of work along" -- start it, complete it,
+report or clear a blocker on it -- and until now `assignTask` used the exact same gate. That
+conflated two different questions.** Doing the work and deciding who holds it are not the same
+authority: the person a task is handed to should not also be the one who can hand it to someone
+else, any more than a contributor on a project should be able to hand their own tasks off
+unilaterally. The population that may change *who* a task or deliverable belongs to is narrower
+than the population that may work on it -- `atLeast(actor, "manager")`, full stop, with no
+assignee-of-record or project-lead exception.
+
+**The same rule reaches task *creation*, not just reassignment.** Letting a member create a task
+already assigned to someone else was the same authority through the back door -- so a
+non-manager's `createTask` now always assigns to themselves regardless of what the form carries,
+and the assignee field is not shown to them at all (`new-task-dialog.tsx`), the same treatment
+`new-task-dialog.tsx` already gave non-project personal tasks. Deliverables get the identical
+split: `createDeliverableAction` self-assigns for a non-manager, and `updateDeliverableAction`
+leaves the existing assignee exactly where it was rather than trusting the submitted value --
+editing your own deliverable's title or stage should not be blocked outright just because the
+assignee field is locked, so the fix is to ignore that one field's submission, not refuse the
+whole edit.
+
+**The task drawer and the deliverable dialog both keep the picker for a manager and swap in a
+read-only value with a one-line note for everyone else** -- including someone who can otherwise
+work the task, so the locked field reads as deliberate rather than broken next to buttons that
+are still active.

@@ -235,6 +235,7 @@ function TasksPanel({
             projectId={projectId}
             assignablePeople={assignablePeople}
             currentUserId={viewer.userId}
+            isManager={viewer.isManager}
           />
         ) : null}
       </div>
