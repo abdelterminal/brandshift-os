@@ -35,21 +35,37 @@ const PRIORITIES = ["low", "medium", "high", "urgent"] as const;
  *
  * The button anyone connected to a project's work sees -- the same population
  * `mayWorkOn()` lets start, complete or block a task, because adding one is
- * the same kind of ordinary write. For a personal task (`projectId === null`,
- * from Today) there is no assignee field at all -- it is always your own.
+ * the same kind of ordinary write.
+ *
+ * Opened from a project's own Tasks tab, `projectId` is fixed and there is
+ * nothing to pick. Opened from Today, `projectId` is null and `myProjects`
+ * offers the member's own projects instead -- left on the default "Personal
+ * to-do" option, the task stays exactly what it always was: nobody else's
+ * business. Pick one, and it is a project task like any other, subject to
+ * the same rule as everywhere else: `createTask` re-checks membership on the
+ * server regardless of which project this list happens to offer.
  *
  * On a project task, *who* it is assigned to is a narrower question than
  * *whether you may add one* -- a manager's call, the same as reassigning an
  * existing task. A member sees no assignee field at all and gets their own
- * task; a manager gets the picker, defaulting to themselves.
+ * task; a manager gets the picker, defaulting to themselves, the moment a
+ * project (fixed or picked) is in play.
  */
 export function NewTaskDialog({
   projectId,
+  myProjects,
   assignablePeople,
   currentUserId,
   isManager,
 }: {
   projectId: string | null;
+  /**
+   * Only given when `projectId` is null (Today) -- the projects the member
+   * is a lead or contributor on, offered in place of a personal to-do.
+   * Omitted from a project's own Tasks tab, where the project is fixed and
+   * there is nothing to choose.
+   */
+  myProjects?: { id: string; key: string; name: string }[];
   /** Only asked for on a project task, and only for a manager. */
   assignablePeople: AssignablePerson[];
   currentUserId: string;
@@ -61,10 +77,16 @@ export function NewTaskDialog({
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [pickedProjectId, setPickedProjectId] = useState("");
+
+  // Fixed wins when it is given; otherwise it is whatever the picker (if any)
+  // is currently set to, or null for a plain personal to-do.
+  const effectiveProjectId = projectId ?? (pickedProjectId || null);
 
   function onSubmit(formData: FormData) {
     setError(null);
-    if (projectId) formData.set("projectId", projectId);
+    formData.delete("taskProjectId");
+    if (effectiveProjectId) formData.set("projectId", effectiveProjectId);
 
     startTransition(async () => {
       const result = await createTask(formData);
@@ -73,6 +95,7 @@ export function NewTaskDialog({
         return;
       }
       setOpen(false);
+      setPickedProjectId("");
       router.refresh();
     });
   }
@@ -107,8 +130,28 @@ export function NewTaskDialog({
             />
           </Field>
 
+          {myProjects && myProjects.length > 0 ? (
+            <Field>
+              <FieldLabel htmlFor="task-project">{t("project")}</FieldLabel>
+              <select
+                id="task-project"
+                name="taskProjectId"
+                className={selectClass}
+                value={pickedProjectId}
+                onChange={(event) => setPickedProjectId(event.target.value)}
+              >
+                <option value="">{t("personalToDo")}</option>
+                {myProjects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.key} · {project.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          ) : null}
+
           <div className="grid gap-4 sm:grid-cols-2">
-            {projectId && isManager ? (
+            {effectiveProjectId && isManager ? (
               <Field>
                 <FieldLabel htmlFor="task-assignee">{t("assignee")}</FieldLabel>
                 <select

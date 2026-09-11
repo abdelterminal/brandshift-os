@@ -298,6 +298,7 @@
     "assigneeOpen": "Afficher les personnes",
     "unassigned": "Non attribué",
     "project": "Projet",
+    "personalToDo": "Tâche personnelle (sans projet)",
     "dueDate": "Échéance",
     "priority": "Priorité",
     "estimate": "Estimation",

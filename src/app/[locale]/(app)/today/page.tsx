@@ -19,6 +19,7 @@ import { dayKey } from "@/lib/calendar-dates";
 import { nextMeetingsFor } from "@/lib/data/meetings";
 import { listAssignablePeople } from "@/lib/data/people";
 import { listUnplannedMembers, planningGraceHours } from "@/lib/data/planning";
+import { listProjectsForUser } from "@/lib/data/projects";
 import { cn } from "@/lib/utils";
 import {
   coordinationQueue,
@@ -189,16 +190,24 @@ async function CoordinationQueue() {
 
 async function MyDay({ name }: { name: string }) {
   const session = await requireUser();
-  const [t, tWork, buckets, meetings, assignablePeople, myUnplanned, graceHours] = await Promise.all([
-    getTranslations("Today"),
-    getTranslations("Work"),
-    listTaskBuckets(session.actor, { assigneeUserId: session.actor.userId }),
-    nextMeetingsFor(session.actor, new Date()),
-    listAssignablePeople(session.actor),
-    listUnplannedMembers(session.actor, { onlyUserId: session.actor.userId }),
-    planningGraceHours(session.actor),
-  ]);
+  const [t, tWork, buckets, meetings, assignablePeople, myUnplanned, graceHours, myProjectMemberships] =
+    await Promise.all([
+      getTranslations("Today"),
+      getTranslations("Work"),
+      listTaskBuckets(session.actor, { assigneeUserId: session.actor.userId }),
+      nextMeetingsFor(session.actor, new Date()),
+      listAssignablePeople(session.actor),
+      listUnplannedMembers(session.actor, { onlyUserId: session.actor.userId }),
+      planningGraceHours(session.actor),
+      listProjectsForUser(session.actor, session.actor.userId),
+    ]);
   const viewer = { userId: session.actor.userId, isManager: atLeast(session.actor, "manager"), projectIds: await listWorkableProjectIds(session.actor) };
+  // The Today dialog's project picker: only projects a lead or contributor
+  // is actually on -- a viewer-only membership doesn't earn a "New task"
+  // button here any more than it does on the project's own Tasks tab.
+  const myProjects = myProjectMemberships
+    .filter((project) => viewer.projectIds.includes(project.id))
+    .map((project) => ({ id: project.id, key: project.key, name: project.name }));
 
   // Now is what is late or due today; Next is the rest of the week; Later is
   // everything else. Three horizons, so the first one is short enough to act on.
@@ -232,12 +241,14 @@ async function MyDay({ name }: { name: string }) {
             {t("greeting", { name: name.split(" ")[0] ?? name })}
           </p>
         </div>
-        {/* No project: a personal to-do, always the creator's own. */}
+        {/* No fixed project here -- a personal to-do by default, or one of
+            the member's own projects if they pick one. */}
         <NewTaskDialog
           projectId={null}
-          assignablePeople={[]}
+          myProjects={myProjects}
+          assignablePeople={assignablePeople}
           currentUserId={session.actor.userId}
-          isManager={atLeast(session.actor, "manager")}
+          isManager={viewer.isManager}
         />
       </header>
 

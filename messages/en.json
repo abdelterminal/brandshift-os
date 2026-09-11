@@ -298,6 +298,7 @@
     "assigneeOpen": "Show people",
     "unassigned": "Unassigned",
     "project": "Project",
+    "personalToDo": "Personal to-do (no project)",
     "dueDate": "Due",
     "priority": "Priority",
     "estimate": "Estimate",

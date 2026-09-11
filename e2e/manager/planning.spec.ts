@@ -4,13 +4,16 @@ import { expect, test, type Page } from "@playwright/test";
  * Letting the people on a project plan their own work, and the signal when
  * nobody has.
  *
- * Two things worth protecting:
+ * Three things worth protecting:
  *
  * 1. Anyone connected to a project's work -- not just a manager -- can add a
  *    task to it, with `createTask()` now wired to a real "New task" dialog.
  * 2. A project member with nothing of their own on the board shows "No tasks
  *    here yet" wherever they look -- their own project, their own Today --
  *    and the fact disappears the moment they add one.
+ * 3. Today's own "New task" button defaults to a personal to-do, but can
+ *    also attach straight to one of the member's own projects -- so a
+ *    member is never limited to visiting the project's own Tasks tab first.
  */
 
 const main = (page: Page) => page.locator("#main");
@@ -97,5 +100,38 @@ test("a newly-unplanned project shows the banner, and adding a task clears it", 
     await expect(main(lukas).getByText("No tasks here yet")).toHaveCount(0);
   } finally {
     await lukasCtx.close();
+  }
+});
+
+test("Today's New task can attach to one of the member's own projects", async ({ browser }) => {
+  // Lukas is a contributor on NOR. Left on the dialog's default, the task
+  // would be his own personal to-do -- picking NOR from the new project
+  // field is what puts it under the project instead.
+  const context = await browser.newContext({ storageState: "e2e/.auth/member.json" });
+  const page = await context.newPage();
+
+  try {
+    await page.goto("/en/today");
+    await page.getByRole("button", { name: "New task" }).click();
+    const dialog = page.getByRole("dialog");
+
+    const title = `Provision the staging bucket ${Date.now()}`;
+    await dialog.getByLabel("Title").fill(title);
+
+    const projectField = dialog.getByLabel("Project");
+    const norOption = projectField.locator("option", { hasText: "NOR" });
+    await projectField.selectOption(await norOption.getAttribute("value"));
+
+    const done = page.waitForResponse((r) => r.request().method() === "POST" && r.status() === 200);
+    await dialog.getByRole("button", { name: "Create task" }).click();
+    await done;
+    await expect(dialog).toBeHidden();
+
+    // Not on Today as a personal to-do -- filed under NOR's own Tasks tab.
+    await page.goto("/en/work/NOR");
+    await page.getByRole("tab", { name: "Tasks" }).click();
+    await expect(main(page).getByText(title, { exact: true })).toBeVisible();
+  } finally {
+    await context.close();
   }
 });

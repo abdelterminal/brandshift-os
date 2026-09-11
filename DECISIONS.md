@@ -1182,3 +1182,20 @@ because `--fg-subtle` text on it already sits at the edge of AA. There is no lig
 stays exactly where it was rather than taking a second, lighter step of its own -- hover and
 active now share a lightness in dark theme, which reads as one quiet highlight rather than two,
 and is still a real improvement over hover doing nothing at all.
+
+## Today's "New task" can now also attach to one of the member's own projects
+
+**The Today page's own "New task" button always created a personal to-do, `projectId: null`,
+with no way to point it at a project instead -- a separate feature from the per-project "New
+task" on a project's own Tasks tab, and easy to confuse for the same thing.** A member reaching
+for the Today button because it is the first "add a task" affordance they see got a task nobody
+else's page would ever show.
+
+**Fixed by giving the dialog an optional project picker, offered only from Today.** Left on its
+default "Personal to-do" option, nothing changes. Pick one of the member's own projects (leads
+and contributors only -- the same population `mayWorkOn` already lets add a task, and the same
+list `listWorkableProjectIds` already builds for the sidebar's silo) and the task is filed under
+it exactly as if it had been added from that project's own Tasks tab, assignee rule included: a
+manager picking a project gets the assignee field, a member does not. `createTask` re-checks
+project membership on the server regardless of what the picker happens to offer, so this is a
+convenience, not a new door.
