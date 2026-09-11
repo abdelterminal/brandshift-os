@@ -1,0 +1,1 @@
+ALTER TABLE "organizations" ADD COLUMN "planning_grace_hours" integer DEFAULT 48 NOT NULL;

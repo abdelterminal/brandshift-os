@@ -127,6 +127,7 @@ export type ProjectMemberRow = {
   name: string;
   avatarUrl: string | null;
   role: "lead" | "contributor" | "viewer";
+  addedAt: Date;
 };
 
 export async function listProjectMembers(
@@ -140,6 +141,7 @@ export async function listProjectMembers(
       name: users.name,
       avatarUrl: users.avatarUrl,
       role: projectMembers.role,
+      addedAt: projectMembers.addedAt,
     },
     [{ table: users, on: eq(users.id, projectMembers.userId), type: "inner" as const }],
     eq(projectMembers.projectId, projectId),

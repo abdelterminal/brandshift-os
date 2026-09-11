@@ -2,7 +2,10 @@ import { Check } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { NextMeetings } from "@/components/calendar/next-meetings";
+import { NewTaskDialog } from "@/components/work/new-task-dialog";
 import { TaskListFlat } from "@/components/work/task-list";
+import { UnplannedBanner } from "@/components/work/unplanned-banner";
+import { UnplannedList } from "@/components/work/unplanned-list";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CountBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +17,7 @@ import { requireUser } from "@/lib/auth/guards";
 import { dayKey } from "@/lib/calendar-dates";
 import { nextMeetingsFor } from "@/lib/data/meetings";
 import { listAssignablePeople } from "@/lib/data/people";
+import { listUnplannedMembers, planningGraceHours } from "@/lib/data/planning";
 import {
   coordinationQueue,
   listTaskBuckets,
@@ -46,17 +50,26 @@ export default async function TodayPage() {
 
 async function CoordinationQueue() {
   const session = await requireUser();
-  const [t, queue, meetings, assignablePeople] = await Promise.all([
+  const [t, queue, meetings, assignablePeople, unplannedAll, graceHours] = await Promise.all([
     getTranslations("Today"),
     coordinationQueue(session.actor),
     nextMeetingsFor(session.actor, new Date()),
     listAssignablePeople(session.actor),
+    listUnplannedMembers(session.actor),
+    planningGraceHours(session.actor),
   ]);
   const viewer = { userId: session.actor.userId, isManager: atLeast(session.actor, "manager"), projectIds: await listWorkableProjectIds(session.actor) };
   const todayIso = organizationToday();
 
+  // Only once they are past the grace period -- inside it, it is between the
+  // member and their own project page, not yet the coordinator's problem.
+  const unplanned = unplannedAll.filter((row) => row.hoursSince >= graceHours);
+
   const nothingToDo =
-    queue.blocked.length === 0 && queue.overdue.length === 0 && queue.unassigned.length === 0;
+    queue.blocked.length === 0 &&
+    queue.overdue.length === 0 &&
+    queue.unassigned.length === 0 &&
+    unplanned.length === 0;
 
   const columns = [
     { key: "blocked" as const, tasks: queue.blocked, tone: "blocked" as const },
@@ -85,7 +98,7 @@ async function CoordinationQueue() {
           <EmptyState title={t("allClear")} description={t("allClearBody")} />
         </div>
       ) : (
-        <div className="mt-6 grid gap-4 lg:grid-cols-3">
+        <div className="mt-6 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
           {columns.map((column) => (
             <Card key={column.key} className="min-w-0">
               <CardHeader>
@@ -133,6 +146,37 @@ async function CoordinationQueue() {
               ) : null}
             </Card>
           ))}
+
+          <Card className="min-w-0">
+            <CardHeader>
+              <div className="min-w-0">
+                <CardTitle className="flex items-center gap-2">
+                  {t("noPlan")}
+                  <CountBadge tone={unplanned.length > 0 ? "attention" : "neutral"}>
+                    {unplanned.length}
+                  </CountBadge>
+                </CardTitle>
+                <p className="text-caption text-fg-muted mt-1">{t("noPlanBody")}</p>
+              </div>
+            </CardHeader>
+            <CardContent className="px-0 pt-1 pb-2">
+              {unplanned.length === 0 ? (
+                <div className="flex items-center gap-2 px-4 py-2">
+                  <Check aria-hidden className="text-fg-subtle size-3.5 shrink-0" />
+                  <p className="text-caption text-fg-subtle">{t("noPlanEmpty")}</p>
+                </div>
+              ) : (
+                <UnplannedList items={unplanned.slice(0, 8)} />
+              )}
+            </CardContent>
+            {unplanned.length > 8 ? (
+              <div className="border-border border-t px-4 py-2.5">
+                <Button variant="link" render={<Link href="/work/queue?bucket=noPlan" />}>
+                  {t("viewAll")}
+                </Button>
+              </div>
+            ) : null}
+          </Card>
         </div>
       )}
     </div>
@@ -143,11 +187,14 @@ async function CoordinationQueue() {
 
 async function MyDay({ name }: { name: string }) {
   const session = await requireUser();
-  const [t, buckets, meetings, assignablePeople] = await Promise.all([
+  const [t, tWork, buckets, meetings, assignablePeople, myUnplanned, graceHours] = await Promise.all([
     getTranslations("Today"),
+    getTranslations("Work"),
     listTaskBuckets(session.actor, { assigneeUserId: session.actor.userId }),
     nextMeetingsFor(session.actor, new Date()),
     listAssignablePeople(session.actor),
+    listUnplannedMembers(session.actor, { onlyUserId: session.actor.userId }),
+    planningGraceHours(session.actor),
   ]);
   const viewer = { userId: session.actor.userId, isManager: atLeast(session.actor, "manager"), projectIds: await listWorkableProjectIds(session.actor) };
 
@@ -176,11 +223,15 @@ async function MyDay({ name }: { name: string }) {
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8 sm:px-8">
-      <header>
-        <h1 className="text-display font-display text-fg-default">{t("title")}</h1>
-        <p className="text-body text-fg-muted mt-1.5">
-          {t("greeting", { name: name.split(" ")[0] ?? name })}
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-display font-display text-fg-default">{t("title")}</h1>
+          <p className="text-body text-fg-muted mt-1.5">
+            {t("greeting", { name: name.split(" ")[0] ?? name })}
+          </p>
+        </div>
+        {/* No project: a personal to-do, always the creator's own. */}
+        <NewTaskDialog projectId={null} assignablePeople={[]} currentUserId={session.actor.userId} />
       </header>
 
       {/*
@@ -195,6 +246,21 @@ async function MyDay({ name }: { name: string }) {
           today={dayKey(new Date(), session.organization.timezone)}
         />
       </div>
+
+      {myUnplanned.length > 0 ? (
+        <div className="mt-6 flex flex-col gap-2">
+          {myUnplanned.map((row) => (
+            <Link key={row.projectId} href={`/work/${row.projectKey}`} className="block">
+              <p className="text-caption text-fg-muted mb-1">{row.projectName}</p>
+              <UnplannedBanner
+                title={tWork("noPlanYet")}
+                body={tWork("noPlanYetBody")}
+                pastGrace={row.hoursSince >= graceHours}
+              />
+            </Link>
+          ))}
+        </div>
+      ) : null}
 
       {!hasAnyWork ? (
         <div className="border-border rounded-card mt-6 border">

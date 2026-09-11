@@ -5,20 +5,24 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requirePermissionForAction, requireUserForAction } from "@/lib/auth/guards";
-import { can } from "@/lib/authz";
 import { dayKey } from "@/lib/calendar-dates";
 import { recordActivity } from "@/lib/data/activity";
 import { DOCUMENT_KINDS } from "@/lib/data/document-kinds";
 import { PROJECT_STAGES } from "@/lib/data/pipeline-stages";
 import { setStagePlaybook, setUpStage } from "@/lib/data/playbook";
+import { mayWorkOn } from "@/lib/data/project-access";
 import { getProjectById } from "@/lib/data/projects";
 
 /**
  * Configuring the delivery flow, and running a stage's setup against a project.
  *
  * Two different privileges: writing the playbook is a manager's call
- * (`playbook.manage`), the same as writing a template; running a stage's setup
- * is for whoever can move that project along the flow (`project.setStage`).
+ * (`playbook.manage`), the same as writing a template. Running a stage's
+ * setup -- creating the tasks and document stubs it names -- is work, not a
+ * client-facing decision, so it is `mayWorkOn()`: the project's own assignee,
+ * lead or contributor, or a manager. Moving the project *to* a different
+ * stage is the separate, narrower `project.setStage` -- that one stays a
+ * manager's or the project owner's call, because it is what the client sees.
  */
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -61,7 +65,7 @@ export async function setUpStageAction(input: z.input<typeof setUpSchema>): Prom
   const project = await getProjectById(session.actor, parsed.data.projectId);
   if (!project) return { ok: false, error: "notFound" };
 
-  if (!can(session.actor, "project.setStage", { ownerUserId: project.ownerUserId ?? undefined })) {
+  if (!(await mayWorkOn(session.actor, { projectId: project.id, assigneeUserId: null }))) {
     return { ok: false, error: "forbidden" };
   }
 

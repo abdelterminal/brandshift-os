@@ -1,4 +1,4 @@
-import { index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import { localeEnum } from "./enums";
 
@@ -39,6 +39,14 @@ export const organizations = pgTable(
      * date they were taken on, not a column.
      */
     currency: text("currency").notNull().default("MAD"),
+    /**
+     * How long a new project member has to put at least one task of their own
+     * on the board before "no plan yet" starts showing. A column rather than a
+     * constant so it can be tuned per organization without a deploy -- there is
+     * no settings screen for it yet, so today that means a SQL statement, the
+     * same honest gap the letterhead fields already carry.
+     */
+    planningGraceHours: integer("planning_grace_hours").notNull().default(48),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     /** Soft delete. A tenant is never hard-deleted. */

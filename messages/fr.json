@@ -208,7 +208,11 @@
     "nothingTodayBody": "Aucun retard ni échéance du jour. Profitez-en.",
     "noWork": "Aucune tâche ouverte ne vous est attribuée",
     "noWorkBody": "Dès qu'on vous attribue une tâche, elle apparaîtra ici.",
-    "viewAll": "Tout voir"
+    "viewAll": "Tout voir",
+    "noPlan": "Pas de plan",
+    "noPlanBody": "A rejoint un projet et n'y a encore rien de personnel.",
+    "noPlanEmpty": "Tout le monde a quelque chose de planifié.",
+    "noPlanSince": "{hours, plural, one {# heure} other {# heures}} depuis l'arrivée"
   },
   "Work": {
     "title": "Travaux",
@@ -271,7 +275,9 @@
     "startOnFlowHint": "Définit l'étape sur Intégration et crée ses tâches et documents.",
     "deliverables": "Livrables",
     "convertToDeliverable": "Convertir en livrable",
-    "convertHint": "Cette tâche sera supprimée et un livrable prend sa place."
+    "convertHint": "Cette tâche sera supprimée et un livrable prend sa place.",
+    "noPlanYet": "Aucune tâche pour l'instant",
+    "noPlanYetBody": "Découpez votre travail en tâches pour que l'équipe voie votre plan."
   },
   "Task": {
     "bucketOverdue": "En retard",
@@ -299,7 +305,11 @@
     "newTask": "Nouvelle tâche",
     "title": "Titre",
     "titleRequired": "Donnez un titre à la tâche.",
+    "description": "Description",
+    "descriptionPlaceholder": "Ce qu'il faut faire, et tout ce dont quelqu'un qui reprend cette tâche aurait besoin.",
     "create": "Créer la tâche",
+    "cancel": "Annuler",
+    "genericError": "Une erreur s'est produite. Réessayez.",
     "notFound": "Cette tâche n'existe plus.",
     "workRestricted": "Seul l'attributaire ou un membre de l'équipe de ce projet peut le modifier.",
     "openTask": "Ouvrir la tâche",

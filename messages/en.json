@@ -208,7 +208,11 @@
     "nothingTodayBody": "You have no late or due-today work. Enjoy it.",
     "noWork": "No open work assigned to you",
     "noWorkBody": "When someone assigns you a task it will appear here.",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "noPlan": "No plan",
+    "noPlanBody": "Joined a project and still has nothing of their own on it.",
+    "noPlanEmpty": "Everyone has something planned.",
+    "noPlanSince": "{hours, plural, one {# hour} other {# hours}} since joining"
   },
   "Work": {
     "title": "Work",
@@ -271,7 +275,9 @@
     "startOnFlowHint": "Sets the stage to Onboarding and creates its tasks and documents.",
     "deliverables": "Deliverables",
     "convertToDeliverable": "Convert to deliverable",
-    "convertHint": "This task will be removed and a deliverable takes its place."
+    "convertHint": "This task will be removed and a deliverable takes its place.",
+    "noPlanYet": "No tasks here yet",
+    "noPlanYetBody": "Break your work down into tasks so the team can see your plan."
   },
   "Task": {
     "bucketOverdue": "Overdue",
@@ -299,7 +305,11 @@
     "newTask": "New task",
     "title": "Title",
     "titleRequired": "Give the task a title.",
+    "description": "Description",
+    "descriptionPlaceholder": "What needs to happen, and any context someone picking this up would want.",
     "create": "Create task",
+    "cancel": "Cancel",
+    "genericError": "Something went wrong. Try again.",
     "notFound": "That task no longer exists.",
     "workRestricted": "Only the assignee or someone on this project's team can change this.",
     "openTask": "Open task",

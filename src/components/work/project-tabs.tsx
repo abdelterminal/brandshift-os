@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { BUCKET_ORDER, type AssignablePerson, type TaskBucket, type TaskRow } from "@/lib/data/task-types";
 import { cn } from "@/lib/utils";
 
+import { NewTaskDialog } from "./new-task-dialog";
 import { TaskBoard } from "./task-board";
 import { TaskList } from "./task-list";
 import type { TaskDrawerViewer } from "./task-drawer";
@@ -191,38 +192,51 @@ function TasksPanel({
 }) {
   const t = useTranslations("Work");
   const [view, setView] = useState<"list" | "board">("list");
+  // The same population mayWorkOn() opens a task's own actions to: the
+  // project's own assignee, lead or contributor, or a manager.
+  const canAddTask = viewer.isManager || viewer.projectIds.includes(projectId);
 
   return (
     <div>
-      <div
-        role="radiogroup"
-        aria-label={`${t("listView")} / ${t("boardView")}`}
-        className="border-border bg-surface-raised mb-4 inline-flex items-center gap-0.5 rounded-control border p-0.5"
-      >
-        {(["list", "board"] as const).map((option) => (
-          <button
-            key={option}
-            type="button"
-            role="radio"
-            aria-checked={view === option}
-            onClick={() => setView(option)}
-            className={cn(
-              "text-label inline-flex items-center gap-1.5 rounded-[6px] px-2.5 py-1.5",
-              "focus-visible:outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-1",
-              "transition-colors duration-[var(--duration-fast)]",
-              view === option
-                ? "bg-accent-subtle text-accent-text"
-                : "text-fg-muted hover:bg-surface-hover hover:text-fg-default",
-            )}
-          >
-            {option === "list" ? (
-              <List aria-hidden className="size-4" />
-            ) : (
-              <Columns3 aria-hidden className="size-4" />
-            )}
-            {option === "list" ? t("listView") : t("boardView")}
-          </button>
-        ))}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div
+          role="radiogroup"
+          aria-label={`${t("listView")} / ${t("boardView")}`}
+          className="border-border bg-surface-raised inline-flex items-center gap-0.5 rounded-control border p-0.5"
+        >
+          {(["list", "board"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              role="radio"
+              aria-checked={view === option}
+              onClick={() => setView(option)}
+              className={cn(
+                "text-label inline-flex items-center gap-1.5 rounded-[6px] px-2.5 py-1.5",
+                "focus-visible:outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-1",
+                "transition-colors duration-[var(--duration-fast)]",
+                view === option
+                  ? "bg-accent-subtle text-accent-text"
+                  : "text-fg-muted hover:bg-surface-hover hover:text-fg-default",
+              )}
+            >
+              {option === "list" ? (
+                <List aria-hidden className="size-4" />
+              ) : (
+                <Columns3 aria-hidden className="size-4" />
+              )}
+              {option === "list" ? t("listView") : t("boardView")}
+            </button>
+          ))}
+        </div>
+
+        {canAddTask ? (
+          <NewTaskDialog
+            projectId={projectId}
+            assignablePeople={assignablePeople}
+            currentUserId={viewer.userId}
+          />
+        ) : null}
       </div>
 
       {view === "list" ? (

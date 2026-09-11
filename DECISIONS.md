@@ -1020,3 +1020,57 @@ page reload does the same, so coming back to a tab does not replay a morning of 
 - **A toast is now more than "you did a thing"** -- the component's doc said it was only for the
   result of an action the viewer took. Pushed notifications now use it too; state the viewer did
   not cause is exactly what a toast in the corner is for when it is something they should see now.
+
+## Added when members started planning their own work
+
+**Adding a task was never actually restricted; it was never actually offered.** `task.create` had
+been open to everyone since `authz.ts` was first written, and `createTask()` had the right
+`mayWorkOn()` check on the project case already -- there was simply no "New task" button anywhere
+in the app, and the `Task.newTask` string had sat unused since it was written. The member could
+not plan a website's frontend, backend, database, API and CI/CD as separate tasks not because of
+a rule, but because of a missing form. Closing that gap is most of this change; the rest is making
+the gap itself visible when somebody does not close it.
+
+**`createTask()` now also takes a description, and a personal task always assigns itself.** The
+column existed; nothing wrote to it. And a to-do with no project had no check on who it could be
+assigned to at all -- reachable by nobody today because nothing called the action, but worth
+closing before something did: it is now always the creator, the same way a personal task has
+always conceptually been theirs.
+
+**Running a stage's setup split off from moving the project's stage.** Both were `project.setStage`
+before this -- a manager's call, or the project owner's. Instantiating a stage's tasks and document
+stubs is work, the same kind `mayWorkOn()` already gates everywhere else; deciding the project has
+actually *reached* a new stage is the client-facing fact the pipeline board and the stage rail show.
+Collapsing them meant a contributor could not one-click the six tasks a stage already names for
+them, which is the whole point of having a playbook. `setUpStageAction` now checks `mayWorkOn()`;
+`ProjectStageControl`'s own gate is untouched.
+
+**"No plan yet" is computed, not stored, and it is read-only information.** A project member past
+`organizations.planning_grace_hours` (default 48h) with zero tasks of their own on that project.
+No new table: `project_members.addedAt` already existed, and the check against `tasks` is one
+query plus an in-memory anti-join, the same trade `workloadFrom()` already makes at this scale.
+Deliberately not a stored warning, a strike, or a record that outlives the thing it is about --
+it disappears the moment a task exists, because the fact it reports is "this is empty right now",
+not "this happened, on this date, and is now part of a file on you".
+
+**The threshold is a column, not a constant, because changing it should not need a deploy.**
+There is no Settings field for it yet -- the same honest gap the letterhead already has -- so
+today that is a SQL statement. The number itself was asked for directly: 48 hours.
+
+**It shows three places, each already built for exactly this kind of fact.** A neutral banner
+on the member's own project (and their own Today, across every project they are on) while they
+are inside the grace window, turning amber once they are past it -- the same fact, a louder tone,
+never a new screen. A fourth card in the coordination queue, beside Blocked / Overdue /
+Unassigned, once it actually becomes something a coordinator should act on. Nothing pushes a
+notification at hour 48 -- there is no scheduler -- so the signal is exactly as honest as
+`isOverdue()` already is: visible wherever someone looks, never promised at a moment nobody is
+looking.
+
+- **A required minimum task count** -- the one shape of this idea actively rejected. It rewards
+  splitting "build the site" into six empty titles instead of a plan anyone could read, and it is
+  enforceable by counting rows in a way that a real breakdown is not.
+- **A stored strike or warning record** -- a disciplinary history that would then need managing,
+  appealing and clearing. The visible signal already does the job and clears itself.
+- **Gating "no plan" by task count on the whole project rather than by person** -- would reward a
+  lead who has planned everything under their own name and nobody else's, which is not the thing
+  being asked for. The check is per person, per project, on purpose.

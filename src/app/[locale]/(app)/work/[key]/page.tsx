@@ -24,7 +24,9 @@ import { getProjectByKey, listProjectMembers } from "@/lib/data/projects";
 import { listProjectDeliverables } from "@/lib/data/deliverables";
 import { getPlaybook, stageSetupFor } from "@/lib/data/playbook";
 import { listWorkableProjectIds } from "@/lib/data/project-access";
+import { planningGraceHours } from "@/lib/data/planning";
 import { isOnProject, seesOnlyOwnWork } from "@/lib/data/visibility";
+import { UnplannedBanner } from "@/components/work/unplanned-banner";
 import { sopForStage } from "@/lib/data/sops";
 import { bucketTasks, listProjectTasks, organizationToday } from "@/lib/data/tasks";
 
@@ -126,6 +128,22 @@ export default async function ProjectPage({
   const canSetStage = can(session.actor, "project.setStage", {
     ownerUserId: project.ownerUserId ?? undefined,
   });
+  // Running a stage's setup is work, not the client-facing decision moving
+  // the stage is -- the project's own team may do it, not just whoever may
+  // move the stage. Same shape as `canEditBoard` / `canAddTask` below.
+  const canSetUpStage = viewer.isManager || viewer.projectIds.includes(project.id);
+
+  // "No plan yet": the signed-in person is on this project and has not put a
+  // single task of their own on it. Checked against every task on the
+  // project, not the silo-filtered list, so this is right for a manager
+  // looking at their own project too.
+  const myMembership = members.find((member) => member.userId === session.actor.userId);
+  const hasOwnTask = allProjectTasks.some((row) => row.assigneeUserId === session.actor.userId);
+  const graceHours = await planningGraceHours(session.actor);
+  const hoursSinceJoined = myMembership
+    ? (new Date().getTime() - myMembership.addedAt.getTime()) / (60 * 60 * 1000)
+    : 0;
+  const noPlanYet = myMembership != null && myMembership.role !== "viewer" && !hasOwnTask;
   const [stageProcedure, playbook, setupDone] = await Promise.all([
     project.stage ? sopForStage(session.actor, project.stage) : Promise.resolve(null),
     getPlaybook(session.actor),
@@ -226,6 +244,16 @@ export default async function ProjectPage({
         </dl>
       </header>
 
+      {noPlanYet ? (
+        <div className="mt-6">
+          <UnplannedBanner
+            title={t("noPlanYet")}
+            body={t("noPlanYetBody")}
+            pastGrace={hoursSinceJoined >= graceHours}
+          />
+        </div>
+      ) : null}
+
       <div className="mt-8">
         <ProjectTabs
           /*
@@ -297,7 +325,7 @@ export default async function ProjectPage({
                 stage={project.stage}
                 configured={stageConfigured}
                 alreadySetUp={setupDone.has(project.stage)}
-                canSetUp={canSetStage}
+                canSetUp={canSetUpStage}
               />
             ) : null
           }

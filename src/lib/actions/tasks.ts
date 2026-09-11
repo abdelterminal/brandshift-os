@@ -256,6 +256,7 @@ export async function assignTask(
 
 const createTaskSchema = z.object({
   title: z.string().trim().min(2).max(200),
+  description: z.string().trim().max(4000).optional(),
   projectId: z.union([idSchema, z.literal("")]).optional(),
   assigneeUserId: z.union([idSchema, z.literal("")]).optional(),
   dueDate: z.union([z.iso.date(), z.literal("")]).optional(),
@@ -267,6 +268,7 @@ export async function createTask(formData: FormData): Promise<ActionResult> {
 
   const parsed = createTaskSchema.safeParse({
     title: formData.get("title"),
+    description: formData.get("description") ?? "",
     projectId: formData.get("projectId") ?? "",
     assigneeUserId: formData.get("assigneeUserId") ?? "",
     dueDate: formData.get("dueDate") ?? "",
@@ -276,7 +278,7 @@ export async function createTask(formData: FormData): Promise<ActionResult> {
   if (!parsed.success) return { ok: false, error: "titleRequired" };
 
   // Adding a task to a project you are not on is the same overreach as
-  // completing one there. A personal task (no project) is always your own.
+  // completing one there.
   if (
     parsed.data.projectId &&
     !(await mayWorkOn(session.actor, {
@@ -287,10 +289,19 @@ export async function createTask(formData: FormData): Promise<ActionResult> {
     return { ok: false, error: "forbidden" };
   }
 
+  // A personal task (no project) is always your own -- nothing scopes the
+  // assignee otherwise, since there is no project to check membership
+  // against, and assigning your own personal to-do to someone else is not a
+  // real case.
+  const assigneeUserId = parsed.data.projectId
+    ? parsed.data.assigneeUserId || null
+    : session.actor.userId;
+
   const [created] = await withOrg(session.actor.organizationId).insert(tasks, {
     title: parsed.data.title,
+    description: parsed.data.description || null,
     projectId: parsed.data.projectId || null,
-    assigneeUserId: parsed.data.assigneeUserId || null,
+    assigneeUserId,
     dueDate: parsed.data.dueDate || null,
     priority: parsed.data.priority,
     createdByUserId: session.actor.userId,
