@@ -1529,6 +1529,7 @@
   },
   "Ui": {
     "dataTable": "Tableau de données — faites défiler horizontalement pour voir les autres colonnes",
+    "resizeColumn": "Redimensionner la colonne",
     "searchAll": "Tout rechercher",
     "workGroup": "Votre travail",
     "planGroup": "Planifier et améliorer",

@@ -1214,3 +1214,29 @@ See `KNOWN-GAPS.md`.
 `activityEvents` exactly as before, so a project's own Activity tab and any channel that
 surfaces its activity are untouched -- this is about what lands in one person's queue, not
 about whether the event happened.
+
+## Resizable containers: a personal layout preference, clamped, in `localStorage`
+
+**The Today coordination queue's four columns and the People directory's table columns can now
+be dragged to a different size** -- a divider between two panes, `role="separator"` plus arrow
+keys (the "window splitter" pattern), rather than a mouse-only affordance. Both are clamped: the
+queue's columns between 220px (still worth reading) and 560px (would otherwise swallow the row);
+the table's between 90px (still enough for a badge) and 480px (a column should never own the
+whole table). "Reasonable size" was the request -- these numbers are that made concrete, not a
+user-configurable setting of their own.
+
+**Only the first n-1 panes carry an explicit width; the last always fills whatever is left.**
+The alternative -- redistributing every pane's width whenever one changes, so the row's total
+stays constant -- is the shape a spreadsheet uses, not a sidebar or an editor pane, and it means
+widening one column always narrows a specific *other* one, which is a harder mental model than
+"the last column is where the slack goes." Same shape in both places: `ResizableQueueColumns`
+for Today, `PeopleTable`'s own column widths for the directory.
+
+**Widths live in this browser's `localStorage`, not the database.** This is what somebody's
+screen looks like, not organization data -- nobody else's queue or directory should reflow
+because one person likes a wider Name column. Read through `useSyncExternalStore` rather than a
+`useState` seeded in an `useEffect`, the same reason `sidebar.tsx`'s own collapsed-sections state
+already uses it: the server has no opinion on a value that only exists in this browser, and a
+`useState`/`useEffect` pair for that is exactly the cascading-render shape the `react-hooks`
+lint rule now catches. A drag in progress is ordinary local state for per-pixel feedback; only
+release commits it to storage and the event every reader of that key is listening for.

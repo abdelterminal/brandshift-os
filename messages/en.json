@@ -1529,6 +1529,7 @@
   },
   "Ui": {
     "dataTable": "Data table — scroll horizontally for more columns",
+    "resizeColumn": "Resize column",
     "searchAll": "Search everything",
     "workGroup": "Your work",
     "planGroup": "Plan and improve",

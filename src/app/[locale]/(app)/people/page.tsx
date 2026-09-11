@@ -1,20 +1,12 @@
 import { getTranslations } from "next-intl/server";
 
 import { PersonAvatar } from "@/components/ui/avatar";
-import { Badge, CountBadge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/feedback";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { InviteDialog } from "@/components/people/invite-dialog";
 import { PeopleFilters } from "@/components/people/people-filters";
 import { PeoplePagination } from "@/components/people/people-pagination";
+import { PeopleTable } from "@/components/people/people-table";
 import { Link } from "@/i18n/navigation";
 import { atLeast, can } from "@/lib/authz";
 import { requireUser } from "@/lib/auth/guards";
@@ -138,90 +130,26 @@ export default async function PeoplePage({ searchParams }: PageProps<"/[locale]/
               </li>;
             })}
           </ul>
-          <TableContainer className="mt-4 hidden md:block">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("name")}</TableHead>
-                  <TableHead className="hidden sm:table-cell">{t("role")}</TableHead>
-                  {showDepartment ? (
-                    <TableHead className="hidden md:table-cell">{t("department")}</TableHead>
-                  ) : null}
-                  <TableHead className="hidden lg:table-cell">{t("jobTitle")}</TableHead>
-                  {isCoordinator ? <TableHead>{t("workload")}</TableHead> : null}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {result.rows.map((person) => {
-                  const load = workload.get(person.userId) ?? { open: 0, overdue: 0 };
-
-                  return (
-                    <TableRow key={person.userId}>
-                      <TableCell>
-                        <span className="flex items-center gap-2.5">
-                          <PersonAvatar
-                            name={person.name}
-                            src={person.avatarUrl}
-                            size="sm"
-                            className="shrink-0"
-                          />
-                          <span className="min-w-0">
-                            {linksToPerson(person.userId) ? (
-                              <Link
-                                href={`/people/${person.userId}`}
-                                className="text-fg-default focus-visible:outline-focus-ring block truncate rounded-[4px] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
-                              >
-                                {person.name}
-                              </Link>
-                            ) : (
-                              <span className="text-fg-default block truncate font-medium">
-                                {person.name}
-                              </span>
-                            )}
-                            <span className="text-caption text-fg-subtle block truncate">
-                              {person.email}
-                            </span>
-                          </span>
-                          {person.status === "invited" ? (
-                            <Badge tone="attention" size="sm" className="shrink-0">
-                              {t("pending")}
-                            </Badge>
-                          ) : null}
-                        </span>
-                      </TableCell>
-
-                      <TableCell className="hidden sm:table-cell">
-                        <Badge tone={person.role === "owner" ? "accent" : "neutral"} size="sm">
-                          {roles(person.role)}
-                        </Badge>
-                      </TableCell>
-
-                      {showDepartment ? (
-                        <TableCell className="text-fg-muted hidden md:table-cell">
-                          {person.departmentName ?? "--"}
-                        </TableCell>
-                      ) : null}
-
-                      <TableCell className="text-fg-muted hidden lg:table-cell">
-                        {person.jobTitle ?? "--"}
-                      </TableCell>
-
-                      {isCoordinator ? (
-                        <TableCell>
-                          <span className="flex items-center gap-2">
-                            <span className="text-fg-muted tabular-nums">{load.open}</span>
-                            {load.overdue > 0 ? (
-                              <CountBadge tone="attention">{load.overdue}</CountBadge>
-                            ) : null}
-                          </span>
-                        </TableCell>
-                      ) : null}
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <PeopleTable
+            rows={result.rows.map((person) => {
+              const load = workload.get(person.userId) ?? { open: 0, overdue: 0 };
+              return {
+                userId: person.userId,
+                name: person.name,
+                email: person.email,
+                avatarUrl: person.avatarUrl,
+                role: person.role,
+                jobTitle: person.jobTitle,
+                departmentName: person.departmentName,
+                status: person.status,
+                linkable: linksToPerson(person.userId),
+                openTasks: load.open,
+                overdueTasks: load.overdue,
+              };
+            })}
+            showDepartment={showDepartment}
+            isCoordinator={isCoordinator}
+          />
 
           {isCoordinator ? (
             <PeoplePagination
