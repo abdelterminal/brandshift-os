@@ -1074,3 +1074,29 @@ looking.
 - **Gating "no plan" by task count on the whole project rather than by person** -- would reward a
   lead who has planned everything under their own name and nobody else's, which is not the thing
   being asked for. The check is per person, per project, on purpose.
+
+## The shell owns the scroll region, and a menu link now closes its menu
+
+**The rail used to move when a tall page scrolled, because nothing was actually pinning it --
+the shell's outer row only had a *minimum* height.** `min-h-dvh` lets the row grow past one
+viewport the moment a page is taller than the screen, and once it grows, the browser itself
+scrolls the whole row -- rail included -- because there is nothing else to scroll. The rail's own
+internal parts (`<ul className="... overflow-y-auto">`) had always been built correctly for a
+fixed-height shell; the shell just never gave them one. It is `h-dvh overflow-hidden` now, with
+`<main>` carrying `overflow-y-auto` as the one thing that actually scrolls -- the change the
+composer's own `KNOWN-GAPS.md` row already named as its prerequisite. Checked against every
+`position: sticky` and `IntersectionObserver` use in the app (the section nav on Settings, table
+headers, the wizard's and composer's own sticky footers, the channel feed's read-marker): none of
+them name an explicit scroll root, so all of them simply adopt the new one -- CSS `sticky` sticks
+to its nearest scrolling ancestor, and an unrooted `IntersectionObserver` still clips its target
+against every ancestor's own `overflow`, whichever element that ends up being.
+
+**Settings and Profile needed a click before they would scroll, because the account menu never
+actually closed when you chose one.** Base UI's `Menu.LinkItem` defaults to `closeOnClick={false}`
+-- deliberately, so a modifier-click can still open the link in a new tab without the menu
+snatching itself shut first. But every link in this menu navigates in the same tab, and a menu
+that is still "open" as far as its own state is concerned keeps the scroll lock it applies to
+`<html>` for as long as it is open -- so the lock outlived the navigation, and only cleared once
+some unrelated click counted as dismissing it. `closeOnClick` now defaults to `true` on this
+app's own `MenuLinkItem` wrapper, which is the right default for every current use (Profile,
+Settings) and can still be overridden the day a link-like menu item genuinely wants to stay open.

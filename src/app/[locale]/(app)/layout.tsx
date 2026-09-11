@@ -101,7 +101,17 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
           {t("skipToContent")}
         </a>
 
-        <div className="flex min-h-dvh">
+        {/*
+          The shell owns the scroll region: this row is exactly one viewport
+          tall and clips anything that tries to grow past it, so the rail and
+          the header -- both flex children with nothing scrollable of their
+          own -- simply never move. `<main>` below is the one thing that
+          scrolls. Before this, the row only had a *minimum* height, so a
+          page taller than the viewport grew the whole row and left the
+          browser itself to scroll it, carrying the rail away with everything
+          else.
+        */}
+        <div className="flex h-dvh overflow-hidden">
           <Sidebar
             destinations={rail}
             organizationName={organization.name}
@@ -154,7 +164,7 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
             </header>
 
             <div className="flex min-h-0 flex-1">
-              <main id="main" className="min-w-0 flex-1 pb-20 md:pb-0">
+              <main id="main" className="min-w-0 flex-1 overflow-y-auto pb-20 md:pb-0">
                 {children}
               </main>
 

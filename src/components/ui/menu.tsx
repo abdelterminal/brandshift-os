@@ -71,11 +71,24 @@ function MenuItem({ className, ...props }: MenuPrimitive.Item.Props) {
 }
 
 /** A menu entry that navigates. Renders a real link, so it can be opened in a new tab. */
-function MenuLinkItem({ className, ...props }: MenuPrimitive.LinkItem.Props) {
+/**
+ * Base UI's own default is `closeOnClick={false}` -- kept open on a plain
+ * click so a modifier-click can still open the link in a new tab without the
+ * menu snatching itself shut first. Every link in this app navigates in the
+ * same tab, so the default here is the opposite: closing is what a normal
+ * click should do. Left open, the menu's own scroll lock (`overflow: hidden`
+ * on `<html>`) outlives the navigation -- the route changes underneath a
+ * menu that, as far as its own state is concerned, never closed, and the
+ * lock only lifts on whatever later click happens to count as "outside".
+ * That is the exact shape of the bug this default exists to prevent: a page
+ * that needs a click before the next scroll does anything.
+ */
+function MenuLinkItem({ className, closeOnClick = true, ...props }: MenuPrimitive.LinkItem.Props) {
   return (
     <MenuPrimitive.LinkItem
       data-slot="menu-link-item"
       className={cn(itemClassName, className)}
+      closeOnClick={closeOnClick}
       {...props}
     />
   );
