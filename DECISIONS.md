@@ -1161,3 +1161,24 @@ whole edit.
 read-only value with a one-line note for everyone else** -- including someone who can otherwise
 work the task, so the locked field reads as deliberate rather than broken next to buttons that
 are still active.
+
+## Dark theme's hover was a no-op: `--surface-hover` equalled `--surface-raised`
+
+**Every hover on a card in dark theme -- a task row, a project row, a person in the People
+directory -- did nothing, because `--surface-hover` and `--surface-raised` had been the exact
+same primitive (`--neutral-900`) since dark theme was first written.** `quietLinkHover` and the
+hover sweep earlier in this file both assumed `bg-surface-hover` was a visible step away from
+whatever it sat on -- true in light theme (`raised` is `neutral-0`, `hover` is `neutral-50`) and
+silently false in dark, so every one of those fixes was invisible for anyone on dark theme, which
+is this app's default. A token bug, not a component bug -- nothing to redo in any of the
+components that already reach for `bg-surface-hover`/`hover:bg-surface-hover`.
+
+**Fixed to `--neutral-850`, one step lighter than raised** -- mirroring light theme's own
+one-step move, in the opposite direction because dark surfaces get lighter as they gain
+elevation rather than darker. `--neutral-850` is not an arbitrary choice: it is already
+`--surface-overlay`'s value, called out elsewhere in this file as "the lightest dark surface"
+because `--fg-subtle` text on it already sits at the edge of AA. There is no lighter step to give
+`--surface-hover` without failing that contrast check, which is also why `--surface-active`
+stays exactly where it was rather than taking a second, lighter step of its own -- hover and
+active now share a lightness in dark theme, which reads as one quiet highlight rather than two,
+and is still a real improvement over hover doing nothing at all.

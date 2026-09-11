@@ -227,7 +227,17 @@
     --surface-raised: var(--neutral-900);
     --surface-overlay: var(--neutral-850);
     --surface-inset: var(--neutral-1000);
-    --surface-hover: var(--neutral-900);
+    /* One step lighter than a raised card -- the same lightness already
+       verified against --fg-subtle on --surface-overlay below, which is as
+       light as this ramp gets while still clearing AA for --fg-subtle text.
+       Mirrors light theme's raised(0) -> hover(50), one step off the card
+       rather than equal to it. Left equal to --surface-raised for a long
+       stretch, which made every hover on a card a no-op in dark theme --
+       rows, list items, anything sitting on the raised background that
+       surrounds most of the app. --surface-active stays where it already
+       was: there is no lighter step left to give it once --surface-hover
+       takes the only one AA leaves available. */
+    --surface-hover: var(--neutral-850);
     --surface-active: var(--neutral-850);
 
     --fg-default: var(--neutral-50);
@@ -312,7 +322,8 @@
   --surface-raised: var(--neutral-900);
   --surface-overlay: var(--neutral-850);
   --surface-inset: var(--neutral-1000);
-  --surface-hover: var(--neutral-900);
+  /* See the note in the media-query block. */
+  --surface-hover: var(--neutral-850);
   --surface-active: var(--neutral-850);
 
   --fg-default: var(--neutral-50);
