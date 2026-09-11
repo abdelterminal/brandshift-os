@@ -6,12 +6,13 @@ import { focusRing, transition } from "./styles";
 
 /**
  * The draggable divider between two resizable panes -- a queue column, a
- * table header. Invisible at rest -- the cursor already changes over its
- * (wider than 1px) hit target, and a permanent line on every container edge
- * read as clutter rather than affordance -- and a thin line only once
- * hovered or actively dragged, in the existing border ramp: a resize handle
- * is not one of the four things the brand accent is allowed to mean, either
- * way.
+ * table header. Invisible at rest and on hover -- the cursor changing over
+ * its (wider than 1px) hit target is the only affordance; a line on every
+ * container edge, even just on hover, still read as clutter. The one
+ * exception is an active drag, which gets a thin line in the existing
+ * border ramp so there is some feedback that the pane is actually being
+ * grabbed -- a resize handle is not one of the four things the brand
+ * accent is allowed to mean, dragging or not.
  *
  * Keyboard-operable too -- `role="separator"` plus arrow keys, the
  * "window splitter" pattern -- so resizing is not mouse-only. A focusable
@@ -54,18 +55,14 @@ export function ResizeHandle({
       onPointerDown={onPointerDown}
       onKeyDown={onKeyDown}
       className={cn(
-        "group absolute top-0 z-10 flex h-full w-3 cursor-col-resize touch-none items-stretch justify-center outline-none",
+        "absolute top-0 z-10 flex h-full w-3 cursor-col-resize touch-none items-stretch justify-center outline-none",
         focusRing,
         className,
       )}
     >
       <span
         aria-hidden
-        className={cn(
-          "w-px",
-          dragging ? "bg-fg-subtle" : "bg-transparent group-hover:bg-border-hover",
-          transition,
-        )}
+        className={cn("w-px", dragging ? "bg-fg-subtle" : "bg-transparent", transition)}
       />
     </div>
   );
