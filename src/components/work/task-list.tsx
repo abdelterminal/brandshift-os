@@ -161,6 +161,7 @@ function TaskListRow({
   task,
   tone,
   showProject,
+  showAssignee = true,
   todayIso,
   showBlockedReason = false,
   onOpen,
@@ -168,6 +169,14 @@ function TaskListRow({
   task: TaskRow;
   tone: Tone;
   showProject: boolean;
+  /**
+   * Off on a list that is already filtered to one person's own tasks (`MyDay`,
+   * the manager's own "Mine" panel) -- every row there is already yours, so an
+   * avatar repeating that fact on each one is noise, not information. On by
+   * default for a list where the assignee is the thing you're scanning for
+   * (the coordination queue, a project's Tasks tab).
+   */
+  showAssignee?: boolean;
   todayIso?: string;
   /**
    * One truncated line of `blockedReason` under the title. Off by default --
@@ -277,11 +286,13 @@ function TaskListRow({
           </span>
         ) : null}
 
-        {task.assigneeName ? (
-          <PersonAvatar name={task.assigneeName} size="xs" className="shrink-0" />
-        ) : (
-          <span className="text-caption text-fg-subtle shrink-0">{t("unassigned")}</span>
-        )}
+        {showAssignee ? (
+          task.assigneeName ? (
+            <PersonAvatar name={task.assigneeName} size="xs" className="shrink-0" />
+          ) : (
+            <span className="text-caption text-fg-subtle shrink-0">{t("unassigned")}</span>
+          )
+        ) : null}
       </button>
     </li>
   );
@@ -296,6 +307,7 @@ export function TaskListFlat({
   emptyTitle,
   emptyBody,
   showProject = true,
+  showAssignee = true,
   max,
   todayIso,
   showBlockedReason,
@@ -306,6 +318,8 @@ export function TaskListFlat({
   emptyTitle: string;
   emptyBody: string;
   showProject?: boolean;
+  /** See `TaskListRow`'s own doc -- same prop, same reason. */
+  showAssignee?: boolean;
   max?: number;
   /** See `TaskList`'s own doc -- same prop, same reason. */
   todayIso?: string;
@@ -340,6 +354,7 @@ export function TaskListFlat({
             task={task}
             tone={STATUS_TONE[task.status]}
             showProject={showProject}
+            showAssignee={showAssignee}
             todayIso={todayIso}
             showBlockedReason={showBlockedReason}
             onOpen={() => setOpenTask(task.id)}

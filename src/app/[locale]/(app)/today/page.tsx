@@ -17,6 +17,7 @@ import { atLeast } from "@/lib/authz";
 import { listWorkableProjectIds } from "@/lib/data/project-access";
 import { requireUser } from "@/lib/auth/guards";
 import { dayKey } from "@/lib/calendar-dates";
+import { isOverdue } from "@/lib/due-date";
 import { nextMeetingsFor } from "@/lib/data/meetings";
 import { listAssignablePeople } from "@/lib/data/people";
 import { listUnplannedMembers, planningGraceHours } from "@/lib/data/planning";
@@ -40,6 +41,18 @@ import {
  * Nothing here is a vanity total. Every number is a count of rows someone can
  * click through to and act on.
  */
+
+/**
+ * What an empty bucket says, per bucket -- not one message reused for all
+ * three. Reusing "no open work assigned to you" on an empty `next` while
+ * `now`/`later` are full told somebody with three open tasks that they had
+ * none, which is simply wrong rather than just generic.
+ */
+const SECTION_EMPTY = {
+  now: ["nothingToday", "nothingTodayBody"],
+  next: ["nothingNext", "nothingNextBody"],
+  later: ["nothingLater", "nothingLaterBody"],
+} as const;
 
 /** Same mapping `/work` uses for its own project list -- kept local, same as that page's own copy. */
 const PROJECT_STATUS_TONE = {
@@ -130,6 +143,7 @@ async function CoordinationQueue() {
                 tasks={mine}
                 emptyTitle={t("allClear")}
                 emptyBody={t("mineBody")}
+                showAssignee={false}
                 max={5}
                 todayIso={todayIso}
                 assignablePeople={assignablePeople}
@@ -401,7 +415,7 @@ async function MyDay({ name }: { name: string }) {
         </div>
       ) : (
         <>
-          {nextTask ? <NextTaskPanel task={nextTask} /> : null}
+          {nextTask ? <NextTaskPanel task={nextTask} todayIso={todayIso} /> : null}
 
           <div className="mt-8 flex flex-col gap-6">
             {sections.map((section) => (
@@ -417,8 +431,9 @@ async function MyDay({ name }: { name: string }) {
                 <div className="border-border bg-surface-raised overflow-hidden rounded-card border">
                   <TaskListFlat
                     tasks={section.tasks}
-                    emptyTitle={section.key === "now" ? t("nothingToday") : t("noWork")}
-                    emptyBody={section.key === "now" ? t("nothingTodayBody") : t("noWorkBody")}
+                    emptyTitle={t(SECTION_EMPTY[section.key][0])}
+                    emptyBody={t(SECTION_EMPTY[section.key][1])}
+                    showAssignee={false}
                     todayIso={todayIso}
                     showBlockedReason
                     assignablePeople={assignablePeople}
@@ -440,15 +455,28 @@ async function MyDay({ name }: { name: string }) {
  * A member's Today opens with a single task rather than a list, because the
  * question "what should I do now" has one answer and a list of twelve does not
  * give it.
+ *
+ * Red only when the task itself earns it -- overdue or blocked, the two
+ * meanings CLAUDE.md's palette actually reserves red for. A next task that is
+ * neither is still worth featuring, just not alarming: the same "active, in
+ * progress" blue every other on-track row already uses.
  */
-async function NextTaskPanel({ task }: { task: TaskRow }) {
+async function NextTaskPanel({ task, todayIso }: { task: TaskRow; todayIso: string }) {
   const t = await getTranslations("Today");
+  const urgent = isOverdue(task.dueDate, todayIso, task.status) || task.status === "blocked";
 
   return (
-    <Card className="border-accent-border bg-accent-subtle mt-6">
+    <Card
+      className={cn(
+        "mt-6",
+        urgent ? "border-blocked-border bg-blocked-bg" : "border-active-border bg-active-bg",
+      )}
+    >
       <CardHeader>
         <div className="min-w-0">
-          <p className="text-caption text-accent-text">{t("nextTask")}</p>
+          <p className={cn("text-caption", urgent ? "text-blocked-text" : "text-active-text")}>
+            {t("nextTask")}
+          </p>
           <CardTitle className="mt-1 truncate">{task.title}</CardTitle>
           {task.projectName ? (
             <p className="text-caption text-fg-muted mt-1">
