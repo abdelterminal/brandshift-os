@@ -29,6 +29,7 @@ export const QUOTE_LINE_CATEGORIES = [
   "website",
   "hosting",
   "video",
+  "posts",
   "social",
 ] as const;
 
@@ -218,6 +219,57 @@ export const QUOTE_LINE_TEMPLATES: (QuoteLineTemplate & { category: QuoteLineCat
     ].join("\n"),
     exclusions: "Modèles non inclus — à la charge du client",
     unitPrice: "4000",
+  },
+
+  // ---- Posts / visuels ----
+  // Every devis to date sold posts bundled with management and/or video
+  // (see "Pack contenu mensuel" below, and the excluded monthly tiers) --
+  // never as their own line. Split out the same way "Charte graphique"
+  // was: real wording, estimated standalone price to confirm before it
+  // goes out, not a figure already invoiced on its own.
+  {
+    id: "visuels_mensuel_4",
+    category: "posts",
+    description: "Visuels réseaux sociaux — 4 posts/mois",
+    details: [
+      "4 posts / mois — visuels statiques & carrousels (création graphique)",
+      "Rédaction des légendes",
+    ].join("\n"),
+    exclusions: "Programmation & publication non incluses",
+    unitPrice: "500",
+  },
+  {
+    id: "visuels_mensuel_8",
+    category: "posts",
+    description: "Visuels réseaux sociaux — 8 posts/mois",
+    details: [
+      "8 posts / mois — visuels statiques & carrousels (création graphique)",
+      "Rédaction des légendes",
+    ].join("\n"),
+    exclusions: "Programmation & publication non incluses",
+    unitPrice: "900",
+  },
+  {
+    id: "visuels_mensuel_12",
+    category: "posts",
+    description: "Visuels réseaux sociaux — 12 posts/mois",
+    details: [
+      "12 posts / mois — visuels statiques & carrousels informatifs (création graphique)",
+      "Rédaction des légendes",
+    ].join("\n"),
+    exclusions: "Programmation & publication non incluses",
+    unitPrice: "1300",
+  },
+  {
+    id: "visuels_ponctuel_10",
+    category: "posts",
+    description: "Visuels réseaux sociaux — pack ponctuel (10 posts)",
+    details: [
+      "10 visuels — création graphique pour un lancement ou une campagne",
+      "Rédaction des légendes",
+    ].join("\n"),
+    exclusions: "Programmation & publication non incluses",
+    unitPrice: "1200",
   },
 
   // ---- Social media (mensuel) ----
