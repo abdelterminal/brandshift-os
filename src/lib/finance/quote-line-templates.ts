@@ -59,6 +59,22 @@ export const QUOTE_LINE_TEMPLATES: (QuoteLineTemplate & { category: QuoteLineCat
     exclusions: "Impression non incluse — à la charge du client",
     unitPrice: "3000",
   },
+  // Split out on its own: every devis above sells it bundled with the logo,
+  // but a client who already has a logo and only needs the charte written
+  // up needs to be quoted that alone. No historical devis has ever priced
+  // it standalone, so this one price is an estimate to confirm, not a
+  // figure already invoiced -- unlike every other line in this file.
+  {
+    id: "charte_graphique",
+    category: "branding",
+    description: "Charte graphique",
+    details: [
+      "Palette de couleurs, typographies & règles d'usage du logo",
+      "Document de référence (PDF) pour toute application future de la marque",
+    ].join("\n"),
+    exclusions: "",
+    unitPrice: "1500",
+  },
   {
     id: "supports_visuels_conception",
     category: "branding",
@@ -217,6 +233,9 @@ export const QUOTE_LINE_TEMPLATES: (QuoteLineTemplate & { category: QuoteLineCat
     exclusions: "Modération (réponses aux commentaires & messages privés) non incluse",
     unitPrice: "1000",
   },
+  // Named "Pack" but not a whole-devis tier like the ones excluded below --
+  // this line was combined with two others (social media management,
+  // site maintenance) inside Mr Dyaf's monthly devis, not sold alone.
   {
     id: "pack_contenu_mensuel_4500",
     category: "social",
@@ -229,107 +248,13 @@ export const QUOTE_LINE_TEMPLATES: (QuoteLineTemplate & { category: QuoteLineCat
     exclusions: "Modèles / créateurs et frais de déplacement non inclus — à la charge du client",
     unitPrice: "4500",
   },
-  {
-    id: "gestion_social_video_1magasin_6500",
-    category: "social",
-    description: "Gestion réseaux sociaux & production vidéo — 1 magasin",
-    details: [
-      "15 vidéos / mois — 3 créatives (scénarios / idées) + 12 reels en magasin",
-      "3 sessions de tournage / mois · montage inclus",
-      "Miniatures (thumbnails) pour les vidéos",
-      "Gestion des publicités Meta — lancement des campagnes & reporting",
-      "Social media management — programmation des posts, bio & highlights",
-    ].join("\n"),
-    exclusions: "Modèles non inclus — à la charge du client",
-    unitPrice: "6500",
-  },
-  {
-    id: "pack_essentiel_4000",
-    category: "social",
-    description: "Pack Essentiel",
-    details: [
-      "8 vidéos / mois — issues de 2 sessions de tournage · montage inclus",
-      "8 posts / mois — création graphique (visuels & carrousels)",
-      "Calendrier éditorial + rédaction des captions",
-      "Programmation & publication sur les réseaux (Instagram · Facebook · TikTok)",
-    ].join("\n"),
-    exclusions: "Modèles / créateurs et frais de déplacement non inclus — à la charge du client",
-    unitPrice: "4000",
-  },
-  {
-    id: "pack_croissance_mensuel_6000",
-    category: "social",
-    description: "Pack Croissance",
-    details: [
-      "8 vidéos / mois — issues de 2 sessions de tournage · montage inclus",
-      "8 posts / mois — création graphique (visuels & carrousels)",
-      "Calendrier éditorial + rédaction des captions",
-      "Programmation & publication sur les réseaux (Instagram · Facebook · TikTok)",
-    ].join("\n"),
-    exclusions: "Modèles / créateurs et frais de déplacement non inclus — à la charge du client",
-    unitPrice: "6000",
-  },
-  {
-    id: "pack_signature_8000",
-    category: "social",
-    description: "Pack Signature",
-    details: [
-      "12 vidéos / mois — issues de 2 sessions de tournage · montage inclus",
-      "12 posts / mois — création graphique (visuels & carrousels)",
-      "Calendrier éditorial + rédaction des captions",
-      "Programmation & publication sur les réseaux (Instagram · Facebook · TikTok)",
-    ].join("\n"),
-    exclusions: "Modèles / créateurs et frais de déplacement non inclus — à la charge du client",
-    unitPrice: "8000",
-  },
-  {
-    id: "pack_decouverte_1000",
-    category: "social",
-    description: "Pack Découverte",
-    details: [
-      "1 post réseaux sociaux par mois (visuels + légendes)",
-      "Création des visuels & rédaction des légendes",
-      "Publicité Instagram & Facebook (gestion)",
-    ].join("\n"),
-    exclusions: "",
-    unitPrice: "1000",
-  },
-  {
-    id: "pack_presence_1300",
-    category: "social",
-    description: "Pack Présence",
-    details: [
-      "3 posts réseaux sociaux par mois (visuels + légendes)",
-      "Création des visuels & rédaction des légendes",
-      "Publicité Instagram & Facebook (gestion)",
-    ].join("\n"),
-    exclusions: "",
-    unitPrice: "1300",
-  },
-  {
-    id: "pack_croissance_posts_1500",
-    category: "social",
-    description: "Pack Croissance",
-    details: [
-      "5 posts réseaux sociaux par mois (visuels + légendes)",
-      "Création des visuels & rédaction des légendes",
-      "Calendrier de contenu & programmation",
-      "Publicité Instagram & Facebook (gestion)",
-    ].join("\n"),
-    exclusions: "",
-    unitPrice: "1500",
-  },
-  {
-    id: "pack_autorite_1800",
-    category: "social",
-    description: "Pack Autorité",
-    details: [
-      "10 posts réseaux sociaux par mois (visuels + légendes)",
-      "Création des visuels & rédaction des légendes",
-      "Calendrier de contenu & programmation",
-      "Publicité Instagram & Facebook (gestion)",
-    ].join("\n"),
-    exclusions: "",
-    unitPrice: "1800",
-  },
 ];
+
+// Deliberately NOT in QUOTE_LINE_TEMPLATES: "Pack Essentiel / Croissance /
+// Signature", "Pack Découverte / Présence / Autorité", and "Gestion réseaux
+// sociaux & production vidéo — 1 magasin" are each a complete, self-priced
+// monthly retainer tier -- picking one of them *is* the whole devis, not a
+// line you add alongside others (see gen_skin.py's pack(), gen.py's four
+// standalone PDFs, and gen_safir.py -- none of these ever shared a document
+// with another item). Composing one into a mixed itemized quote would sell
+// something that was never actually offered.
