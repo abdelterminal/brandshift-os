@@ -101,24 +101,31 @@ export function ProjectTabs({
       </TabsList>
 
       <TabsPanel value="overview">
-        <div className="mb-5 space-y-3">
-          {stageRail}
-          <div className="flex flex-wrap items-center gap-3">
-            {stageControl}
-            {stageSetup}
+        <div className="border-border rounded-card border p-4">
+          <p className="text-label text-fg-muted mb-3">{t("stageSection")}</p>
+          <div className="space-y-3">
+            {stageRail}
+            {stageControl || stageSetup ? (
+              <div className="flex flex-wrap items-center gap-3">
+                {stageControl}
+                {stageSetup}
+              </div>
+            ) : null}
           </div>
         </div>
 
+        <div className="mt-5 flex flex-wrap items-center gap-2">
+          <span className="text-caption text-fg-muted">{t("priority")}</span>
+          <Badge>{priority}</Badge>
+        </div>
+
         {description ? (
-          <p className="text-body-lg text-fg-default max-w-2xl whitespace-pre-line">
+          <p className="text-body-lg text-fg-default mt-4 max-w-2xl whitespace-pre-line">
             {description}
           </p>
         ) : (
-          <p className="text-body text-fg-subtle">--</p>
+          <p className="text-body text-fg-subtle mt-4 italic">{t("noDescription")}</p>
         )}
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Badge>{priority}</Badge>
-        </div>
 
         {stageProcedure ? <div className="mt-6">{stageProcedure}</div> : null}
 

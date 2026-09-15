@@ -324,11 +324,13 @@ export default async function ProjectPage({
           }
           stageRail={<StageRail current={project.stage} />}
           stageControl={
-            <ProjectStageControl
-              projectId={project.id}
-              stage={project.stage}
-              canSet={canSetStage}
-            />
+            canSetStage ? (
+              <ProjectStageControl
+                projectId={project.id}
+                stage={project.stage}
+                canSet={canSetStage}
+              />
+            ) : null
           }
           stageSetup={
             project.stage ? (
