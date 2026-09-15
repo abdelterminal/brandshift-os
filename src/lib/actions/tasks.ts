@@ -293,6 +293,57 @@ export async function assignTask(
   return { ok: true };
 }
 
+const updateDetailsSchema = z.object({
+  taskId: idSchema,
+  description: z.string().trim().max(4000).optional(),
+  dueDate: z.union([z.iso.date(), z.literal("")]).optional(),
+  priority: z.enum(["low", "medium", "high", "urgent"]),
+});
+
+/**
+ * Edit a task's own details -- description, due date, priority.
+ *
+ * Never offered at creation and never editable since: `createTask` sets
+ * these once and nothing afterward could change them. Gated the same as
+ * Start/Complete/Report blocker -- the assignee, a lead or contributor on
+ * the project, or a manager -- because getting a date or a description
+ * right is the same routine kind of write those are, not a bigger call the
+ * way reassigning or cancelling is.
+ */
+export async function updateTaskDetails(
+  input: z.input<typeof updateDetailsSchema>,
+): Promise<ActionResult> {
+  const parsed = updateDetailsSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "notFound" };
+
+  const session = await requireUserForAction();
+  const gate = await assertMayWork(session.actor, parsed.data.taskId);
+  if (!gate.ok) return gate;
+
+  const [updated] = await withOrg(session.actor.organizationId).update(
+    tasks,
+    {
+      description: parsed.data.description || null,
+      dueDate: parsed.data.dueDate || null,
+      priority: parsed.data.priority,
+      updatedAt: new Date(),
+    },
+    eq(tasks.id, parsed.data.taskId),
+  );
+  if (!updated) return { ok: false, error: "notFound" };
+
+  await recordActivity(session.actor, {
+    verb: "task.updated",
+    subjectType: "task",
+    subjectId: updated.id,
+    projectId: updated.projectId,
+    taskId: updated.id,
+  });
+
+  revalidateTaskViews();
+  return { ok: true };
+}
+
 /**
  * Cancel a task: work someone decided not to do.
  *

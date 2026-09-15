@@ -23,7 +23,8 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { Textarea } from "@/components/ui/input";
+import { Input, Textarea } from "@/components/ui/input";
+import { focusRing, transition } from "@/components/ui/styles";
 import {
   assignTask,
   cancelTask,
@@ -31,8 +32,10 @@ import {
   completeTask,
   reportBlocker,
   startTask,
+  updateTaskDetails,
 } from "@/lib/actions/tasks";
-import type { AssignablePerson, TaskRow } from "@/lib/data/task-types";
+import type { AssignablePerson, TaskPriority, TaskRow } from "@/lib/data/task-types";
+import { cn } from "@/lib/utils";
 
 import { STATUS_TONE } from "./task-list";
 import { TaskHandoffs } from "./task-handoffs";
@@ -96,7 +99,40 @@ export function TaskDrawer({
   const [assignPending, startAssignTransition] = useTransition();
   const [assignError, setAssignError] = useState<string | null>(null);
 
+  const [detailsEditing, setDetailsEditing] = useState(false);
+  const [detailsPending, startDetailsTransition] = useTransition();
+  const [detailsError, setDetailsError] = useState(false);
+  const [editDescription, setEditDescription] = useState("");
+  const [editDueDate, setEditDueDate] = useState("");
+  const [editPriority, setEditPriority] = useState<TaskPriority>("medium");
+
   if (!task) return null;
+
+  const startEditingDetails = () => {
+    setDetailsError(false);
+    setEditDescription(task.description ?? "");
+    setEditDueDate(task.dueDate ?? "");
+    setEditPriority(task.priority);
+    setDetailsEditing(true);
+  };
+
+  const saveDetails = () => {
+    setDetailsError(false);
+    startDetailsTransition(async () => {
+      const result = await updateTaskDetails({
+        taskId: task.id,
+        description: editDescription,
+        dueDate: editDueDate,
+        priority: editPriority,
+      });
+      if (!result.ok) {
+        setDetailsError(true);
+        return;
+      }
+      setDetailsEditing(false);
+      router.refresh();
+    });
+  };
 
   function run(action: () => Promise<{ ok: boolean; error?: string }>) {
     setError(null);
@@ -188,9 +224,78 @@ export function TaskDrawer({
             </div>
           ) : null}
 
-          {task.description ? (
-            <p className="text-body text-fg-muted whitespace-pre-line">{task.description}</p>
-          ) : null}
+          {detailsEditing ? (
+            <div className="space-y-4">
+              <Field>
+                <FieldLabel>{t("description")}</FieldLabel>
+                <Textarea
+                  autoFocus
+                  value={editDescription}
+                  onChange={(event) => setEditDescription(event.target.value)}
+                  placeholder={t("descriptionPlaceholder")}
+                />
+              </Field>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Field>
+                  <FieldLabel>{t("dueDate")}</FieldLabel>
+                  <Input
+                    type="date"
+                    value={editDueDate}
+                    onChange={(event) => setEditDueDate(event.target.value)}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>{t("priority")}</FieldLabel>
+                  <select
+                    aria-label={t("priority")}
+                    value={editPriority}
+                    onChange={(event) => setEditPriority(event.target.value as TaskPriority)}
+                    className={cn(
+                      "h-9 w-full rounded-control border px-3 text-body",
+                      "bg-surface-raised text-fg-default border-border-control hover:border-border-hover",
+                      focusRing,
+                      transition,
+                    )}
+                  >
+                    <option value="low">{priorities("low")}</option>
+                    <option value="medium">{priorities("medium")}</option>
+                    <option value="high">{priorities("high")}</option>
+                    <option value="urgent">{priorities("urgent")}</option>
+                  </select>
+                </Field>
+              </div>
+
+              {detailsError ? <p className="text-body text-blocked-text">{t("notFound")}</p> : null}
+
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="secondary" loading={detailsPending} onClick={saveDetails}>
+                  {t("saveDetails")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={detailsPending}
+                  onClick={() => setDetailsEditing(false)}
+                >
+                  {t("closeTask")}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {task.description ? (
+                <p className="text-body text-fg-muted whitespace-pre-line">{task.description}</p>
+              ) : canWork ? (
+                <p className="text-body text-fg-subtle italic">{t("noDescription")}</p>
+              ) : null}
+              {canWork ? (
+                <Button size="sm" variant="ghost" onClick={startEditingDetails}>
+                  {t("editDetails")}
+                </Button>
+              ) : null}
+            </div>
+          )}
 
           {/*
             Reassigning is narrower than everything else here: `canWork`
@@ -239,21 +344,25 @@ export function TaskDrawer({
             </div>
           )}
 
-          <dl className="grid grid-cols-2 gap-4">
-            <div>
-              <dt className="text-caption text-fg-muted">{t("dueDate")}</dt>
-              <dd className="text-body text-fg-default mt-1 tabular-nums">
-                {task.dueDate ? (
-                  format.dateTime(new Date(`${task.dueDate}T00:00:00`), {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })
-                ) : (
-                  <span className="text-fg-subtle">{t("bucketNoDeadline")}</span>
-                )}
-              </dd>
-            </div>
+          <dl className="grid grid-cols-2 gap-4 empty:hidden">
+            {/* Shown as an editable field above instead, while editing --
+                not repeated here read-only at the same time. */}
+            {!detailsEditing ? (
+              <div>
+                <dt className="text-caption text-fg-muted">{t("dueDate")}</dt>
+                <dd className="text-body text-fg-default mt-1 tabular-nums">
+                  {task.dueDate ? (
+                    format.dateTime(new Date(`${task.dueDate}T00:00:00`), {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })
+                  ) : (
+                    <span className="text-fg-subtle">{t("bucketNoDeadline")}</span>
+                  )}
+                </dd>
+              </div>
+            ) : null}
 
             {task.estimateHours ? (
               <div>
