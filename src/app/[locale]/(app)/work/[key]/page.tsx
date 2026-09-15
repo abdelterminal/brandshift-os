@@ -7,6 +7,7 @@ import { ActivityFeed } from "@/components/work/activity-feed";
 import { DeliverablesPanel } from "@/components/work/deliverables-panel";
 import { ProjectDocs } from "@/components/work/project-docs";
 import { ProjectStageControl } from "@/components/work/project-stage-control";
+import { ProjectStatusControl } from "@/components/work/project-status-control";
 import { ProjectTabs } from "@/components/work/project-tabs";
 import { StageRail } from "@/components/work/stage-rail";
 import { StageSetupButton } from "@/components/work/stage-setup-button";
@@ -125,6 +126,7 @@ export default async function ProjectPage({
   const canWorkDeliverables = !siloed && (canEditBoard || viewer.isManager);
 
   const mayManageTemplates = can(session.actor, "template.manage");
+  const canSetStatus = can(session.actor, "project.create");
   const canSetStage = can(session.actor, "project.setStage", {
     ownerUserId: project.ownerUserId ?? undefined,
   });
@@ -173,9 +175,18 @@ export default async function ProjectPage({
             <h1 className="text-display font-display text-fg-default mt-0.5">{project.name}</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <StatusPill tone={STATUS_TONE[project.status]}>
-              {statusLabels(project.status)}
-            </StatusPill>
+            {canSetStatus ? (
+              <ProjectStatusControl
+                projectId={project.id}
+                projectName={project.name}
+                status={project.status}
+                canSet={canSetStatus}
+              />
+            ) : (
+              <StatusPill tone={STATUS_TONE[project.status]}>
+                {statusLabels(project.status)}
+              </StatusPill>
+            )}
             {blocked.length > 0 ? <CountBadge tone="blocked">{blocked.length}</CountBadge> : null}
 
             {/*

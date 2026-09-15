@@ -240,8 +240,19 @@ export async function assignTask(
   // not a lead's or contributor's, whatever else they may do to the task.
   if (!atLeast(session.actor, "manager")) return { ok: false, error: "forbidden" };
   const assignee = parsed.data.assigneeUserId || null;
+  const scope = withOrg(session.actor.organizationId);
 
-  const [updated] = await withOrg(session.actor.organizationId).update(
+  // Read before overwriting: whoever held this task before is who a
+  // reassignment or a clear should tell, and the update below no longer knows
+  // who that was once it has run.
+  const [before] = await scope.selectFields(
+    tasks,
+    { assigneeUserId: tasks.assigneeUserId },
+    eq(tasks.id, parsed.data.taskId),
+  );
+  const previousAssignee = before?.assigneeUserId ?? null;
+
+  const [updated] = await scope.update(
     tasks,
     { assigneeUserId: assignee, updatedAt: new Date() },
     eq(tasks.id, parsed.data.taskId),
@@ -249,13 +260,82 @@ export async function assignTask(
 
   if (!updated) return { ok: false, error: "notFound" };
 
+  const changedHands = previousAssignee !== null && previousAssignee !== assignee;
+
   await recordActivity(session.actor, {
     verb: assignee ? "task.assigned" : "task.unassigned",
     subjectType: "task",
     subjectId: updated.id,
     projectId: updated.projectId,
     taskId: updated.id,
-    metadata: { assigneeUserId: assignee },
+    metadata: {
+      assigneeUserId: assignee,
+      previousAssigneeUserId: changedHands ? previousAssignee : null,
+    },
+  });
+
+  // A straight reassignment (A to B) is two people's news, worded two
+  // different ways -- "assigned you" is wrong for the person it just came
+  // off of. Recorded as its own event, addressed to the one person it is
+  // about, rather than stretching one message to fit both audiences.
+  if (assignee && changedHands) {
+    await recordActivity(session.actor, {
+      verb: "task.unassigned",
+      subjectType: "task",
+      subjectId: updated.id,
+      projectId: updated.projectId,
+      taskId: updated.id,
+      metadata: { previousAssigneeUserId: previousAssignee },
+    });
+  }
+
+  revalidateTaskViews();
+  return { ok: true };
+}
+
+/**
+ * Cancel a task: work someone decided not to do.
+ *
+ * Never a delete -- the row and its history stay, just out of every open
+ * queue (`bucketTasks()` already excludes `cancelled`; see `KNOWN-GAPS.md`).
+ * A manager may cancel any task, the same rung `assignTask` uses for the same
+ * reason: deciding a task is not going to happen is a bigger call than doing
+ * it. The one exception is a person's own personal to-do (no project) --
+ * nobody needs a manager's permission to drop something they made up for
+ * themselves.
+ */
+export async function cancelTask(taskId: string): Promise<ActionResult> {
+  const parsed = idSchema.safeParse(taskId);
+  if (!parsed.success) return { ok: false, error: "notFound" };
+
+  const session = await requireUserForAction();
+  const scope = withOrg(session.actor.organizationId);
+
+  const [row] = await scope.selectFields(
+    tasks,
+    { projectId: tasks.projectId, assigneeUserId: tasks.assigneeUserId },
+    eq(tasks.id, parsed.data),
+  );
+  if (!row) return { ok: false, error: "notFound" };
+
+  const ownPersonalTodo = row.projectId === null && row.assigneeUserId === session.actor.userId;
+  if (!atLeast(session.actor, "manager") && !ownPersonalTodo) {
+    return { ok: false, error: "forbidden" };
+  }
+
+  const [updated] = await scope.update(
+    tasks,
+    { status: "cancelled", updatedAt: new Date() },
+    eq(tasks.id, parsed.data),
+  );
+  if (!updated) return { ok: false, error: "notFound" };
+
+  await recordActivity(session.actor, {
+    verb: "task.cancelled",
+    subjectType: "task",
+    subjectId: updated.id,
+    projectId: updated.projectId,
+    taskId: updated.id,
   });
 
   revalidateTaskViews();

@@ -8,7 +8,7 @@ import { TaskListFlat } from "@/components/work/task-list";
 import { UnplannedBanner } from "@/components/work/unplanned-banner";
 import { UnplannedList } from "@/components/work/unplanned-list";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CountBadge } from "@/components/ui/badge";
+import { CountBadge, StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/feedback";
 import { focusRing, transition } from "@/components/ui/styles";
@@ -40,6 +40,16 @@ import {
  * Nothing here is a vanity total. Every number is a count of rows someone can
  * click through to and act on.
  */
+
+/** Same mapping `/work` uses for its own project list -- kept local, same as that page's own copy. */
+const PROJECT_STATUS_TONE = {
+  planning: "neutral",
+  active: "active",
+  on_hold: "attention",
+  completed: "complete",
+  archived: "neutral",
+} as const;
+
 export default async function TodayPage() {
   const session = await requireUser();
 
@@ -54,16 +64,22 @@ export default async function TodayPage() {
 
 async function CoordinationQueue() {
   const session = await requireUser();
-  const [t, queue, meetings, assignablePeople, unplannedAll, graceHours] = await Promise.all([
-    getTranslations("Today"),
-    coordinationQueue(session.actor),
-    nextMeetingsFor(session.actor, new Date()),
-    listAssignablePeople(session.actor),
-    listUnplannedMembers(session.actor),
-    planningGraceHours(session.actor),
-  ]);
+  const [t, queue, meetings, assignablePeople, unplannedAll, graceHours, myBuckets] =
+    await Promise.all([
+      getTranslations("Today"),
+      coordinationQueue(session.actor),
+      nextMeetingsFor(session.actor, new Date()),
+      listAssignablePeople(session.actor),
+      listUnplannedMembers(session.actor),
+      planningGraceHours(session.actor),
+      // Triage is org-wide and about everyone else's work; a manager still
+      // does their own, and this page was otherwise the one place that never
+      // showed it to them.
+      listTaskBuckets(session.actor, { assigneeUserId: session.actor.userId }),
+    ]);
   const viewer = { userId: session.actor.userId, isManager: atLeast(session.actor, "manager"), projectIds: await listWorkableProjectIds(session.actor) };
   const todayIso = organizationToday();
+  const mine = [...myBuckets.overdue, ...myBuckets.today];
 
   // Only once they are past the grace period -- inside it, it is between the
   // member and their own project page, not yet the coordinator's problem.
@@ -96,6 +112,33 @@ async function CoordinationQueue() {
           today={dayKey(new Date(), session.organization.timezone)}
         />
       </div>
+
+      {mine.length > 0 ? (
+        <div className="mt-6">
+          <Card>
+            <CardHeader>
+              <div className="min-w-0">
+                <CardTitle className="flex items-center gap-2">
+                  {t("mine")}
+                  <CountBadge tone="attention">{mine.length}</CountBadge>
+                </CardTitle>
+                <p className="text-caption text-fg-muted mt-1">{t("mineBody")}</p>
+              </div>
+            </CardHeader>
+            <CardContent className="px-0 pt-1 pb-2">
+              <TaskListFlat
+                tasks={mine}
+                emptyTitle={t("allClear")}
+                emptyBody={t("mineBody")}
+                max={5}
+                todayIso={todayIso}
+                assignablePeople={assignablePeople}
+                viewer={viewer}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
 
       {nothingToDo ? (
         <div className="border-border rounded-card mt-6 border">
@@ -194,17 +237,29 @@ async function CoordinationQueue() {
 
 async function MyDay({ name }: { name: string }) {
   const session = await requireUser();
-  const [t, tWork, buckets, meetings, assignablePeople, myUnplanned, graceHours, myProjectMemberships] =
-    await Promise.all([
-      getTranslations("Today"),
-      getTranslations("Work"),
-      listTaskBuckets(session.actor, { assigneeUserId: session.actor.userId }),
-      nextMeetingsFor(session.actor, new Date()),
-      listAssignablePeople(session.actor),
-      listUnplannedMembers(session.actor, { onlyUserId: session.actor.userId }),
-      planningGraceHours(session.actor),
-      listProjectsForUser(session.actor, session.actor.userId),
-    ]);
+  const [
+    t,
+    tWork,
+    ui,
+    tProjectStatus,
+    buckets,
+    meetings,
+    assignablePeople,
+    myUnplanned,
+    graceHours,
+    myProjectMemberships,
+  ] = await Promise.all([
+    getTranslations("Today"),
+    getTranslations("Work"),
+    getTranslations("Ui"),
+    getTranslations("ProjectStatus"),
+    listTaskBuckets(session.actor, { assigneeUserId: session.actor.userId }),
+    nextMeetingsFor(session.actor, new Date()),
+    listAssignablePeople(session.actor),
+    listUnplannedMembers(session.actor, { onlyUserId: session.actor.userId }),
+    planningGraceHours(session.actor),
+    listProjectsForUser(session.actor, session.actor.userId),
+  ]);
   const viewer = { userId: session.actor.userId, isManager: atLeast(session.actor, "manager"), projectIds: await listWorkableProjectIds(session.actor) };
   // The Today dialog's project picker: only projects a lead or contributor
   // is actually on -- a viewer-only membership doesn't earn a "New task"
@@ -235,6 +290,19 @@ async function MyDay({ name }: { name: string }) {
     { key: "next" as const, tasks: next },
     { key: "later" as const, tasks: later },
   ];
+
+  // Which project each open task belongs to, counted once here rather than
+  // queried again -- every one of this member's open tasks is already in
+  // `now`/`next`/`later`, so grouping them by `projectId` is free.
+  const openByProject = new Map<string, number>();
+  const blockedByProject = new Map<string, number>();
+  for (const task of [...now, ...next, ...later]) {
+    if (!task.projectId) continue;
+    openByProject.set(task.projectId, (openByProject.get(task.projectId) ?? 0) + 1);
+    if (task.status === "blocked") {
+      blockedByProject.set(task.projectId, (blockedByProject.get(task.projectId) ?? 0) + 1);
+    }
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8 sm:px-8">
@@ -268,6 +336,45 @@ async function MyDay({ name }: { name: string }) {
           today={dayKey(new Date(), session.organization.timezone)}
         />
       </div>
+
+      {myProjectMemberships.length > 0 ? (
+        <div className="mt-6">
+          <h2 className="text-heading font-display text-fg-default mb-2">{t("myProjects")}</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {myProjectMemberships.map((project) => (
+              <Link
+                key={project.id}
+                href={`/work/${project.key}`}
+                className={cn(
+                  "border-border bg-surface-raised hover:bg-surface-hover rounded-card block border p-3",
+                  focusRing,
+                  transition,
+                )}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-caption text-fg-subtle truncate">{project.key}</p>
+                    <p className="text-body text-fg-default truncate font-medium">
+                      {project.name}
+                    </p>
+                  </div>
+                  <StatusPill tone={PROJECT_STATUS_TONE[project.status]} size="sm">
+                    {tProjectStatus(project.status)}
+                  </StatusPill>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="text-caption text-fg-muted">
+                    {ui("openTasks", { count: openByProject.get(project.id) ?? 0 })}
+                  </span>
+                  {(blockedByProject.get(project.id) ?? 0) > 0 ? (
+                    <CountBadge tone="blocked">{blockedByProject.get(project.id)!}</CountBadge>
+                  ) : null}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {myUnplanned.length > 0 ? (
         <div className="mt-6 flex flex-col gap-2">

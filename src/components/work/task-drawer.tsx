@@ -24,7 +24,14 @@ import {
 } from "@/components/ui/drawer";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/input";
-import { assignTask, clearBlocker, completeTask, reportBlocker, startTask } from "@/lib/actions/tasks";
+import {
+  assignTask,
+  cancelTask,
+  clearBlocker,
+  completeTask,
+  reportBlocker,
+  startTask,
+} from "@/lib/actions/tasks";
 import type { AssignablePerson, TaskRow } from "@/lib/data/task-types";
 
 import { STATUS_TONE } from "./task-list";
@@ -84,6 +91,7 @@ export function TaskDrawer({
   const [pending, startTransition] = useTransition();
   const [blockerOpen, setBlockerOpen] = useState(false);
   const [blockerReason, setBlockerReason] = useState("");
+  const [cancelConfirming, setCancelConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [assignPending, startAssignTransition] = useTransition();
   const [assignError, setAssignError] = useState<string | null>(null);
@@ -100,6 +108,7 @@ export function TaskDrawer({
       }
       setBlockerOpen(false);
       setBlockerReason("");
+      setCancelConfirming(false);
       // The row behind the drawer has changed, so the list has to be re-read.
       router.refresh();
       onClose();
@@ -121,11 +130,20 @@ export function TaskDrawer({
   };
 
   const isDone = task.status === "done";
+  const isCancelled = task.status === "cancelled";
   const isBlocked = task.status === "blocked";
   const canWork =
     viewer.isManager ||
     task.assigneeUserId === viewer.userId ||
     (task.projectId != null && viewer.projectIds.includes(task.projectId));
+  // Cancelling is narrower than working the task -- the same "a bigger call
+  // than doing it" reasoning `assignTask` uses -- except for a person's own
+  // personal to-do, which needs nobody's permission to drop.
+  const canCancel =
+    !isDone &&
+    !isCancelled &&
+    (viewer.isManager ||
+      (task.projectId === null && task.assigneeUserId === viewer.userId));
   const assigneeOptions: ComboboxOption[] = assignablePeople.map((person) => ({
     value: person.userId,
     label: person.name,
@@ -294,9 +312,29 @@ export function TaskDrawer({
                 {t("closeTask")}
               </Button>
             </>
+          ) : cancelConfirming ? (
+            <>
+              <p className="text-caption text-fg-muted mr-auto">{t("cancelTaskConfirm")}</p>
+              <Button
+                variant="secondary"
+                loading={pending}
+                onClick={() => run(() => cancelTask(task.id))}
+              >
+                {t("cancelTaskConfirmButton")}
+              </Button>
+              <Button variant="ghost" onClick={() => setCancelConfirming(false)}>
+                {t("closeTask")}
+              </Button>
+            </>
           ) : (
             <>
-              {!isDone ? (
+              {canCancel ? (
+                <Button variant="ghost" onClick={() => setCancelConfirming(true)}>
+                  {t("cancelTask")}
+                </Button>
+              ) : null}
+
+              {!isDone && !isCancelled ? (
                 <Button
                   variant="primary"
                   loading={pending}
@@ -306,7 +344,7 @@ export function TaskDrawer({
                 </Button>
               ) : null}
 
-              {!isDone && task.status !== "in_progress" && !isBlocked ? (
+              {!isDone && !isCancelled && task.status !== "in_progress" && !isBlocked ? (
                 <Button loading={pending} onClick={() => run(() => startTask(task.id))}>
                   {t("start")}
                 </Button>
@@ -316,7 +354,7 @@ export function TaskDrawer({
                 <Button loading={pending} onClick={() => run(() => clearBlocker(task.id))}>
                   {t("clearBlocker")}
                 </Button>
-              ) : !isDone ? (
+              ) : !isDone && !isCancelled ? (
                 <Button variant="secondary" onClick={() => setBlockerOpen(true)}>
                   {t("reportBlocker")}
                 </Button>

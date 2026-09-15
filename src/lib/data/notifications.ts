@@ -229,6 +229,24 @@ async function recipientsFor(
       break;
     }
 
+    // Either the assignee was cleared, or the task changed hands -- either
+    // way, whoever held it before was taken off it. `assignTask` records this
+    // as its own event (alongside `task.assigned` on a straight reassignment)
+    // precisely so this copy is never stretched to cover both audiences.
+    case "task.unassigned": {
+      const previous = event.metadata?.previousAssigneeUserId;
+      if (typeof previous === "string") recipients.add(previous);
+      break;
+    }
+
+    // Work someone decided not to do -- the person who was doing it should
+    // hear that it is off their plate, not notice its silent disappearance.
+    case "task.cancelled": {
+      const assignee = await taskAssignee();
+      if (assignee) recipients.add(assignee);
+      break;
+    }
+
     // A blocker is a request for help, so it goes to whoever can unblock it.
     case "task.blocked": {
       const [owner, assignee] = await Promise.all([projectOwner(), taskAssignee()]);
@@ -271,9 +289,33 @@ async function recipientsFor(
       break;
     }
 
-    // A project's status/stage moving -- see NOTIFY_STATUS_AND_ACCESS_CHANGES.
+    // A project's stage moving -- see NOTIFY_STATUS_AND_ACCESS_CHANGES.
     case "project.stageChanged": {
       if (!NOTIFY_STATUS_AND_ACCESS_CHANGES || !event.projectId) break;
+      const members = await scope.selectFields(
+        projectMembers,
+        { userId: projectMembers.userId },
+        eq(projectMembers.projectId, event.projectId),
+      );
+      for (const member of members) recipients.add(member.userId);
+      break;
+    }
+
+    // A project ending -- archived or completed -- is not the quiet nudge
+    // `stageChanged` is muted for above; it is the point someone's work on it
+    // stops, and finding that out only by noticing the board went quiet is
+    // exactly the silent disruption this is here to prevent. Not gated on
+    // `NOTIFY_STATUS_AND_ACCESS_CHANGES`: that flag mutes a notification that
+    // used to fire and was judged too noisy; this one has never fired at all
+    // -- `setProjectStatus` records the event but nothing has ever read it.
+    case "project.statusChanged": {
+      const status = event.metadata?.status;
+      if (
+        !event.projectId ||
+        (status !== "archived" && status !== "completed")
+      ) {
+        break;
+      }
       const members = await scope.selectFields(
         projectMembers,
         { userId: projectMembers.userId },

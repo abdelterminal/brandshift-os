@@ -203,6 +203,11 @@ export async function setProjectStatus(
     {
       status: parsedStatus.data,
       completedAt: parsedStatus.data === "completed" ? new Date() : null,
+      // `listProjects()` hides a project by `archivedAt`, not by `status` --
+      // without setting this, moving a project to `archived` here changed
+      // only its pill, and it kept showing up on every list it was meant to
+      // leave.
+      archivedAt: parsedStatus.data === "archived" ? new Date() : null,
       updatedAt: new Date(),
     },
     eq(projects.id, parsedId.data),
@@ -215,7 +220,10 @@ export async function setProjectStatus(
     subjectType: "project",
     subjectId: updated.id,
     projectId: updated.id,
-    metadata: { status: parsedStatus.data },
+    // `status` is what `recipientsFor` gates the notification on; `to`
+    // matches the interpolation name `projectStageChanged`'s copy already
+    // uses, so the same message shape works for both.
+    metadata: { status: parsedStatus.data, to: parsedStatus.data },
   });
 
   const locale = await getLocale();
