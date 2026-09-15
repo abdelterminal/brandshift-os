@@ -50,6 +50,7 @@ const SURFACE_TOKENS = [
   // hover and press it.
   "--surface-hover",
   "--surface-active",
+  "--surface-overlay-hover",
 ];
 
 const TEXT_ON_SURFACE: Pair[] = TEXT_TOKENS.flatMap((text) =>

@@ -54,7 +54,7 @@ function MenuContent({
 const itemClassName = cn(
   "flex w-full cursor-default items-center gap-2 rounded-[6px] px-2 py-1.5 text-body",
   "text-fg-default select-none outline-none",
-  "data-highlighted:bg-surface-hover",
+  "data-highlighted:bg-surface-overlay-hover",
   "data-disabled:pointer-events-none data-disabled:opacity-55",
   "[&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-fg-subtle",
   transition,

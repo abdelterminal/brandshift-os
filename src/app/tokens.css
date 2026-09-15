@@ -132,6 +132,12 @@
      and subtle levels dropped under AA the moment the pointer arrived. */
   --surface-hover: var(--neutral-50);
   --surface-active: var(--neutral-100);
+  /* Same role as --surface-hover, for an item highlighted inside a popup
+     (menu, select, combobox) rather than a row on the raised surface. Equal
+     to --surface-hover here because --surface-overlay and --surface-raised
+     are already distinct in light theme -- split out only so dark theme,
+     where they are not, has somewhere else to point it. */
+  --surface-overlay-hover: var(--neutral-50);
 
   /* Text */
   --fg-default: var(--neutral-1000);
@@ -239,6 +245,14 @@
        takes the only one AA leaves available. */
     --surface-hover: var(--neutral-850);
     --surface-active: var(--neutral-850);
+    /* --surface-hover equals --surface-overlay here (both --neutral-850),
+       which made a highlighted item inside any menu, select or combobox a
+       no-op -- the same bug the note above already fixed once for cards.
+       --neutral-850 is already the lightest step --fg-subtle clears AA on, so
+       there is no lighter step to give this one either; it goes darker
+       instead, to --surface-raised's own step, which reads as a shift either
+       way against the overlay it sits on. */
+    --surface-overlay-hover: var(--neutral-900);
 
     --fg-default: var(--neutral-50);
     --fg-muted: var(--neutral-400);
@@ -325,6 +339,7 @@
   /* See the note in the media-query block. */
   --surface-hover: var(--neutral-850);
   --surface-active: var(--neutral-850);
+  --surface-overlay-hover: var(--neutral-900);
 
   --fg-default: var(--neutral-50);
   --fg-muted: var(--neutral-400);

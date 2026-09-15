@@ -44,6 +44,7 @@
   --color-surface-overlay: var(--surface-overlay);
   --color-surface-inset: var(--surface-inset);
   --color-surface-hover: var(--surface-hover);
+  --color-surface-overlay-hover: var(--surface-overlay-hover);
   --color-surface-active: var(--surface-active);
 
   /* Text */

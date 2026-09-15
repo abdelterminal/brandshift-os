@@ -90,7 +90,7 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
         "text-fg-default relative select-none outline-none",
         // Base UI moves `data-highlighted` with both pointer and keyboard, so
         // one rule covers hover and arrow-key navigation.
-        "data-highlighted:bg-surface-hover",
+        "data-highlighted:bg-surface-overlay-hover",
         "data-disabled:pointer-events-none data-disabled:opacity-55",
         transition,
         className,

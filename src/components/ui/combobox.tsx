@@ -123,7 +123,7 @@ function ComboboxItem({ className, children, ...props }: ComboboxPrimitive.Item.
       className={cn(
         "relative flex cursor-default items-center gap-2 rounded-[6px] py-1.5 pr-2 pl-7 text-body",
         "text-fg-default select-none outline-none",
-        "data-highlighted:bg-surface-hover",
+        "data-highlighted:bg-surface-overlay-hover",
         "data-disabled:pointer-events-none data-disabled:opacity-55",
         transition,
         className,
