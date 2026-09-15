@@ -269,10 +269,20 @@ export function DocumentSheet({
         <div className="flex justify-end">
           <div className="w-[78mm]">
             <Row label={t("subtotal")} value={money(subtotal)} />
-            <Row
-              label={singleRate === null ? t("tax") : t("taxAt", { rate: singleRate / 100 })}
-              value={money(tax)}
-            />
+            {/*
+              Hidden rather than printed at zero: this follows the Mediast
+              devis, which never carries a VAT line at all for work billed
+              hors taxes -- a "TVA 0,00 MAD" row would claim a tax regime
+              that was never actually applied. Every line at 0% is how a
+              document opts out of VAT entirely; a mix of 0% and a real
+              rate still shows the row, since some of the total *is* taxed.
+            */}
+            {tax > 0 ? (
+              <Row
+                label={singleRate === null ? t("tax") : t("taxAt", { rate: singleRate / 100 })}
+                value={money(tax)}
+              />
+            ) : null}
           </div>
         </div>
 

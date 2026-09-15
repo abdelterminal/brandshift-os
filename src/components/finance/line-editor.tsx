@@ -91,11 +91,49 @@ export function LineEditor({
     transition,
   );
 
+  // A document almost always shares one rate across every line -- see the
+  // sheet's own `singleRate` logic, which prints "VAT 20%" only when this
+  // is true and falls back to a bare "VAT" the moment it isn't. So the
+  // common case -- add VAT to the whole devis, or take it off entirely --
+  // is one control here, applied to every line at once, rather than
+  // clicking through each line's own selector to change the same number
+  // four times. That per-line selector stays, for the rare document that
+  // genuinely mixes rates.
+  const bulkTaxRate = lines.every((line) => line.taxRateBasisPoints === lines[0]?.taxRateBasisPoints)
+    ? (lines[0]?.taxRateBasisPoints ?? 0)
+    : null;
+
   return (
     <div>
-      <p className="text-label text-fg-default mb-2 font-medium" id="lines-label">
-        {t("lines")}
-      </p>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-label text-fg-default font-medium" id="lines-label">
+          {t("lines")}
+        </p>
+        <label className="flex items-center gap-2">
+          <span className="text-caption text-fg-muted">{t("taxForAllLines")}</span>
+          <select
+            aria-label={t("taxForAllLines")}
+            value={bulkTaxRate ?? ""}
+            onChange={(event) => {
+              const rate = Number(event.target.value);
+              setLines(lines.map((line) => ({ ...line, taxRateBasisPoints: rate })));
+            }}
+            className={cn(
+              "h-8 rounded-control border px-2 text-body",
+              "bg-surface-raised text-fg-default border-border-control hover:border-border-hover",
+              focusRing,
+              transition,
+            )}
+          >
+            {bulkTaxRate === null ? <option value="">{t("taxMixed")}</option> : null}
+            {TAX_RATES.map((rate) => (
+              <option key={rate} value={rate}>
+                {rate === 0 ? t("taxNone") : `${rate / 100}%`}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       <p className="text-caption text-fg-muted mb-3">{ui("lineGuide")}</p>
       <ul aria-labelledby="lines-label" className="flex flex-col gap-3">

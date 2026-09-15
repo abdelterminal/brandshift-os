@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { requirePermissionForAction } from "@/lib/auth/guards";
 import { recordActivity } from "@/lib/data/activity";
+import { createCompany } from "@/lib/data/crm";
 import {
   attachQuoteToProject,
   createExpense,
@@ -101,6 +102,49 @@ function parseLines(
 
 async function revalidateFinance() {
   revalidatePath(`/${await getLocale()}`, "layout");
+}
+
+/**
+ * A brand-new client, named on the spot.
+ *
+ * The quote form's company field is otherwise a picker over existing CRM
+ * companies -- correct for a repeat client, a dead end for a first-time
+ * one, who previously had to be created as a full company (name, status,
+ * industry, owner) in a separate screen before a devis could even start.
+ * This is that same row, minimal: a name and nothing else, gated the same
+ * `finance.manage` a quote itself needs rather than `crm.manage` -- whoever
+ * may bill someone should not be blocked from first recording who that is
+ * just because they don't separately hold the CRM module. Status defaults
+ * to `prospect`, the same as anyone not yet a paying client; the rest of
+ * the company record can be filled in later from the CRM screen itself.
+ */
+const quickCompanySchema = z.object({ name: z.string().trim().min(1).max(160) });
+
+export async function quickAddCompany(
+  input: z.input<typeof quickCompanySchema>,
+): Promise<ActionResult> {
+  const parsed = quickCompanySchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "invalid" };
+
+  const session = await requirePermissionForAction("finance.manage");
+
+  const created = await createCompany(session.actor, {
+    name: parsed.data.name,
+    website: null,
+    industry: null,
+    status: "prospect",
+    ownerUserId: session.actor.userId,
+  });
+  if (!created) return { ok: false, error: "invalid" };
+
+  await recordActivity(session.actor, {
+    verb: "company.created",
+    subjectType: "company",
+    subjectId: created.id,
+    metadata: { name: parsed.data.name },
+  });
+
+  return { ok: true, id: created.id };
 }
 
 // ---------------------------------------------------------------------------

@@ -9,7 +9,7 @@ import { DocumentSheet } from "./sheet";
 import type { Option } from "./dialogs";
 import type { Letterhead } from "@/lib/data/organization";
 import type { DocumentLine } from "@/lib/data/finance";
-import { addInvoice, addQuote } from "@/lib/actions/finance";
+import { addInvoice, addQuote, quickAddCompany } from "@/lib/actions/finance";
 import { lineTotal, parseMoney, parseQuantity, totalsFor } from "@/lib/money";
 import { focusRing, quietLinkHover, transition } from "@/components/ui/styles";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,12 @@ export function DocumentComposer({ kind, companies, projects = [], letterhead, c
   const [fullSize, setFullSize] = useState(false);
   const [title, setTitle] = useState("");
   const [companyId, setCompanyId] = useState(companies.some(c => c.id === defaultCompanyId) ? defaultCompanyId : "");
+  // Picking an existing CRM company is the ordinary case; typing one is the
+  // escape hatch for a first-time client who isn't in the CRM yet -- see
+  // `quickAddCompany`. Only one of `companyId` / `newCompanyName` is ever
+  // read at submit time, decided by which mode is active.
+  const [newCompanyMode, setNewCompanyMode] = useState(false);
+  const [newCompanyName, setNewCompanyName] = useState("");
   const [projectId, setProjectId] = useState("");
   const [issueDate, setIssueDate] = useState(today);
   const [untilDate, setUntilDate] = useState(kind === "invoice" ? dueDefault : "");
@@ -41,7 +47,7 @@ export function DocumentComposer({ kind, companies, projects = [], letterhead, c
       quantityThousandths, unitPrice, taxRateBasisPoints: line.taxRateBasisPoints, lineTotal: lineTotal(quantityThousandths, unitPrice) }];
   });
   const totals = totalsFor(previewLines);
-  const ready = title.trim().length >= 1 && !!companyId && !!issueDate && (kind === "quote" || !!untilDate) && previewLines.length === lines.length && lines.length > 0;
+  const ready = title.trim().length >= 1 && (newCompanyMode ? newCompanyName.trim().length >= 1 : !!companyId) && !!issueDate && (kind === "quote" || !!untilDate) && previewLines.length === lines.length && lines.length > 0;
   const knownErrors: Record<string, string> = { money: t("money"), quantity: t("quantity_invalid"), noLines: t("noLines"), dueBeforeIssue: t("dueBeforeIssue") };
   // The annotation is a sibling of the label, not a descendant of it: any
   // text inside `<label for>` joins its accessible name, so "Company" would
@@ -64,9 +70,15 @@ export function DocumentComposer({ kind, companies, projects = [], letterhead, c
         event.preventDefault(); setError(null);
         startTransition(async () => {
           try {
+            let resolvedCompanyId = companyId;
+            if (newCompanyMode) {
+              const created = await quickAddCompany({ name: newCompanyName });
+              if (!created.ok) { setError(knownErrors[created.error] ?? t("invalid")); return; }
+              resolvedCompanyId = created.id!;
+            }
             const result = kind === "quote"
-              ? await addQuote({ title, companyId, issueDate, validUntil: untilDate || undefined, lines })
-              : await addInvoice({ title, companyId, projectId: projectId || null, issueDate, dueDate: untilDate, lines });
+              ? await addQuote({ title, companyId: resolvedCompanyId, issueDate, validUntil: untilDate || undefined, lines })
+              : await addInvoice({ title, companyId: resolvedCompanyId, projectId: projectId || null, issueDate, dueDate: untilDate, lines });
             if (result && !result.ok) setError(knownErrors[result.error] ?? t("invalid"));
           } catch (failure) {
             // A successful Server Action redirect is handled by Next, not shown as a form error.
@@ -77,7 +89,14 @@ export function DocumentComposer({ kind, companies, projects = [], letterhead, c
       }}>
         <div className="border-border bg-surface-raised space-y-4 rounded-card border p-4">
           {field("document-title", t("documentTitle"), true, <input id="document-title" className={inputClass} value={title} onChange={e => setTitle(e.target.value)} required maxLength={200} />)}
-          {field("document-company", t("company"), true, <select id="document-company" className={inputClass} value={companyId} onChange={e => setCompanyId(e.target.value)} required><option value="">—</option>{companies.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select>)}
+          {field("document-company", t("company"), true, <div className="space-y-1.5">
+            {newCompanyMode
+              ? <input id="document-company" className={inputClass} value={newCompanyName} onChange={e => setNewCompanyName(e.target.value)} placeholder={t("newCompanyPlaceholder")} required maxLength={160} autoFocus />
+              : <select id="document-company" className={inputClass} value={companyId} onChange={e => setCompanyId(e.target.value)} required><option value="">—</option>{companies.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select>}
+            <button type="button" onClick={() => { setNewCompanyMode(!newCompanyMode); setCompanyId(""); setNewCompanyName(""); }} className={cn("text-caption text-fg-muted rounded-[4px] hover:underline", focusRing)}>
+              {t(newCompanyMode ? "pickExistingCompany" : "typeNewCompany")}
+            </button>
+          </div>)}
           {kind === "invoice" ? field("document-project", t("project"), false, <select id="document-project" className={inputClass} value={projectId} onChange={e => setProjectId(e.target.value)}><option value="">{t("noProject")}</option>{projects.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}</select>) : null}
           <div className="grid gap-4 sm:grid-cols-2">
             {field("document-issued", t("issued"), true, <input id="document-issued" type="date" className={inputClass} value={issueDate} onChange={e => setIssueDate(e.target.value)} required />)}
@@ -101,7 +120,7 @@ export function DocumentComposer({ kind, companies, projects = [], letterhead, c
         {previewLines.length !== lines.length ? <p className="text-caption text-fg-muted mt-2" role="status">{ui("incompletePreview")}</p> : null}
         <Button type="button" size="sm" className="mt-3" aria-pressed={fullSize} onClick={() => setFullSize(!fullSize)}>{ui(fullSize ? "fitPreview" : "fullPreview")}</Button>
         <div data-full-size={fullSize || undefined} className="document-preview border-border mt-4 overflow-x-auto rounded-card border p-3 focus-visible:outline-focus-ring focus-visible:outline-2" role="region" tabIndex={0} aria-label={ui("preview")}>
-          <DocumentSheet preview kind={kind} letterhead={letterhead} number={ui("draft")} title={title} clientName={companies.find(c => c.id === companyId)?.label ?? ui("draft")}
+          <DocumentSheet preview kind={kind} letterhead={letterhead} number={ui("draft")} title={title} clientName={(newCompanyMode ? newCompanyName : companies.find(c => c.id === companyId)?.label) || ui("draft")}
             issueDate={new Date(`${issueDate || today}T12:00:00`)} untilDate={untilDate ? new Date(`${untilDate}T12:00:00`) : null}
             lines={previewLines} currency={currency} subtotal={totals.subtotal} tax={totals.tax} total={totals.total} terms={null} />
         </div>
