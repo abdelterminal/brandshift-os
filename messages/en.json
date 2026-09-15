@@ -184,6 +184,7 @@
     "title": "Today",
     "greeting": "Good day, {name}",
     "myProjects": "My projects",
+    "myDeliverables": "My deliverables",
     "mine": "Mine",
     "mineBody": "Your own assigned work, alongside the queue below.",
     "queueTitle": "Needs a decision",

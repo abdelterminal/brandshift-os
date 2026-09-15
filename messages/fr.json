@@ -184,6 +184,7 @@
     "title": "Aujourd'hui",
     "greeting": "Bonjour {name}",
     "myProjects": "Mes projets",
+    "myDeliverables": "Mes livrables",
     "mine": "Le mien",
     "mineBody": "Votre propre travail assigné, à côté de la file ci-dessous.",
     "queueTitle": "Décisions à prendre",

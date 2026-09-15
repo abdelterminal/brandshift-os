@@ -61,7 +61,7 @@ export default async function ProjectPage({
 }: PageProps<"/[locale]/work/[key]">) {
   const session = await requireUser();
   const { key } = await params;
-  const { task } = await searchParams;
+  const { task, tab } = await searchParams;
 
   const project = await getProjectByKey(session.actor, key);
   if (!project) notFound();
@@ -274,7 +274,13 @@ export default async function ProjectPage({
            * the shareable link was only shareable with someone already looking
            * at the right tab.
            */
-          defaultTab={typeof task === "string" && task ? "tasks" : "overview"}
+          defaultTab={
+            typeof task === "string" && task
+              ? "tasks"
+              : tab === "deliverables" || tab === "docs" || tab === "team" || tab === "activity"
+                ? tab
+                : "overview"
+          }
           description={project.description}
           priority={priorities(project.priority)}
           projectId={project.id}

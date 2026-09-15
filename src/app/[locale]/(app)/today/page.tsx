@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import { getFormatter, getTranslations } from "next-intl/server";
 
 import { NextMeetings } from "@/components/calendar/next-meetings";
 import { NewTaskDialog } from "@/components/work/new-task-dialog";
@@ -17,6 +17,7 @@ import { atLeast } from "@/lib/authz";
 import { listWorkableProjectIds } from "@/lib/data/project-access";
 import { requireUser } from "@/lib/auth/guards";
 import { dayKey } from "@/lib/calendar-dates";
+import { listMyDeliverables, type MyDeliverableRow } from "@/lib/data/deliverables";
 import { isOverdue } from "@/lib/due-date";
 import { nextMeetingsFor } from "@/lib/data/meetings";
 import { listAssignablePeople } from "@/lib/data/people";
@@ -54,6 +55,16 @@ const SECTION_EMPTY = {
   later: ["nothingLater", "nothingLaterBody"],
 } as const;
 
+/** Same mapping the project's own Deliverables tab uses -- kept local, same as that page's own copy. */
+const DELIVERABLE_STATUS_TONE = {
+  producing: "neutral",
+  internal_review: "active",
+  with_client: "active",
+  revising: "attention",
+  published: "complete",
+  cancelled: "neutral",
+} as const;
+
 /** Same mapping `/work` uses for its own project list -- kept local, same as that page's own copy. */
 const PROJECT_STATUS_TONE = {
   planning: "neutral",
@@ -77,7 +88,7 @@ export default async function TodayPage() {
 
 async function CoordinationQueue() {
   const session = await requireUser();
-  const [t, queue, meetings, assignablePeople, unplannedAll, graceHours, myBuckets] =
+  const [t, queue, meetings, assignablePeople, unplannedAll, graceHours, myBuckets, myDeliverables] =
     await Promise.all([
       getTranslations("Today"),
       coordinationQueue(session.actor),
@@ -89,6 +100,7 @@ async function CoordinationQueue() {
       // does their own, and this page was otherwise the one place that never
       // showed it to them.
       listTaskBuckets(session.actor, { assigneeUserId: session.actor.userId }),
+      listMyDeliverables(session.actor),
     ]);
   const viewer = { userId: session.actor.userId, isManager: atLeast(session.actor, "manager"), projectIds: await listWorkableProjectIds(session.actor) };
   const todayIso = organizationToday();
@@ -153,6 +165,8 @@ async function CoordinationQueue() {
           </Card>
         </div>
       ) : null}
+
+      <MyDeliverables items={myDeliverables} />
 
       {nothingToDo ? (
         <div className="border-border rounded-card mt-6 border">
@@ -262,6 +276,7 @@ async function MyDay({ name }: { name: string }) {
     myUnplanned,
     graceHours,
     myProjectMemberships,
+    myDeliverables,
   ] = await Promise.all([
     getTranslations("Today"),
     getTranslations("Work"),
@@ -273,6 +288,7 @@ async function MyDay({ name }: { name: string }) {
     listUnplannedMembers(session.actor, { onlyUserId: session.actor.userId }),
     planningGraceHours(session.actor),
     listProjectsForUser(session.actor, session.actor.userId),
+    listMyDeliverables(session.actor),
   ]);
   const viewer = { userId: session.actor.userId, isManager: atLeast(session.actor, "manager"), projectIds: await listWorkableProjectIds(session.actor) };
   // The Today dialog's project picker: only projects a lead or contributor
@@ -390,6 +406,8 @@ async function MyDay({ name }: { name: string }) {
         </div>
       ) : null}
 
+      <MyDeliverables items={myDeliverables} />
+
       {myUnplanned.length > 0 ? (
         <div className="mt-6 flex flex-col gap-2">
           {myUnplanned.map((row) => (
@@ -489,5 +507,62 @@ async function NextTaskPanel({ task, todayIso }: { task: TaskRow; todayIso: stri
         <p className="text-caption text-fg-muted">{t("nextTaskBody")}</p>
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * One person's own open deliverables, across every project.
+ *
+ * Deliverables otherwise show only on their own project's Deliverables tab --
+ * there was no view of "everything I owe a client" spanning more than one.
+ * Read-only here: the status line, the client-feedback flow and the rest of
+ * the panel's controls stay where they already work, on the project itself.
+ */
+async function MyDeliverables({ items }: { items: MyDeliverableRow[] }) {
+  if (items.length === 0) return null;
+
+  const t = await getTranslations("Today");
+  const statusLabels = await getTranslations("DeliverableStatus");
+  const format = await getFormatter();
+
+  return (
+    <div className="mt-6">
+      <div className="mb-2 flex items-baseline gap-2">
+        <h2 className="text-heading font-display text-fg-default">{t("myDeliverables")}</h2>
+        <span className="text-caption text-fg-subtle tabular-nums">{items.length}</span>
+      </div>
+      <ul className="border-border divide-border bg-surface-raised divide-y overflow-hidden rounded-card border">
+        {items.map((item) => (
+          <li key={item.id}>
+            <Link
+              href={`/work/${item.projectKey}?tab=deliverables`}
+              className={cn(
+                "hover:bg-surface-hover flex items-center gap-3 px-3 py-2.5",
+                focusRing,
+                transition,
+              )}
+            >
+              <span className="min-w-0 flex-1">
+                <span className="text-body text-fg-default block truncate">{item.title}</span>
+                <span className="text-caption text-fg-subtle block truncate">
+                  {item.projectKey} · {item.projectName}
+                </span>
+              </span>
+              {item.dueDate ? (
+                <span className="text-caption text-fg-muted hidden shrink-0 tabular-nums sm:block">
+                  {format.dateTime(new Date(`${item.dueDate}T00:00:00`), {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </span>
+              ) : null}
+              <StatusPill tone={DELIVERABLE_STATUS_TONE[item.status]} size="sm" className="shrink-0">
+                {statusLabels(item.status)}
+              </StatusPill>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

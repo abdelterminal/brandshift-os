@@ -5,10 +5,11 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { deliverables } from "@/db/schema/deliverables";
 import { users } from "@/db/schema/people";
+import { projects } from "@/db/schema/projects";
 import { tasks } from "@/db/schema/tasks";
 import { withOrg } from "@/db/tenancy";
 import type { Actor } from "@/lib/authz";
-import { compareByFlow, type DeliverableStatus } from "@/lib/deliverables";
+import { compareByFlow, isDeliverableOpen, type DeliverableStatus } from "@/lib/deliverables";
 import type { ProjectStage } from "@/lib/data/pipeline-stages";
 import { isUuid } from "@/lib/uuid";
 
@@ -66,6 +67,31 @@ export async function listProjectDeliverables(
   )) as DeliverableView[];
 
   return rows.sort(compareByFlow);
+}
+
+export type MyDeliverableRow = DeliverableView & {
+  projectKey: string;
+  projectName: string;
+};
+
+/**
+ * One person's own open deliverables, across every project -- the cross-
+ * project view `listProjectDeliverables` cannot give, since it always takes
+ * one `projectId`. Mirrors `listTaskBuckets`'s own "assignee across projects"
+ * shape, one table over.
+ */
+export async function listMyDeliverables(actor: Actor): Promise<MyDeliverableRow[]> {
+  const rows = (await withOrg(actor.organizationId).selectJoined(
+    deliverables,
+    { ...FIELDS, projectKey: projects.key, projectName: projects.name },
+    [
+      { table: users, on: eq(users.id, deliverables.assigneeUserId), type: "left" as const },
+      { table: projects, on: eq(projects.id, deliverables.projectId), type: "inner" as const },
+    ],
+    eq(deliverables.assigneeUserId, actor.userId),
+  )) as MyDeliverableRow[];
+
+  return rows.filter((row) => isDeliverableOpen(row.status)).sort(compareByFlow);
 }
 
 export async function getDeliverableById(actor: Actor, id: string) {
