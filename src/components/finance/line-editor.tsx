@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { focusRing, transition } from "@/components/ui/styles";
+import { QUOTE_LINE_CATEGORIES, QUOTE_LINE_TEMPLATES } from "@/lib/finance/quote-line-templates";
 import { lineTotal, parseMoney, parseQuantity, totalsFor } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
@@ -223,14 +224,49 @@ export function LineEditor({
         })}
       </ul>
 
-      <Button
-        type="button"
-        size="sm"
-        className="mt-3"
-        onClick={() => setLines([...lines, { ...EMPTY_LINE }])}
-      >
-        {t("addLine")}
-      </Button>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Button type="button" size="sm" onClick={() => setLines([...lines, { ...EMPTY_LINE }])}>
+          {t("addLine")}
+        </Button>
+
+        {/*
+          The studio's own service catalogue -- so a line most often starts
+          from a pick, not a blank one typed from scratch. Resets to the
+          placeholder after adding, since this is an action, not a field
+          with a value of its own.
+        */}
+        <select
+          aria-label={t("addFromTemplate")}
+          value=""
+          onChange={(event) => {
+            const template = QUOTE_LINE_TEMPLATES.find((row) => row.id === event.target.value);
+            if (!template) return;
+            setLines([
+              ...lines,
+              {
+                description: template.description,
+                details: template.details,
+                exclusions: template.exclusions,
+                quantity: "1",
+                unitPrice: template.unitPrice,
+                taxRateBasisPoints: EMPTY_LINE.taxRateBasisPoints,
+              },
+            ]);
+          }}
+          className={cn(inputClass, "h-8 w-auto max-w-56")}
+        >
+          <option value="">{t("addFromTemplate")}</option>
+          {QUOTE_LINE_CATEGORIES.map((category) => (
+            <optgroup key={category} label={t(`templateCategory_${category}`)}>
+              {QUOTE_LINE_TEMPLATES.filter((row) => row.category === category).map((row) => (
+                <option key={row.id} value={row.id}>
+                  {row.description}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+      </div>
 
       {/*
         The running total, from the same functions the server stores with --
