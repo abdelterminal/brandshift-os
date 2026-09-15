@@ -31,7 +31,21 @@ export function DocumentComposer({ kind, companies, projects = [], letterhead, c
   const [newCompanyName, setNewCompanyName] = useState("");
   const [projectId, setProjectId] = useState("");
   const [issueDate, setIssueDate] = useState(today);
-  const [untilDate, setUntilDate] = useState(kind === "invoice" ? dueDefault : "");
+  // Every reference devis states "Validité 30 jours" -- a quote with no
+  // expiry at all was the one thing this form let through that none of them
+  // ever did. Defaults to the same 30 days an invoice's due date already
+  // uses, same as the quotes it's modeled on, and stays a plain date field
+  // the sender can move earlier or later per document.
+  const [untilDate, setUntilDate] = useState(dueDefault);
+  // Every quote already sent by hand carries a substantial Conditions list --
+  // payment split, what is and isn't included, property rights, validity --
+  // and until now the composer had nowhere to write it at all: `addQuote`
+  // and `DocumentSheet` both already take `terms`, nothing here ever sent
+  // it. Pre-filled with the two clauses that recur on every one of those
+  // devis regardless of what is being sold, so a quote starts with real
+  // conditions rather than none -- still a plain textarea, so any of it can
+  // be changed or removed per document.
+  const [terms, setTerms] = useState(() => t("defaultTerms", { name: letterhead.name }));
   const { lines, setLines } = useLines();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +61,7 @@ export function DocumentComposer({ kind, companies, projects = [], letterhead, c
       quantityThousandths, unitPrice, taxRateBasisPoints: line.taxRateBasisPoints, lineTotal: lineTotal(quantityThousandths, unitPrice) }];
   });
   const totals = totalsFor(previewLines);
-  const ready = title.trim().length >= 1 && (newCompanyMode ? newCompanyName.trim().length >= 1 : !!companyId) && !!issueDate && (kind === "quote" || !!untilDate) && previewLines.length === lines.length && lines.length > 0;
+  const ready = title.trim().length >= 1 && (newCompanyMode ? newCompanyName.trim().length >= 1 : !!companyId) && !!issueDate && !!untilDate && terms.trim().length >= 1 && previewLines.length === lines.length && lines.length > 0;
   const knownErrors: Record<string, string> = { money: t("money"), quantity: t("quantity_invalid"), noLines: t("noLines"), dueBeforeIssue: t("dueBeforeIssue") };
   // The annotation is a sibling of the label, not a descendant of it: any
   // text inside `<label for>` joins its accessible name, so "Company" would
@@ -77,8 +91,8 @@ export function DocumentComposer({ kind, companies, projects = [], letterhead, c
               resolvedCompanyId = created.id!;
             }
             const result = kind === "quote"
-              ? await addQuote({ title, companyId: resolvedCompanyId, issueDate, validUntil: untilDate || undefined, lines })
-              : await addInvoice({ title, companyId: resolvedCompanyId, projectId: projectId || null, issueDate, dueDate: untilDate, lines });
+              ? await addQuote({ title, companyId: resolvedCompanyId, issueDate, validUntil: untilDate || undefined, terms, lines })
+              : await addInvoice({ title, companyId: resolvedCompanyId, projectId: projectId || null, issueDate, dueDate: untilDate, terms, lines });
             if (result && !result.ok) setError(knownErrors[result.error] ?? t("invalid"));
           } catch (failure) {
             // A successful Server Action redirect is handled by Next, not shown as a form error.
@@ -100,8 +114,9 @@ export function DocumentComposer({ kind, companies, projects = [], letterhead, c
           {kind === "invoice" ? field("document-project", t("project"), false, <select id="document-project" className={inputClass} value={projectId} onChange={e => setProjectId(e.target.value)}><option value="">{t("noProject")}</option>{projects.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}</select>) : null}
           <div className="grid gap-4 sm:grid-cols-2">
             {field("document-issued", t("issued"), true, <input id="document-issued" type="date" className={inputClass} value={issueDate} onChange={e => setIssueDate(e.target.value)} required />)}
-            {field("document-until", t(kind === "quote" ? "validUntil" : "due"), kind === "invoice", <input id="document-until" type="date" className={inputClass} value={untilDate} min={issueDate} onChange={e => setUntilDate(e.target.value)} required={kind === "invoice"} />)}
+            {field("document-until", t(kind === "quote" ? "validUntil" : "due"), true, <input id="document-until" type="date" className={inputClass} value={untilDate} min={issueDate} onChange={e => setUntilDate(e.target.value)} required />)}
           </div>
+          {field("document-terms", t("terms"), true, <textarea id="document-terms" rows={6} className={cn(inputClass, "h-auto py-2 leading-snug")} value={terms} onChange={e => setTerms(e.target.value)} placeholder={t("termsHint")} required />)}
         </div>
         <LineEditor lines={lines} setLines={setLines} currency={currency} />
         {error ? <div ref={errorRef} role="alert" tabIndex={-1} className="text-body text-blocked-text border-blocked-border bg-blocked-bg rounded-control border p-3 outline-none">
@@ -122,7 +137,7 @@ export function DocumentComposer({ kind, companies, projects = [], letterhead, c
         <div data-full-size={fullSize || undefined} className="document-preview border-border mt-4 overflow-x-auto rounded-card border p-3 focus-visible:outline-focus-ring focus-visible:outline-2" role="region" tabIndex={0} aria-label={ui("preview")}>
           <DocumentSheet preview kind={kind} letterhead={letterhead} number={ui("draft")} title={title} clientName={(newCompanyMode ? newCompanyName : companies.find(c => c.id === companyId)?.label) || ui("draft")}
             issueDate={new Date(`${issueDate || today}T12:00:00`)} untilDate={untilDate ? new Date(`${untilDate}T12:00:00`) : null}
-            lines={previewLines} currency={currency} subtotal={totals.subtotal} tax={totals.tax} total={totals.total} terms={null} />
+            lines={previewLines} currency={currency} subtotal={totals.subtotal} tax={totals.tax} total={totals.total} terms={terms} />
         </div>
         <p className="text-caption text-fg-muted mt-3">{ui("previewPages")}</p>
       </aside>

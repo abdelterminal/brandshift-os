@@ -987,6 +987,8 @@
     "owed": "Still owed",
     "terms": "Terms",
     "noTerms": "No terms written.",
+    "termsHint": "Payment split, what's included and what isn't, property rights, validity — one condition per line.",
+    "defaultTerms": "Prices shown exclude tax.\nOwnership: deliverables transfer to the client after payment in full; {name} keeps the source files and may feature the work in its portfolio.",
     "lines": "What is being charged",
     "description": "Description",
     "quantity": "Qty",

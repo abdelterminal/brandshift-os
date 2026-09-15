@@ -987,6 +987,8 @@
     "owed": "Reste dû",
     "terms": "Conditions",
     "noTerms": "Aucune condition écrite.",
+    "termsHint": "Modalités de paiement, ce qui est inclus ou non, propriété, validité — une condition par ligne.",
+    "defaultTerms": "Prix indiqués hors taxes.\nPropriété : livrables transférés au client après règlement intégral ; {name} conserve les fichiers sources et peut présenter le travail dans son portfolio.",
     "lines": "Détail",
     "description": "Désignation",
     "quantity": "Qté",
