@@ -38,11 +38,16 @@ function DrawerContent({
           "data-starting-style:opacity-0 data-ending-style:opacity-0",
         )}
       />
-      <DrawerPrimitive.Viewport className="fixed inset-0 z-50 flex items-stretch justify-end">
+      <DrawerPrimitive.Viewport className="fixed inset-0 z-50 flex items-start justify-end">
         <DrawerPrimitive.Popup
           data-slot="drawer-content"
           className={cn(
-            "bg-surface-overlay border-border relative flex h-dvh max-h-dvh w-[min(30rem,100vw)] flex-col border-l shadow-overlay",
+            // Sized to its content, not stretched to fill the viewport --
+            // short content (a task with no description, no blocker, an
+            // empty handoff) used to leave a bare void between it and the
+            // footer. `max-h-dvh` still caps it and `DrawerBody` still
+            // scrolls once real content is long enough to need it.
+            "bg-surface-overlay border-border relative flex max-h-dvh w-[min(30rem,100vw)] flex-col rounded-bl-[16px] border-l shadow-overlay",
             "outline-none",
             "transition-opacity duration-[var(--duration-slow)] ease-[var(--ease-out)]",
             "data-starting-style:opacity-0 data-ending-style:opacity-0",
