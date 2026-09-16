@@ -1,8 +1,5 @@
-import { getTranslations } from "next-intl/server";
-
 import { ThemeToggle } from "@/components/theme";
 import { LocaleSwitcher } from "@/components/shell/switchers";
-import { Wordmark } from "@/components/brand/wordmark";
 import { withBasePath } from "@/lib/base-path";
 
 /**
@@ -12,71 +9,44 @@ import { withBasePath } from "@/lib/base-path";
  * know who you are. Theme and language stay, because someone should be able to
  * read the sign-in page in their own language and without being flashbanged.
  *
- * The brand panel only shows up at `lg:` -- below that there isn't room for a
- * second column without squeezing the form, so the small-screen path stays
- * exactly what it was: `AuthCard`'s own wordmark, full width.
+ * One full-bleed surface, no side panel -- `AuthCard`'s own wordmark carries
+ * the brand at every width now, so there's nothing left for a second column
+ * to hold.
  */
-export default async function AuthLayout({ children }: LayoutProps<"/[locale]">) {
-  const t = await getTranslations("Auth");
-
+export default function AuthLayout({ children }: LayoutProps<"/[locale]">) {
   return (
-    <div className="bg-surface-sunken flex min-h-dvh flex-col lg:flex-row">
-      <aside
-        className="border-border bg-surface-base relative isolate hidden shrink-0 overflow-hidden border-r lg:flex lg:w-[38%] lg:flex-col lg:p-10 xl:w-[34%]"
+    <div className="bg-surface-sunken relative isolate flex min-h-dvh w-full flex-col overflow-hidden">
+      {/* The tiled motif, covering the whole page -- `object-cover` keeps
+          its own tiling uniform (no stretch/distortion) while it scales to
+          fill whatever the viewport's real aspect ratio is. */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- static asset,
+          no JS needed for a background flourish. */}
+      <img
+        src={withBasePath("/brand/mediast-motif.svg")}
+        alt=""
         aria-hidden
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element -- static
-            asset, decorative background flourish, no JS needed. */}
-        <img
-          src={withBasePath("/brand/mediast-motif.svg")}
-          alt=""
-          className="pointer-events-none absolute -top-20 -right-28 -z-10 size-[28rem] opacity-[0.14] select-none"
-        />
-        <Wordmark className="h-8 w-auto" />
-        <div className="flex flex-1 items-center">
-          <p className="text-heading-lg font-display text-fg-default max-w-sm">{t("brandTagline")}</p>
-        </div>
-      </aside>
-
-      <div className="relative isolate flex flex-1 flex-col overflow-hidden">
-        {/* A second, much fainter copy of the same watermark, covering the
-            whole column rather than the aside's single fixed-size corner
-            placement -- this side has no wordmark or tagline of its own to
-            share the space with, so the texture can fill it, giving the
-            translucent, blurred card something to diffuse across its whole
-            background rather than just behind its centre. `object-cover`
-            keeps the pattern's own tiling uniform (no stretch/distortion)
-            while it scales to fill whatever the column's real aspect ratio
-            is. */}
-        {/* eslint-disable-next-line @next/next/no-img-element -- static asset,
-            no JS needed for a background flourish. */}
-        <img
-          src={withBasePath("/brand/mediast-motif.svg")}
-          alt=""
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover opacity-[0.05] select-none"
-        />
-        {/* Static soft-focus atmosphere -- the compliant stand-in for a
-            floating-blob background: same depth, zero motion. Built from
-            `--fg-subtle` (a semantic token, never a primitive/raw hex), with
-            a `dark:` bump so dark mode reads moodier, matching the deliberate
-            light/dark asymmetry chosen for this pass. */}
-        <div
-          aria-hidden
-          className="bg-fg-subtle/[0.06] dark:bg-fg-subtle/[0.1] pointer-events-none absolute -top-24 -right-16 -z-10 size-[26rem] rounded-full blur-3xl select-none"
-        />
-        <div
-          aria-hidden
-          className="bg-fg-subtle/[0.05] dark:bg-fg-subtle/[0.08] pointer-events-none absolute -bottom-32 -left-10 -z-10 size-[22rem] rounded-full blur-3xl select-none"
-        />
-        <header className="flex items-center justify-end gap-1 px-4 py-3">
-          <LocaleSwitcher />
-          <ThemeToggle />
-        </header>
-        <main className="flex flex-1 items-start justify-center px-4 pb-16 sm:items-center sm:pb-24">
-          {children}
-        </main>
-      </div>
+        className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover opacity-[0.05] select-none"
+      />
+      {/* Static soft-focus atmosphere -- the compliant stand-in for a
+          floating-blob background: same depth, zero motion. Built from
+          `--fg-subtle` (a semantic token, never a primitive/raw hex), with
+          a `dark:` bump so dark mode reads moodier, matching the deliberate
+          light/dark asymmetry chosen for this pass. */}
+      <div
+        aria-hidden
+        className="bg-fg-subtle/[0.06] dark:bg-fg-subtle/[0.1] pointer-events-none absolute -top-24 -right-16 -z-10 size-[26rem] rounded-full blur-3xl select-none"
+      />
+      <div
+        aria-hidden
+        className="bg-fg-subtle/[0.05] dark:bg-fg-subtle/[0.08] pointer-events-none absolute -bottom-32 -left-10 -z-10 size-[22rem] rounded-full blur-3xl select-none"
+      />
+      <header className="flex items-center justify-end gap-1 px-4 py-3">
+        <LocaleSwitcher />
+        <ThemeToggle />
+      </header>
+      <main className="flex flex-1 items-start justify-center px-4 pb-16 sm:items-center sm:pb-24">
+        {children}
+      </main>
     </div>
   );
 }

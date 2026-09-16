@@ -1,5 +1,4 @@
 import { Wordmark } from "@/components/brand/wordmark";
-import { withBasePath } from "@/lib/base-path";
 import { cn } from "@/lib/utils";
 
 /** The panel both auth screens sit in. */
@@ -18,22 +17,7 @@ export function AuthCard({
 }) {
   return (
     <div className={cn("relative isolate w-full max-w-sm lg:max-w-md", className)}>
-      {/* The motif, decorative only: large, faint, clipped to this column so
-          it never crosses under the card's own text. `-z-10` keeps it behind
-          everything, `aria-hidden` because it carries no information. Hidden
-          at `lg:` -- the auth layout's own brand panel carries this
-          watermark there instead, so this would just be a second, fainter
-          copy. */}
-      {/* eslint-disable-next-line @next/next/no-img-element -- static asset,
-          no JS needed for a background flourish. */}
-      <img
-        src={withBasePath("/brand/mediast-motif.svg")}
-        alt=""
-        aria-hidden
-        className="pointer-events-none absolute -top-16 -right-20 -z-10 size-72 opacity-[0.1] select-none lg:hidden"
-      />
-
-      <div className="mb-6 flex items-center gap-2 lg:hidden">
+      <div className="mb-6 flex items-center gap-2">
         <Wordmark className="h-7 w-auto" />
       </div>
 

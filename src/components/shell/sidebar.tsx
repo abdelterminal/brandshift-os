@@ -258,7 +258,7 @@ export function Sidebar({
       data-tour="rail"
       className="bg-sidebar-surface border-sidebar-border hidden w-56 shrink-0 flex-col border-r md:flex"
     >
-      <div className="flex h-14 items-center gap-2 px-4">
+      <div className="flex h-14 items-center justify-center px-4">
         {/* eslint-disable-next-line @next/next/no-img-element -- a static
             asset under public/, no JS needed. Colour-stable across both
             themes (red + blue only -- see src/components/brand/wordmark.tsx),
