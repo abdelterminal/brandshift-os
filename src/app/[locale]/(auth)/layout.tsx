@@ -1,5 +1,9 @@
+import { getTranslations } from "next-intl/server";
+
 import { ThemeToggle } from "@/components/theme";
 import { LocaleSwitcher } from "@/components/shell/switchers";
+import { Wordmark } from "@/components/brand/wordmark";
+import { withBasePath } from "@/lib/base-path";
 
 /**
  * The signed-out frame.
@@ -7,17 +11,46 @@ import { LocaleSwitcher } from "@/components/shell/switchers";
  * No rail, no palette, no organization -- none of it means anything before we
  * know who you are. Theme and language stay, because someone should be able to
  * read the sign-in page in their own language and without being flashbanged.
+ *
+ * The brand panel only shows up at `lg:` -- below that there isn't room for a
+ * second column without squeezing the form, so the small-screen path stays
+ * exactly what it was: `AuthCard`'s own wordmark, full width.
  */
-export default function AuthLayout({ children }: LayoutProps<"/[locale]">) {
+export default async function AuthLayout({ children }: LayoutProps<"/[locale]">) {
+  const t = await getTranslations("Auth");
+
   return (
-    <div className="bg-surface-sunken flex min-h-dvh flex-col">
-      <header className="flex items-center justify-end gap-1 px-4 py-3">
-        <LocaleSwitcher />
-        <ThemeToggle />
-      </header>
-      <main className="flex flex-1 items-start justify-center px-4 pb-16 sm:items-center sm:pb-24">
-        {children}
-      </main>
+    <div className="bg-surface-sunken flex min-h-dvh flex-col lg:flex-row">
+      <aside
+        className="border-border bg-surface-base relative isolate hidden shrink-0 overflow-hidden border-r lg:flex lg:w-[38%] lg:flex-col lg:p-10 xl:w-[34%]"
+        aria-hidden
+      >
+        {/* The icon, not the tiled motif -- the motif sheet bakes in an
+            opaque white backing, which washes out to nothing at low opacity
+            on a dark surface. The icon's background is real transparency, so
+            it reads as a faint colour watermark on either theme. */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- static
+            asset, decorative background flourish, no JS needed. */}
+        <img
+          src={withBasePath("/brand/mediast-icon.svg")}
+          alt=""
+          className="pointer-events-none absolute -top-20 -right-28 -z-10 size-[28rem] opacity-[0.14] select-none"
+        />
+        <Wordmark className="h-8 w-auto" />
+        <div className="flex flex-1 items-center">
+          <p className="text-heading-lg font-display text-fg-default max-w-sm">{t("brandTagline")}</p>
+        </div>
+      </aside>
+
+      <div className="flex flex-1 flex-col">
+        <header className="flex items-center justify-end gap-1 px-4 py-3">
+          <LocaleSwitcher />
+          <ThemeToggle />
+        </header>
+        <main className="flex flex-1 items-start justify-center px-4 pb-16 sm:items-center sm:pb-24">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

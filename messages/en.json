@@ -123,6 +123,7 @@
     "comingSoonBody": "This screen arrives in a later milestone. The shell around it is real."
   },
   "Auth": {
+    "brandTagline": "Brand systems, campaigns, and everything in between — run from one place.",
     "signInTitle": "Sign in",
     "signInSubtitle": "Welcome back to Mediast Creative.",
     "signUpTitle": "Create your organization",
