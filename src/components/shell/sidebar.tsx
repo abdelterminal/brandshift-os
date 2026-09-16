@@ -262,12 +262,14 @@ export function Sidebar({
         {/* eslint-disable-next-line @next/next/no-img-element -- a static
             asset under public/, no JS needed. Colour-stable across both
             themes (red + blue only -- see src/components/brand/wordmark.tsx),
-            so unlike the wordmark it needs no light/dark pair. */}
+            so unlike the wordmark it needs no light/dark pair. Sized by
+            height, not `size-*` -- this mark is a wide lockup (943x204), not
+            square, so a fixed width would distort it. */}
         <img
-          src={withBasePath("/brand/mediast-icon.svg")}
+          src={withBasePath("/brand/mediast-creative-point.svg")}
           alt=""
           aria-hidden
-          className="size-5 shrink-0 object-contain"
+          className="h-5 w-auto shrink-0 object-contain"
         />
         <span className="text-label text-sidebar-fg-active truncate font-semibold">
           {organizationName}

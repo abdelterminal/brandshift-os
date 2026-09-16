@@ -25,14 +25,10 @@ export default async function AuthLayout({ children }: LayoutProps<"/[locale]">)
         className="border-border bg-surface-base relative isolate hidden shrink-0 overflow-hidden border-r lg:flex lg:w-[38%] lg:flex-col lg:p-10 xl:w-[34%]"
         aria-hidden
       >
-        {/* The icon, not the tiled motif -- the motif sheet bakes in an
-            opaque white backing, which washes out to nothing at low opacity
-            on a dark surface. The icon's background is real transparency, so
-            it reads as a faint colour watermark on either theme. */}
         {/* eslint-disable-next-line @next/next/no-img-element -- static
             asset, decorative background flourish, no JS needed. */}
         <img
-          src={withBasePath("/brand/mediast-icon.svg")}
+          src={withBasePath("/brand/mediast-motif.svg")}
           alt=""
           className="pointer-events-none absolute -top-20 -right-28 -z-10 size-[28rem] opacity-[0.14] select-none"
         />
@@ -51,7 +47,7 @@ export default async function AuthLayout({ children }: LayoutProps<"/[locale]">)
         {/* eslint-disable-next-line @next/next/no-img-element -- static asset,
             no JS needed for a background flourish. */}
         <img
-          src={withBasePath("/brand/mediast-icon.svg")}
+          src={withBasePath("/brand/mediast-motif.svg")}
           alt=""
           aria-hidden
           className="pointer-events-none absolute top-1/2 left-1/2 -z-10 size-[36rem] -translate-x-1/2 -translate-y-1/2 opacity-[0.05] select-none"
