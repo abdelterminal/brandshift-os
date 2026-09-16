@@ -40,6 +40,7 @@ const createProjectSchema = z.object({
     .regex(/^[A-Z]{2,5}$/, "keyFormat"),
   description: z.string().trim().max(2000).optional(),
   departmentId: z.union([z.uuid(), z.literal("")]).optional(),
+  companyId: z.union([z.uuid(), z.literal("")]).optional(),
   ownerUserId: z.union([z.uuid(), z.literal("")]).optional(),
   dueDate: z.union([z.iso.date(), z.literal("")]).optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
@@ -114,6 +115,7 @@ export async function createProject(input: CreateProjectInput): Promise<CreatePr
       stageChangedAt: data.startOnFlow ? new Date() : null,
       priority: data.priority,
       departmentId: data.departmentId || null,
+      companyId: data.companyId || null,
       ownerUserId: data.ownerUserId || session.actor.userId,
       dueDate: data.dueDate || null,
       createdByUserId: session.actor.userId,
@@ -224,6 +226,45 @@ export async function setProjectStatus(
     // matches the interpolation name `projectStageChanged`'s copy already
     // uses, so the same message shape works for both.
     metadata: { status: parsedStatus.data, to: parsedStatus.data },
+  });
+
+  const locale = await getLocale();
+  revalidatePath(`/${locale}/work`);
+  revalidatePath(`/${locale}/work/${updated.key}`);
+  return { ok: true };
+}
+
+/**
+ * Set (or clear) which client a project is for.
+ *
+ * The one piece a project could never record after creation -- the wizard's
+ * own client field is write-once otherwise. Gated the same as
+ * `setProjectStatus`: a manager, whoever this project is actually for.
+ * `/crm/companies/[slug]` is `force-dynamic`, so it needs no revalidation of
+ * its own to pick this up.
+ */
+export async function setProjectClient(
+  projectId: string,
+  companyId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const session = await requirePermissionForAction("project.create");
+
+  const parsedId = z.uuid().safeParse(projectId);
+  const parsedCompanyId = z.union([z.uuid(), z.literal("")]).safeParse(companyId);
+  if (!parsedId.success || !parsedCompanyId.success) return { ok: false, error: "notFound" };
+
+  const [updated] = await withOrg(session.actor.organizationId).update(
+    projects,
+    { companyId: parsedCompanyId.data || null, updatedAt: new Date() },
+    eq(projects.id, parsedId.data),
+  );
+  if (!updated) return { ok: false, error: "notFound" };
+
+  await recordActivity(session.actor, {
+    verb: "project.clientChanged",
+    subjectType: "project",
+    subjectId: updated.id,
+    projectId: updated.id,
   });
 
   const locale = await getLocale();

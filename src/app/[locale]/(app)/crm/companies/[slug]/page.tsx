@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 
 import { NewContactDialog, NewDealDialog } from "@/components/crm/create-dialogs";
 import { CompanyNotes } from "@/components/crm/stage-control";
-import { PersonAvatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { AvatarGroup, PersonAvatar } from "@/components/ui/avatar";
+import { Badge, CountBadge, StatusPill } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/feedback";
 import { focusRing, focusRingInset, quietLinkHover, transition } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
@@ -18,8 +18,19 @@ import {
   type DealStage,
 } from "@/lib/data/crm";
 import { listPeople } from "@/lib/data/people";
+import { listProjectMembers, listProjects } from "@/lib/data/projects";
+import { listOpenTasks } from "@/lib/data/tasks";
+import { memberProjectIds, seesOnlyOwnWork } from "@/lib/data/visibility";
 import { readLocation } from "@/lib/meeting-location";
 import { cn } from "@/lib/utils";
+
+const PROJECT_STATUS_TONE = {
+  planning: "neutral",
+  active: "active",
+  on_hold: "attention",
+  completed: "complete",
+  archived: "neutral",
+} as const;
 
 /**
  * One company.
@@ -60,16 +71,47 @@ export default async function CompanyPage({ params }: PageProps<"/[locale]/crm/c
   const company = await getCompanyBySlug(session.actor, slug);
   if (!company) notFound();
 
-  const [t, statuses, stages, format, contacts, deals, companies, people] = await Promise.all([
-    getTranslations("Crm"),
-    getTranslations("CompanyStatus"),
-    getTranslations("DealStage"),
-    getFormatter(),
-    listCompanyContacts(session.actor, company.id),
-    listCompanyDeals(session.actor, company.id),
-    listCompanies(session.actor),
-    listPeople(session.actor, { pageSize: 100 }),
-  ]);
+  const [t, work, ui, statuses, stages, projectStatuses, format, contacts, deals, companies, people, projects, openTasks] =
+    await Promise.all([
+      getTranslations("Crm"),
+      getTranslations("Work"),
+      getTranslations("Ui"),
+      getTranslations("CompanyStatus"),
+      getTranslations("DealStage"),
+      getTranslations("ProjectStatus"),
+      getFormatter(),
+      listCompanyContacts(session.actor, company.id),
+      listCompanyDeals(session.actor, company.id),
+      listCompanies(session.actor),
+      listPeople(session.actor, { pageSize: 100 }),
+      listProjects(session.actor, { companyId: company.id }),
+      listOpenTasks(session.actor),
+    ]);
+
+  // A member sees only the projects they are on, same silo `/work` applies --
+  // this page is reachable by anyone holding the `crm` module, not only
+  // managers.
+  const siloed = seesOnlyOwnWork(session.actor);
+  const mineIds = siloed ? new Set(await memberProjectIds(session.actor)) : null;
+  const visibleProjects = mineIds ? projects.filter((p) => mineIds.has(p.id)) : projects;
+  const countedTasks = siloed
+    ? openTasks.filter((task) => task.assigneeUserId === session.actor.userId)
+    : openTasks;
+
+  // Counted from the org's open set rather than a query per project -- same
+  // batching `/work` already does.
+  const openByProject = new Map<string, number>();
+  const blockedByProject = new Map<string, number>();
+  for (const task of countedTasks) {
+    if (!task.projectId) continue;
+    openByProject.set(task.projectId, (openByProject.get(task.projectId) ?? 0) + 1);
+    if (task.status === "blocked") {
+      blockedByProject.set(task.projectId, (blockedByProject.get(task.projectId) ?? 0) + 1);
+    }
+  }
+  const projectTeams = await Promise.all(
+    visibleProjects.map((project) => listProjectMembers(session.actor, project.id)),
+  );
 
   const currency = session.organization.currency;
   // The same guard the meeting location uses: only http and https become a
@@ -163,6 +205,63 @@ export default async function CompanyPage({ params }: PageProps<"/[locale]/crm/c
                 </Link>
               </li>
             ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="mb-8">
+        <h2 className="text-label text-fg-default mb-2 font-semibold">{work("projects")}</h2>
+
+        {visibleProjects.length === 0 ? (
+          <div className="border-border rounded-card border">
+            <EmptyState title={work("noProjects")} description={work("noProjectsBody")} />
+          </div>
+        ) : (
+          <ul className="border-border divide-border bg-surface-raised divide-y overflow-hidden rounded-card border">
+            {visibleProjects.map((project, index) => {
+              const open = openByProject.get(project.id) ?? 0;
+              const blocked = blockedByProject.get(project.id) ?? 0;
+
+              return (
+                <li key={project.id}>
+                  <Link
+                    href={`/work/${project.key}`}
+                    className={cn(
+                      "flex flex-wrap items-center gap-3 px-4 py-3",
+                      "hover:bg-surface-hover",
+                      focusRingInset,
+                      transition,
+                    )}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="text-body text-fg-default block">{project.name}</span>
+                      <span className="text-caption text-fg-subtle mt-0.5 flex flex-wrap items-center gap-x-2">
+                        {project.key}
+                        <span className="text-fg-muted">
+                          {ui("openTasks", { count: open })}
+                        </span>
+                        {blocked > 0 ? (
+                          <CountBadge tone="blocked">{blocked}</CountBadge>
+                        ) : null}
+                      </span>
+                    </span>
+
+                    <AvatarGroup
+                      people={projectTeams[index]!.map((member) => ({
+                        name: member.name,
+                        src: member.avatarUrl,
+                      }))}
+                      size="sm"
+                      max={3}
+                    />
+
+                    <StatusPill tone={PROJECT_STATUS_TONE[project.status]} size="sm" className="shrink-0">
+                      {projectStatuses(project.status)}
+                    </StatusPill>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

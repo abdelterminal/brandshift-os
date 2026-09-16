@@ -2,6 +2,7 @@ import "server-only";
 
 import { eq, ilike, isNull, or, type SQL } from "drizzle-orm";
 
+import { companies } from "@/db/schema/crm";
 import { departments, users } from "@/db/schema/people";
 import { projectMembers, projects } from "@/db/schema/projects";
 import { withOrg } from "@/db/tenancy";
@@ -30,6 +31,10 @@ export type ProjectRow = {
   departmentName: string | null;
   ownerUserId: string | null;
   ownerName: string | null;
+  /** The client this project is for. `null` for internal work -- see `stage`'s own doc. */
+  companyId: string | null;
+  companyName: string | null;
+  companySlug: string | null;
 };
 
 const PROJECT_FIELDS = {
@@ -47,17 +52,22 @@ const PROJECT_FIELDS = {
   departmentName: departments.name,
   ownerUserId: projects.ownerUserId,
   ownerName: users.name,
+  companyId: projects.companyId,
+  companyName: companies.name,
+  companySlug: companies.slug,
 };
 
 const PROJECT_JOINS = [
   { table: departments, on: eq(departments.id, projects.departmentId), type: "left" as const },
   { table: users, on: eq(users.id, projects.ownerUserId), type: "left" as const },
+  { table: companies, on: eq(companies.id, projects.companyId), type: "left" as const },
 ];
 
 export type ProjectFilter = {
   query?: string;
   status?: ProjectStatus;
   departmentId?: string;
+  companyId?: string;
   /** Archived projects are hidden unless asked for. */
   includeArchived?: boolean;
 };
@@ -72,6 +82,7 @@ function projectConditions(filter: ProjectFilter): Array<SQL | undefined> {
       : undefined,
     filter.status ? eq(projects.status, filter.status) : undefined,
     filter.departmentId ? eq(projects.departmentId, filter.departmentId) : undefined,
+    filter.companyId ? eq(projects.companyId, filter.companyId) : undefined,
   ];
 }
 

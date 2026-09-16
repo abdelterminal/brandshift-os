@@ -1,7 +1,9 @@
 import { getTranslations } from "next-intl/server";
 
 import { NewProjectWizard } from "@/components/work/new-project-wizard";
+import { hasModule } from "@/lib/authz";
 import { requirePermission } from "@/lib/auth/guards";
+import { listCompanies } from "@/lib/data/crm";
 import { listAssignablePeople } from "@/lib/data/people";
 import { listDepartments } from "@/lib/data/people";
 import { listOpenTasks, organizationToday, workloadFrom } from "@/lib/data/tasks";
@@ -13,11 +15,12 @@ import { listOpenTasks, organizationToday, workloadFrom } from "@/lib/data/tasks
 export default async function NewProjectPage() {
   const session = await requirePermission("project.create");
 
-  const [t, departments, people, openTasks] = await Promise.all([
+  const [t, departments, people, openTasks, companies] = await Promise.all([
     getTranslations("NewProject"),
     listDepartments(session.actor),
     listAssignablePeople(session.actor),
     listOpenTasks(session.actor),
+    hasModule(session.actor, "crm") ? listCompanies(session.actor) : Promise.resolve([]),
   ]);
 
   const workload = workloadFrom(openTasks, organizationToday());
@@ -31,6 +34,7 @@ export default async function NewProjectPage() {
           id: department.id,
           name: department.name,
         }))}
+        companies={companies.map((company) => ({ id: company.id, name: company.name }))}
         people={people.map((person) => ({
           userId: person.userId,
           name: person.name,

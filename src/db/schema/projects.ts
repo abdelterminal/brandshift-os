@@ -8,6 +8,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { companies } from "./crm";
 import { priorityEnum, projectRoleEnum, projectStageEnum, projectStatusEnum } from "./enums";
 import { organizations } from "./organizations";
 import { departments, users } from "./people";
@@ -38,6 +39,12 @@ export const projects = pgTable(
     departmentId: uuid("department_id").references(() => departments.id, {
       onDelete: "set null",
     }),
+    /**
+     * The client this project is for. Nullable and deliberately so -- an
+     * internal build (the OS itself, the website) has no client, the same
+     * reasoning `stage` being null already carries for the delivery flow.
+     */
+    companyId: uuid("company_id").references(() => companies.id, { onDelete: "set null" }),
     ownerUserId: uuid("owner_user_id").references(() => users.id, { onDelete: "set null" }),
     /** Day granularity: deadlines are read in the org's timezone, not UTC. */
     startDate: date("start_date"),
@@ -56,6 +63,7 @@ export const projects = pgTable(
     index("projects_org_stage_idx").on(t.organizationId, t.stage),
     index("projects_org_due_idx").on(t.organizationId, t.dueDate),
     index("projects_org_department_idx").on(t.organizationId, t.departmentId),
+    index("projects_org_company_idx").on(t.organizationId, t.companyId),
   ],
 );
 

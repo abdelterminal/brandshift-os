@@ -6,6 +6,7 @@ import { ProjectMeetings } from "@/components/calendar/project-meetings";
 import { ActivityFeed } from "@/components/work/activity-feed";
 import { DeliverablesPanel } from "@/components/work/deliverables-panel";
 import { ProjectDocs } from "@/components/work/project-docs";
+import { ProjectClientControl } from "@/components/work/project-client-control";
 import { ProjectStageControl } from "@/components/work/project-stage-control";
 import { ProjectStatusControl } from "@/components/work/project-status-control";
 import { ProjectTabs } from "@/components/work/project-tabs";
@@ -17,8 +18,9 @@ import { CountBadge, StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { requireUser } from "@/lib/auth/guards";
-import { atLeast, can } from "@/lib/authz";
+import { atLeast, can, hasModule } from "@/lib/authz";
 import { listProjectActivity } from "@/lib/data/activity";
+import { listCompanies } from "@/lib/data/crm";
 import { listProjectMeetings } from "@/lib/data/meetings";
 import { listAssignablePeople } from "@/lib/data/people";
 import { getProjectByKey, listProjectMembers } from "@/lib/data/projects";
@@ -127,6 +129,8 @@ export default async function ProjectPage({
 
   const mayManageTemplates = can(session.actor, "template.manage");
   const canSetStatus = can(session.actor, "project.create");
+  const canSetClient = canSetStatus && hasModule(session.actor, "crm");
+  const clientCompanies = canSetClient ? await listCompanies(session.actor) : [];
   const canSetStage = can(session.actor, "project.setStage", {
     ownerUserId: project.ownerUserId ?? undefined,
   });
@@ -233,6 +237,31 @@ export default async function ProjectPage({
           <div className="flex items-center gap-2">
             <dt className="text-fg-muted">{t("department")}</dt>
             <dd className="text-fg-default">{project.departmentName ?? "--"}</dd>
+          </div>
+          <div className="flex items-center gap-2">
+            <dt className="text-fg-muted">{t("client")}</dt>
+            <dd className="text-fg-default flex items-center gap-2">
+              {canSetClient ? (
+                <ProjectClientControl
+                  projectId={project.id}
+                  companyId={project.companyId}
+                  companies={clientCompanies.map((row) => ({ id: row.id, name: row.name }))}
+                  canSet={canSetClient}
+                />
+              ) : project.companyName ? (
+                <Link
+                  href={`/crm/companies/${project.companySlug}`}
+                  className="hover:underline"
+                >
+                  {project.companyName}
+                </Link>
+              ) : (
+                "--"
+              )}
+              {!project.companyId && project.stage ? (
+                <CountBadge tone="attention">{t("noClient")}</CountBadge>
+              ) : null}
+            </dd>
           </div>
           <div className="flex items-center gap-2">
             <dt className="text-fg-muted">{t("due")}</dt>

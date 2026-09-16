@@ -19,10 +19,12 @@ import {
 import { Link } from "@/i18n/navigation";
 import { can } from "@/lib/authz";
 import { requireUser } from "@/lib/auth/guards";
+import { focusRing } from "@/components/ui/styles";
 import { listDepartments } from "@/lib/data/people";
 import { listProjectMembers, listProjects, type ProjectStatus } from "@/lib/data/projects";
 import { listOpenTasks } from "@/lib/data/tasks";
 import { memberProjectIds, seesOnlyOwnWork } from "@/lib/data/visibility";
+import { cn } from "@/lib/utils";
 
 /**
  * Projects.
@@ -130,6 +132,13 @@ export default async function WorkPage({ searchParams }: PageProps<"/[locale]/wo
               <StatusPill tone={STATUS_TONE[project.status]} size="sm">{statusLabels(project.status)}</StatusPill>
             </div>
             <p className="text-caption text-fg-muted mt-2">{[project.key, project.departmentName].filter(Boolean).join(" · ")}</p>
+            {project.companyName ? (
+              <p className="text-caption text-fg-muted mt-1">
+                <Link href={`/crm/companies/${project.companySlug}`} className={cn("hover:underline", focusRing)}>{project.companyName}</Link>
+              </p>
+            ) : project.stage ? (
+              <p className="mt-1"><CountBadge tone="attention">{t("noClient")}</CountBadge></p>
+            ) : null}
             <p className="text-caption text-fg-muted mt-1">{t("due")}: {project.dueDate ? format.dateTime(new Date(`${project.dueDate}T00:00:00`), { day: "numeric", month: "short", year: "numeric" }) : t("noDueDate")}</p>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
@@ -147,6 +156,7 @@ export default async function WorkPage({ searchParams }: PageProps<"/[locale]/wo
                 <TableHead>{t("projects")}</TableHead>
                 <TableHead>{t("status")}</TableHead>
                 <TableHead className="hidden md:table-cell">{t("department")}</TableHead>
+                <TableHead className="hidden md:table-cell">{t("client")}</TableHead>
                 <TableHead className="hidden lg:table-cell">{t("tasks")}</TableHead>
                 <TableHead className="hidden sm:table-cell">{t("due")}</TableHead>
                 <TableHead className="hidden lg:table-cell">{t("team")}</TableHead>
@@ -177,6 +187,21 @@ export default async function WorkPage({ searchParams }: PageProps<"/[locale]/wo
 
                     <TableCell className="text-fg-muted hidden md:table-cell">
                       {project.departmentName ?? "--"}
+                    </TableCell>
+
+                    <TableCell className="hidden md:table-cell">
+                      {project.companyName ? (
+                        <Link
+                          href={`/crm/companies/${project.companySlug}`}
+                          className={cn("text-fg-muted rounded-[4px] hover:underline", focusRing)}
+                        >
+                          {project.companyName}
+                        </Link>
+                      ) : project.stage ? (
+                        <CountBadge tone="attention">{t("noClient")}</CountBadge>
+                      ) : (
+                        <span className="text-fg-subtle">--</span>
+                      )}
                     </TableCell>
 
                     <TableCell className="hidden lg:table-cell">

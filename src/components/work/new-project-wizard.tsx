@@ -49,9 +49,12 @@ const STEP_LABEL: Record<Step, string> = {
 
 export function NewProjectWizard({
   departments,
+  companies,
   people,
 }: {
   departments: Array<{ id: string; name: string }>;
+  /** Empty when the org doesn't hold the `crm` module -- the field hides itself. */
+  companies: Array<{ id: string; name: string }>;
   people: WizardPerson[];
 }) {
   const t = useTranslations("NewProject");
@@ -71,6 +74,7 @@ export function NewProjectWizard({
     dueDate: "",
     priority: "medium" as "low" | "medium" | "high" | "urgent",
     departmentId: "",
+    companyId: "",
     ownerUserId: "",
     memberIds: [] as string[],
     deliverables: "",
@@ -103,6 +107,7 @@ export function NewProjectWizard({
         key: form.key,
         description: form.description || undefined,
         departmentId: form.departmentId || undefined,
+        companyId: form.companyId || undefined,
         ownerUserId: form.ownerUserId || undefined,
         dueDate: form.dueDate || undefined,
         priority: form.priority,
@@ -310,6 +315,29 @@ export function NewProjectWizard({
                 </select>
               </div>
 
+              {companies.length > 0 ? (
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="project-company" className="text-label text-fg-default w-fit">
+                    {work("client")}
+                  </label>
+                  <select
+                    id="project-company"
+                    value={form.companyId}
+                    onChange={(event) =>
+                      setForm((previous) => ({ ...previous, companyId: event.target.value }))
+                    }
+                    className={inputClass}
+                  >
+                    <option value="">{work("noClientOption")}</option>
+                    {companies.map((company) => (
+                      <option key={company.id} value={company.id}>
+                        {company.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
+
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="project-owner" className="text-label text-fg-default w-fit">
                   {t("owner")}
@@ -426,6 +454,14 @@ export function NewProjectWizard({
                     t("noDepartment")
                   }
                 />
+                {companies.length > 0 ? (
+                  <Summary
+                    label={work("client")}
+                    value={
+                      companies.find((c) => c.id === form.companyId)?.name ?? work("noClientOption")
+                    }
+                  />
+                ) : null}
                 <Summary
                   label={t("owner")}
                   value={
