@@ -33,7 +33,7 @@ function DialogContent({
     <DialogPrimitive.Portal>
       <DialogPrimitive.Backdrop
         className={cn(
-          "bg-scrim fixed inset-0 z-50 min-h-dvh",
+          "bg-scrim backdrop-blur-sm fixed inset-0 z-50 min-h-dvh",
           "transition-opacity duration-[var(--duration-base)] ease-[var(--ease-out)]",
           "data-starting-style:opacity-0 data-ending-style:opacity-0",
         )}
@@ -43,7 +43,7 @@ function DialogContent({
         className={cn(
           "fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2",
           "flex w-[min(28rem,calc(100vw-2rem))] flex-col gap-4",
-          "bg-surface-overlay border-border rounded-surface border p-5 shadow-overlay",
+          "bg-surface-overlay/90 border-border/70 backdrop-blur rounded-surface border p-5 shadow-overlay",
           "outline-none",
           "transition-opacity duration-[var(--duration-base)] ease-[var(--ease-out)]",
           "data-starting-style:opacity-0 data-ending-style:opacity-0",

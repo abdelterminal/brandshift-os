@@ -42,7 +42,20 @@ export default async function AuthLayout({ children }: LayoutProps<"/[locale]">)
         </div>
       </aside>
 
-      <div className="flex flex-1 flex-col">
+      <div className="relative isolate flex flex-1 flex-col overflow-hidden">
+        {/* A second, much fainter copy of the same watermark, so the card at
+            `lg:` -- which now has a translucent, blurred surface -- has actual
+            texture behind it to diffuse. Same asset and technique as the
+            aside's own, just far fainter so it never competes with the brand
+            panel. */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- static asset,
+            no JS needed for a background flourish. */}
+        <img
+          src={withBasePath("/brand/mediast-icon.svg")}
+          alt=""
+          aria-hidden
+          className="pointer-events-none absolute top-1/2 left-1/2 -z-10 size-[36rem] -translate-x-1/2 -translate-y-1/2 opacity-[0.05] select-none"
+        />
         <header className="flex items-center justify-end gap-1 px-4 py-3">
           <LocaleSwitcher />
           <ThemeToggle />

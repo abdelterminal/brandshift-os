@@ -530,6 +530,27 @@ export default function DesignSystemPage() {
                 the whole vocabulary.
               </p>
             </div>
+
+            <div className="border-border bg-surface-raised relative isolate mt-4 overflow-hidden rounded-card border p-6">
+              {/* Plain neutral content standing in for whatever a Dialog or
+                  Drawer would actually float over -- the point of this demo
+                  is showing blur diffuse real content, not a decorative
+                  gradient (this codebase has none, on purpose). */}
+              <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 p-4">
+                <div className="bg-fg-subtle/20 h-3 w-1/2 rounded-full" />
+                <div className="bg-fg-subtle/20 mt-3 h-3 w-2/3 rounded-full" />
+                <div className="bg-fg-subtle/20 mt-3 h-3 w-1/3 rounded-full" />
+              </div>
+              <div className="bg-surface-overlay/90 border-border/70 rounded-surface border p-4 shadow-overlay backdrop-blur">
+                <div className="text-label text-fg-default">Glass</div>
+                <p className="text-caption text-fg-muted mt-1">
+                  <code>bg-surface-overlay/90 backdrop-blur border-border/70 shadow-overlay</code>{" "}
+                  -- reserved for Dialog and Drawer popups, and the sign-in/sign-up card. Blur only
+                  ever sits over a real scrim or a genuinely faint background texture, never over
+                  a flat surface with nothing behind it, and never on menu, toast, or nav chrome.
+                </p>
+              </div>
+            </div>
           </Section>
 
           <Section

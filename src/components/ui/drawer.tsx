@@ -32,7 +32,7 @@ function DrawerContent({
     <DrawerPrimitive.Portal>
       <DrawerPrimitive.Backdrop
         className={cn(
-          "bg-scrim fixed inset-0 z-50 min-h-dvh",
+          "bg-scrim backdrop-blur-sm fixed inset-0 z-50 min-h-dvh",
           "transition-opacity duration-[var(--duration-slow)] ease-[var(--ease-out)]",
           "data-swiping:duration-0",
           "data-starting-style:opacity-0 data-ending-style:opacity-0",
@@ -42,7 +42,7 @@ function DrawerContent({
         <DrawerPrimitive.Popup
           data-slot="drawer-content"
           className={cn(
-            "bg-surface-overlay border-border relative flex h-dvh max-h-dvh w-[min(30rem,100vw)] flex-col border-l shadow-overlay",
+            "bg-surface-overlay/90 border-border/70 backdrop-blur relative flex h-dvh max-h-dvh w-[min(30rem,100vw)] flex-col border-l shadow-overlay",
             "outline-none",
             "transition-opacity duration-[var(--duration-slow)] ease-[var(--ease-out)]",
             "data-starting-style:opacity-0 data-ending-style:opacity-0",
