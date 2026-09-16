@@ -9,6 +9,7 @@ import { useSyncExternalStore, useTransition } from "react";
 import { CountBadge } from "@/components/ui/badge";
 import { Link, usePathname } from "@/i18n/navigation";
 import { setChannelPinnedAction } from "@/lib/actions/channels";
+import { withBasePath } from "@/lib/base-path";
 import type { Destination } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
@@ -258,7 +259,16 @@ export function Sidebar({
       className="bg-sidebar-surface border-sidebar-border hidden w-56 shrink-0 flex-col border-r md:flex"
     >
       <div className="flex h-14 items-center gap-2 px-4">
-        <span className="bg-brand size-5 shrink-0 rounded-[6px]" aria-hidden />
+        {/* eslint-disable-next-line @next/next/no-img-element -- a static
+            asset under public/, no JS needed. Colour-stable across both
+            themes (red + blue only -- see src/components/brand/wordmark.tsx),
+            so unlike the wordmark it needs no light/dark pair. */}
+        <img
+          src={withBasePath("/brand/mediast-icon.svg")}
+          alt=""
+          aria-hidden
+          className="size-5 shrink-0 object-contain"
+        />
         <span className="text-label text-sidebar-fg-active truncate font-semibold">
           {organizationName}
         </span>

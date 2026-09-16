@@ -16,10 +16,10 @@ import "../globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "BrandShift OS",
-    template: "%s -- BrandShift OS",
+    default: "Mediast Creative",
+    template: "%s -- Mediast Creative",
   },
-  description: "ERP, CRM and team collaboration for BrandShift.",
+  description: "ERP, CRM and team collaboration for Mediast Creative.",
 };
 
 export const viewport: Viewport = {

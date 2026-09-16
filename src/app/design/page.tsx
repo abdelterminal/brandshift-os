@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { withBasePath } from "@/lib/base-path";
 import { contrastRatio, ramp, readTokens, resolveToken, type Theme } from "@/lib/tokens";
 
 /**
@@ -248,6 +249,82 @@ export default function DesignSystemPage() {
         </header>
 
         <div className="mt-12 space-y-12">
+          <Section
+            title="Brand"
+            intro="mediast-wordmark.svg / mediast-wordmark-dark.svg carry the mark's own black or white text baked in -- swap the file, not the colour, per theme (src/components/brand/wordmark.tsx). mediast-icon.svg is red + blue only, no text, so it needs no light/dark pair; it's the one used wherever space is tight (the sidebar, the favicon)."
+          >
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div
+                className="overflow-hidden rounded-card border"
+                style={{ borderColor: resolveToken("--border", "light") }}
+              >
+                {/* Forced to the light surface regardless of the page's own
+                    theme -- see the note on the dark swatch below; this is
+                    the light variant's own card, so it stays light. */}
+                <div
+                  className="flex h-24 items-center justify-center p-4"
+                  style={{ backgroundColor: resolveToken("--surface-raised", "light") }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- design reference, static asset */}
+                  <img src={withBasePath("/brand/mediast-wordmark.svg")} alt="Wordmark, light" className="h-8 w-auto" />
+                </div>
+                <div className="bg-surface-sunken p-3">
+                  <div className="text-label text-fg-default">Wordmark -- light</div>
+                  <div className="text-caption text-fg-muted mt-1">mediast-wordmark.svg</div>
+                </div>
+              </div>
+
+              <div
+                className="overflow-hidden rounded-card border"
+                style={{ borderColor: resolveToken("--border", "dark") }}
+              >
+                {/* Forced to the dark surface regardless of the page's own
+                    theme, the same reason `Ramp` renders swatches by
+                    `resolveToken()` rather than a Tailwind colour class --
+                    this is documenting the dark variant, not adapting to it. */}
+                <div
+                  className="flex h-24 items-center justify-center p-4"
+                  style={{ backgroundColor: resolveToken("--surface-base", "dark") }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={withBasePath("/brand/mediast-wordmark-dark.svg")} alt="Wordmark, dark" className="h-8 w-auto" />
+                </div>
+                <div className="bg-surface-sunken p-3">
+                  <div className="text-label text-fg-default">Wordmark -- dark</div>
+                  <div className="text-caption text-fg-muted mt-1">mediast-wordmark-dark.svg</div>
+                </div>
+              </div>
+
+              <div className="border-border overflow-hidden rounded-card border">
+                <div className="bg-surface-raised flex h-24 items-center justify-center p-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={withBasePath("/brand/mediast-icon.svg")} alt="Icon" className="h-10 w-auto" />
+                </div>
+                <div className="bg-surface-sunken p-3">
+                  <div className="text-label text-fg-default">Icon</div>
+                  <div className="text-caption text-fg-muted mt-1">
+                    mediast-icon.svg -- theme-stable, favicon &amp; sidebar
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-border relative mt-4 overflow-hidden rounded-card border">
+              <div className="bg-surface-base relative flex h-32 items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={withBasePath("/brand/mediast-motif.svg")}
+                  alt=""
+                  aria-hidden
+                  className="absolute -top-8 -right-8 size-56 opacity-[0.06]"
+                />
+                <span className="text-caption text-fg-muted relative">
+                  Motif -- decorative only, ~6% opacity, used behind AuthCard
+                </span>
+              </div>
+            </div>
+          </Section>
+
           <Section
             title="The brand red"
             intro="#FF3B22 is the identity. It carries white text at 3.56:1, which is below the 4.5:1 AA needs for a 14px button label -- so the ramp keeps 500 as the identity colour and puts the interactive fill one step down at 600. Both are the brand red; only one of them is legible under a label."

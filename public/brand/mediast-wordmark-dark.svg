@@ -7,7 +7,7 @@
       }
 
       .cls-2 {
-        fill: #131314;
+        fill: #fff;
       }
 
       .cls-2, .cls-3 {
@@ -18,7 +18,7 @@
         fill: url(#linear-gradient);
       }
     </style>
-    <linearGradient id="linear-gradient" x1="-1464.53" y1="745.9" x2="-1463.53" y2="745.9" gradientTransform="translate(1279425.0465 152571.2079) scale(873.4712 -204.1323)" gradientUnits="userSpaceOnUse">
+    <linearGradient id="linear-gradient" x1="94.99" y1="745.9" x2="95.99" y2="745.9" gradientTransform="translate(-82768.0354 152571.2079) scale(873.4712 -204.1323)" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#0047ab"/>
       <stop offset="1" stop-color="#007bff"/>
     </linearGradient>

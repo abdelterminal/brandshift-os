@@ -124,7 +124,7 @@
   },
   "Auth": {
     "signInTitle": "Connexion",
-    "signInSubtitle": "Bon retour sur BrandShift OS.",
+    "signInSubtitle": "Bon retour sur Mediast Creative.",
     "signUpTitle": "Créez votre organisation",
     "signUpSubtitle": "Vous en serez le propriétaire. Vous pourrez inviter l'équipe ensuite.",
     "email": "Adresse e-mail",
@@ -1469,7 +1469,7 @@
     "greeting": "Bonjour {name},",
     "signature": "— {organization}",
     "inviteSubject": "Vous êtes invité à rejoindre {organization}",
-    "inviteBody": "{invitedBy} vous invite à rejoindre {organization} sur BrandShift OS. Ouvrez le lien ci-dessous pour choisir un mot de passe et commencer.",
+    "inviteBody": "{invitedBy} vous invite à rejoindre {organization} sur Mediast Creative. Ouvrez le lien ci-dessous pour choisir un mot de passe et commencer.",
     "inviteExpiry": "Le lien fonctionne une seule fois et expire dans deux semaines.",
     "resetSubject": "Réinitialiser votre mot de passe",
     "resetBody": "Ouvrez le lien ci-dessous pour choisir un nouveau mot de passe.",
