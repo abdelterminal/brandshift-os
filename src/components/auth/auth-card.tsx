@@ -18,7 +18,7 @@ export function AuthCard({
   return (
     <div className={cn("relative isolate w-full max-w-sm lg:max-w-md", className)}>
       <div className="mb-6 flex items-center justify-center">
-        <Wordmark className="h-10 w-auto" />
+        <Wordmark className="h-14 w-auto" />
       </div>
 
       <div className="bg-surface-raised/90 border-border/70 rounded-card border p-6 shadow-overlay backdrop-blur-md sm:p-7 dark:backdrop-blur-lg">
