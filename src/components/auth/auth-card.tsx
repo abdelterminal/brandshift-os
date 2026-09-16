@@ -38,8 +38,8 @@ export function AuthCard({
         <Wordmark className="h-7 w-auto" />
       </div>
 
-      <div className="bg-surface-raised/90 border-border/70 rounded-card border p-6 shadow-overlay backdrop-blur-md sm:p-7">
-        <h1 className="text-heading-lg font-display text-fg-default">{title}</h1>
+      <div className="bg-surface-raised/90 border-border/70 rounded-card border p-6 shadow-overlay backdrop-blur-md sm:p-7 dark:backdrop-blur-lg">
+        <h1 className="text-display-lg font-display text-fg-default">{title}</h1>
         {subtitle ? <p className="text-body text-fg-muted mt-1.5">{subtitle}</p> : null}
         <div className="mt-6">{children}</div>
       </div>

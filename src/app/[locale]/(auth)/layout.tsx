@@ -56,6 +56,19 @@ export default async function AuthLayout({ children }: LayoutProps<"/[locale]">)
           aria-hidden
           className="pointer-events-none absolute top-1/2 left-1/2 -z-10 size-[36rem] -translate-x-1/2 -translate-y-1/2 opacity-[0.05] select-none"
         />
+        {/* Static soft-focus atmosphere -- the compliant stand-in for a
+            floating-blob background: same depth, zero motion. Built from
+            `--fg-subtle` (a semantic token, never a primitive/raw hex), with
+            a `dark:` bump so dark mode reads moodier, matching the deliberate
+            light/dark asymmetry chosen for this pass. */}
+        <div
+          aria-hidden
+          className="bg-fg-subtle/[0.06] dark:bg-fg-subtle/[0.1] pointer-events-none absolute -top-24 -right-16 -z-10 size-[26rem] rounded-full blur-3xl select-none"
+        />
+        <div
+          aria-hidden
+          className="bg-fg-subtle/[0.05] dark:bg-fg-subtle/[0.08] pointer-events-none absolute -bottom-32 -left-10 -z-10 size-[22rem] rounded-full blur-3xl select-none"
+        />
         <header className="flex items-center justify-end gap-1 px-4 py-3">
           <LocaleSwitcher />
           <ThemeToggle />
