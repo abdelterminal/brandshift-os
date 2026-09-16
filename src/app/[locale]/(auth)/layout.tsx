@@ -39,18 +39,22 @@ export default async function AuthLayout({ children }: LayoutProps<"/[locale]">)
       </aside>
 
       <div className="relative isolate flex flex-1 flex-col overflow-hidden">
-        {/* A second, much fainter copy of the same watermark, so the card at
-            `lg:` -- which now has a translucent, blurred surface -- has actual
-            texture behind it to diffuse. Same asset and technique as the
-            aside's own, just far fainter so it never competes with the brand
-            panel. */}
+        {/* A second, much fainter copy of the same watermark, covering the
+            whole column rather than the aside's single fixed-size corner
+            placement -- this side has no wordmark or tagline of its own to
+            share the space with, so the texture can fill it, giving the
+            translucent, blurred card something to diffuse across its whole
+            background rather than just behind its centre. `object-cover`
+            keeps the pattern's own tiling uniform (no stretch/distortion)
+            while it scales to fill whatever the column's real aspect ratio
+            is. */}
         {/* eslint-disable-next-line @next/next/no-img-element -- static asset,
             no JS needed for a background flourish. */}
         <img
           src={withBasePath("/brand/mediast-motif.svg")}
           alt=""
           aria-hidden
-          className="pointer-events-none absolute top-1/2 left-1/2 -z-10 size-[36rem] -translate-x-1/2 -translate-y-1/2 opacity-[0.05] select-none"
+          className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover opacity-[0.05] select-none"
         />
         {/* Static soft-focus atmosphere -- the compliant stand-in for a
             floating-blob background: same depth, zero motion. Built from

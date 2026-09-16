@@ -271,9 +271,10 @@ export function Sidebar({
           aria-hidden
           className="h-5 w-auto shrink-0 object-contain"
         />
-        <span className="text-label text-sidebar-fg-active truncate font-semibold">
-          {organizationName}
-        </span>
+        {/* Not shown -- the mark carries the brand on its own now -- but
+            still announced, so a screen reader still gets which
+            organization this is. */}
+        <span className="sr-only">{organizationName}</span>
       </div>
 
       <ul className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-2">
