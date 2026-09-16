@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useCallback, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { ResizeHandle } from "@/components/ui/resize-handle";
 import { cn } from "@/lib/utils";
@@ -9,10 +9,52 @@ import { cn } from "@/lib/utils";
 const MIN_WIDTH = 220;
 const MAX_WIDTH = 560;
 const STEP = 16;
+/** Matches the row's own `gap-4`. */
+const GAP = 16;
 
 function clampWidth(width: number, fallback: number): number {
   if (!Number.isFinite(width)) return fallback;
   return Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, width));
+}
+
+/**
+ * The most a single resizable column may be, given what the row actually
+ * has to spend: its own container's width, minus the gaps between every
+ * column, minus every *other* resizable column's current width, minus the
+ * last column's own floor (it is never allowed to shrink further than that
+ * `min-width` already gives it). Recomputed from the other columns' widths
+ * on every call, so growing one column always comes out of the row's own
+ * slack rather than the row growing past its container -- which is what
+ * forced the whole page to scroll sideways before this.
+ */
+function maxWidthFor(index: number, widths: number[], containerWidth: number, count: number): number {
+  if (containerWidth <= 0) return MAX_WIDTH;
+  const gaps = count > 1 ? (count - 1) * GAP : 0;
+  const othersTotal = widths.reduce((sum, width, i) => (i === index ? sum : sum + width), 0);
+  const available = containerWidth - gaps - MIN_WIDTH - othersTotal;
+  return Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, available));
+}
+
+/**
+ * Widths as they should actually render, given the row's real, current
+ * width -- a safety net for the case the render-time clamp above doesn't
+ * cover: widths saved on a wider screen, now being read back on a narrower
+ * one. Scales every column's excess above its own floor by the same factor
+ * so the row fits exactly, rather than letting the sum run past the
+ * container the moment the window (or the sidebar) makes it narrower than
+ * it was when those widths were saved.
+ */
+function fitWidths(desired: number[], containerWidth: number, count: number): number[] {
+  if (containerWidth <= 0 || desired.length === 0) return desired;
+  const gaps = count > 1 ? (count - 1) * GAP : 0;
+  const budget = containerWidth - gaps - MIN_WIDTH;
+  const total = desired.reduce((sum, width) => sum + width, 0);
+  if (budget <= 0) return desired.map(() => MIN_WIDTH);
+  if (total <= budget) return desired;
+  const floor = desired.length * MIN_WIDTH;
+  if (budget <= floor) return desired.map(() => MIN_WIDTH);
+  const scale = (budget - floor) / (total - floor);
+  return desired.map((width) => Math.round(MIN_WIDTH + (width - MIN_WIDTH) * scale));
 }
 
 function eventNameFor(storageKey: string): string {
@@ -95,6 +137,20 @@ export function ResizableQueueColumns({
   const count = children.length;
   const resizableCount = Math.max(0, count - 1);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width;
+      if (width !== undefined) setContainerWidth(width);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const subscribe = useCallback(
     (notify: () => void) => {
       const eventName = eventNameFor(storageKey);
@@ -109,15 +165,21 @@ export function ResizableQueueColumns({
   const persistedWidths = parseWidths(stored, resizableCount, defaultWidth);
 
   const [liveWidths, setLiveWidths] = useState<number[] | null>(null);
-  const widths = liveWidths ?? persistedWidths;
+  // The safety net: even a persisted width saved on a wider screen (or a
+  // wider sidebar state) is fitted to what the row actually has *now*
+  // before it ever reaches a style attribute, so reading old widths back on
+  // a narrower row can't reopen the overflow this whole thing exists to
+  // prevent.
+  const widths = fitWidths(liveWidths ?? persistedWidths, containerWidth, count);
 
   const resizeBy = useCallback(
     (index: number, delta: number) => {
       const next = [...persistedWidths];
-      next[index] = clampWidth(next[index] + delta, defaultWidth);
+      const max = maxWidthFor(index, next, containerWidth, count);
+      next[index] = Math.min(max, clampWidth(next[index] + delta, defaultWidth));
       writeStored(storageKey, JSON.stringify(next));
     },
-    [persistedWidths, defaultWidth, storageKey],
+    [persistedWidths, defaultWidth, storageKey, containerWidth, count],
   );
 
   const onPointerDown = useCallback(
@@ -130,7 +192,8 @@ export function ResizableQueueColumns({
 
       function onMove(moveEvent: PointerEvent) {
         current = [...current];
-        current[index] = clampWidth(startWidth + (moveEvent.clientX - startX), defaultWidth);
+        const max = maxWidthFor(index, current, containerWidth, count);
+        current[index] = Math.min(max, clampWidth(startWidth + (moveEvent.clientX - startX), defaultWidth));
         setLiveWidths(current);
       }
       function onUp() {
@@ -142,11 +205,11 @@ export function ResizableQueueColumns({
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
     },
-    [persistedWidths, defaultWidth, storageKey],
+    [persistedWidths, defaultWidth, storageKey, containerWidth, count],
   );
 
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
+    <div ref={containerRef} className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
       {children.map((child, index) => {
         const isLast = index === count - 1;
         return (
@@ -154,7 +217,16 @@ export function ResizableQueueColumns({
             key={index}
             className={cn(
               "relative w-full min-w-0",
-              isLast ? "lg:min-w-[220px] lg:flex-1" : "lg:w-[var(--pane-width)] lg:flex-none",
+              // No `min-w` floor here, on purpose: the fixed panes are
+              // already kept within the row's real width by `fitWidths`/
+              // `maxWidthFor` above, but that JS budget is a soft target,
+              // not a guarantee against every possible combination (a very
+              // narrow `lg:` window, a wide sidebar, browser zoom). `flex-1`
+              // with no floor is what makes the CSS itself incapable of
+              // ever forcing the row past its container -- this column
+              // absorbs whatever's actually left, all the way to 0 in the
+              // extreme case, rather than the row overflowing instead.
+              isLast ? "lg:flex-1" : "lg:w-[var(--pane-width)] lg:flex-none",
             )}
             style={
               isLast ? undefined : ({ "--pane-width": `${widths[index]}px` } as React.CSSProperties)
