@@ -7,7 +7,10 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { createToken } from "@/lib/auth/tokens";
+import { requirePermissionForAction } from "@/lib/auth/guards";
 import { findMembershipsForUser } from "@/db/tenancy";
+import { recordActivity } from "@/lib/data/activity";
+import { getPerson } from "@/lib/data/people";
 import { resetMessage } from "@/lib/mail/templates";
 import { flush, queue } from "@/lib/mail/transport";
 
@@ -89,6 +92,57 @@ export async function requestReset(input: z.input<typeof schema>): Promise<Reset
 
   await queue(actor, message);
   void flush(actor).catch(() => {});
+
+  return { ok: true };
+}
+
+/**
+ * An admin generating a reset link for someone else.
+ *
+ * Self-service `/forgot` is off for now -- see `KNOWN-GAPS.md` -- so this is
+ * the only way in for someone who has lost their password: an admin opens
+ * their People page and sends one. Reuses the exact same token and message
+ * `requestReset` does; the difference is who is asking and why the usual
+ * anti-enumeration care doesn't apply here -- the admin already knows this
+ * person exists, is looking at their page, and is trusted with
+ * `member.editRole` already.
+ *
+ * Delivery is the same as an invite: the message is queued and a best-effort
+ * send is attempted, but the link is also sitting in the Outbox
+ * (`src/components/auth/outbox-panel.tsx`) in full either way, ready to copy
+ * and hand to the person however the admin actually reaches them.
+ */
+export async function sendPasswordReset(userId: string): Promise<ResetResult> {
+  const parsedId = z.uuid().safeParse(userId);
+  if (!parsedId.success) return { ok: true };
+
+  const session = await requirePermissionForAction("member.editRole");
+
+  // Nobody resets their own password this way -- Settings already has that,
+  // with the reauth a change to your own credentials should ask for.
+  if (parsedId.data === session.actor.userId) return { ok: true };
+
+  const person = await getPerson(session.actor, parsedId.data);
+  if (!person) return { ok: true };
+
+  const token = await createToken(session.actor.organizationId, person.userId, "reset");
+
+  const message = await resetMessage({
+    toEmail: person.email,
+    toName: person.name,
+    locale: (await getLocale()) === "fr" ? "fr" : "en",
+    organizationName: session.organization.name,
+    token,
+  });
+
+  await queue(session.actor, message);
+  void flush(session.actor).catch(() => {});
+
+  await recordActivity(session.actor, {
+    verb: "member.passwordResetSent",
+    subjectType: "user",
+    subjectId: person.userId,
+  });
 
   return { ok: true };
 }

@@ -168,7 +168,7 @@
     "revokeAll": "Déconnecter tous les autres appareils",
     "unknownDevice": "Appareil inconnu",
     "sessionRevoked": "Cet appareil a été déconnecté.",
-    "forgotPassword": "Mot de passe oublié ?"
+    "forgotPassword": "Mot de passe oublié ? Demandez à un administrateur de vous envoyer un lien de réinitialisation."
   },
   "Errors": {
     "unauthorizedTitle": "Vous êtes déconnecté",
@@ -393,6 +393,10 @@
     "moduleInsights": "Analyses",
     "save": "Enregistrer",
     "saved": "Enregistré.",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "resetPasswordBody": "La réinitialisation en libre-service est désactivée pour le moment — envoyez-leur plutôt un lien à usage unique. Il est de toute façon écrit en entier dans les messages sortants ; ouvrez Réglages pour le lire et le transmettre comme vous les joignez habituellement.",
+    "sendResetLink": "Envoyer le lien",
+    "resetLinkSent": "Envoyé. Retrouvez le lien dans Réglages → Messages sortants.",
     "inviteTitle": "Inviter quelqu'un",
     "inviteBody": "Elles apparaissent immédiatement dans l’annuaire. Une invitation est écrite dans les messages sortants — aucun serveur de messagerie n’est configuré, ouvrez Réglages pour la lire et transmettre le lien.",
     "send": "Ajouter à l'organisation",

@@ -77,6 +77,20 @@ just judged too noisy for now.
 
 ---
 
+## Asleep: self-service password reset
+
+Turned off on request, not removed. `/forgot` now redirects straight to `/login` --
+`ForgotForm` and the `requestReset` action behind it (`src/lib/actions/reset.ts`) are
+untouched and still fully wired, just unreachable. The login footer explains the actual
+way in for now: ask an admin, who can send a reset link from a person's People page
+(`sendPasswordReset`, same token and Outbox delivery as an invite).
+
+Wakes up by reverting the redirect in `src/app/[locale]/(auth)/forgot/page.tsx` and putting
+the `/forgot` link back in the login footer. No rework needed -- it was never broken, just
+judged unnecessary while the admin-mediated path covers it.
+
+---
+
 ## Asleep: file storage
 
 Deferred deliberately, and written up in `DECISIONS.md`. The storage was never the hard

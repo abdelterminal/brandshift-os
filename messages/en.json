@@ -168,7 +168,7 @@
     "revokeAll": "Sign out everywhere else",
     "unknownDevice": "Unknown device",
     "sessionRevoked": "That device has been signed out.",
-    "forgotPassword": "Forgotten your password?"
+    "forgotPassword": "Forgotten your password? Ask an admin to send you a reset link."
   },
   "Errors": {
     "unauthorizedTitle": "You are signed out",
@@ -393,6 +393,10 @@
     "moduleInsights": "Insights",
     "save": "Save changes",
     "saved": "Saved.",
+    "resetPassword": "Reset password",
+    "resetPasswordBody": "Self-service reset is off for now — send them a one-time link instead. It's written to the outbox in full either way; open Settings to read it and pass it on however you reach them.",
+    "sendResetLink": "Send reset link",
+    "resetLinkSent": "Sent. Find the link in Settings → Outbox.",
     "inviteTitle": "Invite someone",
     "inviteBody": "They appear in the directory straight away. An invitation is written to the outbox — no mail server is configured, so open Settings to read it and pass on the link.",
     "send": "Add to organization",

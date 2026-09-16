@@ -13,6 +13,7 @@ import { TaskList } from "@/components/work/task-list";
 import type { TaskDrawerViewer } from "@/components/work/task-drawer";
 import { Link } from "@/i18n/navigation";
 import { updateMemberRole } from "@/lib/actions/people";
+import { sendPasswordReset } from "@/lib/actions/reset";
 import type { ModulePermissions, Role } from "@/db/schema/people";
 import { BUCKET_ORDER, type AssignablePerson, type TaskBucket, type TaskRow } from "@/lib/data/task-types";
 import { cn } from "@/lib/utils";
@@ -131,8 +132,9 @@ export function PersonTabs({
         </div>
 
         {canEditRole ? (
-          <div className="mt-4">
+          <div className="mt-4 flex flex-col gap-4">
             <RoleEditor person={person} isSelf={isSelf} />
+            {isSelf ? null : <ResetPasswordCard userId={person.userId} />}
           </div>
         ) : null}
       </TabsPanel>
@@ -283,6 +285,49 @@ function RoleEditor({
           <Button variant="primary" loading={pending} onClick={save} className="w-fit">
             {t("save")}
           </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * The way in for someone who has lost their password.
+ *
+ * Self-service `/forgot` is off for now, so this is the only path -- see
+ * `sendPasswordReset`'s own doc. Sends what it can and says so either way;
+ * the link itself always ends up in the Outbox (Settings) in full, whether
+ * or not delivery actually went through.
+ */
+function ResetPasswordCard({ userId }: { userId: string }) {
+  const t = useTranslations("People");
+  const [pending, startTransition] = useTransition();
+  const [sent, setSent] = useState(false);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("resetPassword")}</CardTitle>
+      </CardHeader>
+      <CardContent className="pt-2">
+        <p className="text-body text-fg-muted max-w-md">{t("resetPasswordBody")}</p>
+        <div className="mt-4 flex items-center gap-3">
+          <Button
+            loading={pending}
+            onClick={() =>
+              startTransition(async () => {
+                await sendPasswordReset(userId);
+                setSent(true);
+              })
+            }
+          >
+            {t("sendResetLink")}
+          </Button>
+          {sent ? (
+            <p role="status" className="text-body text-complete-text">
+              {t("resetLinkSent")}
+            </p>
+          ) : null}
         </div>
       </CardContent>
     </Card>

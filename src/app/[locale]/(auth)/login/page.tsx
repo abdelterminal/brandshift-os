@@ -20,12 +20,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/[locale]/l
       subtitle={t("signInSubtitle")}
       footer={
         <>
-          <Link
-            href="/forgot"
-            className="text-accent-text focus-visible:outline-focus-ring rounded-[4px] font-medium underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
-          >
-            {t("forgotPassword")}
-          </Link>
+          <span className="text-fg-muted">{t("forgotPassword")}</span>
           <br />
           {t("noAccount")}{" "}
           <Link
