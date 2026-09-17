@@ -1580,6 +1580,9 @@
   "Ui": {
     "dataTable": "Tableau de données — faites défiler horizontalement pour voir les autres colonnes",
     "resizeColumn": "Redimensionner la colonne",
+    "resizeColumnLeft": "Redimensionner {title} depuis la gauche",
+    "resizeColumnRight": "Redimensionner {title} depuis la droite",
+    "resizableColumnsRegion": "Colonnes redimensionnables — faites défiler horizontalement si elles ne tiennent pas",
     "moveColumnLeft": "Déplacer la colonne vers la gauche",
     "moveColumnRight": "Déplacer la colonne vers la droite",
     "columnPickedUp": "{title} pris.",

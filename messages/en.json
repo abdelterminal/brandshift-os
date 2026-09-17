@@ -1580,6 +1580,9 @@
   "Ui": {
     "dataTable": "Data table — scroll horizontally for more columns",
     "resizeColumn": "Resize column",
+    "resizeColumnLeft": "Resize {title} from the left",
+    "resizeColumnRight": "Resize {title} from the right",
+    "resizableColumnsRegion": "Resizable columns — scroll horizontally if they don't fit",
     "moveColumnLeft": "Move column left",
     "moveColumnRight": "Move column right",
     "columnPickedUp": "Picked up {title}.",
