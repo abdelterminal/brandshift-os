@@ -239,6 +239,34 @@
     color: var(--accent-text);
   }
 
+  /* A slim, theme-matched scrollbar everywhere, instead of the OS default --
+     the classic Windows scrollbar in particular looks like borrowed chrome
+     against a dark, rounded interface. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    background-clip: content-box;
+    border: 2px solid transparent;
+    border-radius: 999px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--border-hover);
+  }
+
   /*
     The guided tour rings whatever it is currently describing.
 
