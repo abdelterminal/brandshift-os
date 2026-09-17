@@ -380,6 +380,87 @@
   }
 }
 
+/*
+  The signature drawing itself, once, on arrival at sign-in or sign-up -- see
+  `AnimatedWordmark`. A deliberate, named exception to this file's own
+  120-180ms/opacity-and-colour motion rule: that rule governs permanent UI a
+  person sees on every navigation, and this is a one-time brand arrival that
+  plays on mount and never repeats within it. The reduced-motion rule in
+  `@layer base` above still applies uniformly -- it collapses every duration
+  here to near-zero rather than skipping the animation, which is what lands
+  each element on its own `100%` keyframe (the finished mark) instead of
+  leaving anything stuck invisible.
+
+  `--dash` arrives per-path from `AnimatedWordmark` as an inline custom
+  property -- the one case this codebase allows an inline `style`, because
+  each path's real length can only come from `getTotalLength()` in the
+  browser, not from a static value in this file. Every other value here,
+  including the stagger, is fixed and lives in CSS, not JS.
+*/
+@layer components {
+  .wordmark-trace {
+    fill: none;
+    stroke-dasharray: var(--dash, 1);
+    stroke-dashoffset: var(--dash, 1);
+    animation: wordmark-draw 1.8s cubic-bezier(0.55, 0, 0.35, 1) both;
+  }
+  .wordmark-fill {
+    opacity: 0;
+    animation: wordmark-flood 1.8s linear both;
+  }
+  .wordmark-dot {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: wordmark-pop 480ms cubic-bezier(0.34, 1.56, 0.64, 1) 1500ms both;
+  }
+  /* The script follows the wordmark rather than racing it. */
+  [data-seq="2"] {
+    animation-delay: 900ms;
+  }
+
+  @keyframes wordmark-draw {
+    0% {
+      opacity: 0;
+      stroke-dashoffset: var(--dash, 1);
+    }
+    4% {
+      opacity: 1;
+    }
+    72%,
+    100% {
+      stroke-dashoffset: 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes wordmark-flood {
+    0%,
+    45% {
+      opacity: 0;
+    }
+    75%,
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes wordmark-pop {
+    0% {
+      opacity: 0;
+      transform: scale(0);
+    }
+    60% {
+      opacity: 1;
+      transform: scale(1.25);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
 /* Hallmark · existing BrandShift system · usability refinement
  * pre-emit critique: P4 H4 E4 S4 R5 V3
  * Keep dense pointer layouts; provide comfortable touch targets. */
