@@ -2,6 +2,7 @@ import { Check } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 
 import { NextMeetings } from "@/components/calendar/next-meetings";
+import { StatStrip } from "@/components/today/stat-strip";
 import { NewTaskDialog } from "@/components/work/new-task-dialog";
 import { ResizableQueueColumns } from "@/components/work/resizable-queue-columns";
 import { TaskListFlat } from "@/components/work/task-list";
@@ -129,44 +130,58 @@ async function CoordinationQueue() {
         <p className="text-body text-fg-muted mt-1.5">{t("queueBody")}</p>
       </header>
 
-      {/* Above the queue: a meeting in twenty minutes changes what you start. */}
       <div className="mt-6">
-        <NextMeetings
-          meetings={meetings}
-          timeZone={session.organization.timezone}
-          today={dayKey(new Date(), session.organization.timezone)}
+        <StatStrip
+          items={[
+            { label: t("statBlocked"), value: queue.blocked.length, href: "/work/queue?bucket=blocked", attention: true },
+            { label: t("statOverdue"), value: queue.overdue.length, href: "/work/queue?bucket=overdue", attention: true },
+            { label: t("statUnassigned"), value: queue.unassigned.length, href: "/work/queue?bucket=unassigned" },
+            { label: t("statMine"), value: mine.length, href: "/work/queue" },
+          ]}
         />
       </div>
 
-      {mine.length > 0 ? (
-        <div className="mt-6">
-          <Card>
-            <CardHeader>
-              <div className="min-w-0">
-                <CardTitle className="flex items-center gap-2">
-                  {t("mine")}
-                  <CountBadge tone="attention">{mine.length}</CountBadge>
-                </CardTitle>
-                <p className="text-caption text-fg-muted mt-1">{t("mineBody")}</p>
-              </div>
-            </CardHeader>
-            <CardContent className="px-0 pt-1 pb-2">
-              <TaskListFlat
-                tasks={mine}
-                emptyTitle={t("allClear")}
-                emptyBody={t("mineBody")}
-                showAssignee={false}
-                max={5}
-                todayIso={todayIso}
-                assignablePeople={assignablePeople}
-                viewer={viewer}
-              />
-            </CardContent>
-          </Card>
+      {/* Overview zone: what's real right now, grouped as one family rather
+          than stacked full-width blocks. The queue below stays a list. */}
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <NextMeetings
+            meetings={meetings}
+            timeZone={session.organization.timezone}
+            today={dayKey(new Date(), session.organization.timezone)}
+          />
         </div>
-      ) : null}
 
-      <MyDeliverables items={myDeliverables} />
+        <div className="flex flex-col gap-4">
+          {mine.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <div className="min-w-0">
+                  <CardTitle className="flex items-center gap-2">
+                    {t("mine")}
+                    <CountBadge tone="attention">{mine.length}</CountBadge>
+                  </CardTitle>
+                  <p className="text-caption text-fg-muted mt-1">{t("mineBody")}</p>
+                </div>
+              </CardHeader>
+              <CardContent className="px-0 pt-1 pb-2">
+                <TaskListFlat
+                  tasks={mine}
+                  emptyTitle={t("allClear")}
+                  emptyBody={t("mineBody")}
+                  showAssignee={false}
+                  max={5}
+                  todayIso={todayIso}
+                  assignablePeople={assignablePeople}
+                  viewer={viewer}
+                />
+              </CardContent>
+            </Card>
+          ) : null}
+
+          <MyDeliverables items={myDeliverables} />
+        </div>
+      </div>
 
       {nothingToDo ? (
         <div className="border-border rounded-card mt-6 border">
@@ -364,59 +379,74 @@ async function MyDay({ name }: { name: string }) {
         />
       </header>
 
+      <div className="mt-6">
+        <StatStrip
+          items={[
+            { label: t("statNow"), value: now.length, href: "#now" },
+            { label: t("statNext"), value: next.length, href: "#next" },
+            { label: t("statLater"), value: later.length, href: "#later" },
+            { label: t("statMyProjects"), value: myProjectMemberships.length, href: "#my-projects" },
+          ]}
+        />
+      </div>
+
       {/*
         Before the work, not after it. Somebody with a call in twenty minutes
         should not start the two-hour task, and finding that out at the bottom
         of the page is finding it out too late.
       */}
-      <div className="mt-6">
-        <NextMeetings
-          meetings={meetings}
-          timeZone={session.organization.timezone}
-          today={dayKey(new Date(), session.organization.timezone)}
-        />
-      </div>
-
-      {myProjectMemberships.length > 0 ? (
-        <div className="mt-6">
-          <h2 className="text-heading font-display text-fg-default mb-2">{t("myProjects")}</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {myProjectMemberships.map((project) => (
-              <Link
-                key={project.id}
-                href={`/work/${project.key}`}
-                className={cn(
-                  "border-border bg-surface-raised hover:bg-surface-hover rounded-card block border p-3",
-                  focusRing,
-                  transition,
-                )}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-caption text-fg-subtle truncate">{project.key}</p>
-                    <p className="text-body text-fg-default truncate font-medium">
-                      {project.name}
-                    </p>
-                  </div>
-                  <StatusPill tone={PROJECT_STATUS_TONE[project.status]} size="sm">
-                    {tProjectStatus(project.status)}
-                  </StatusPill>
-                </div>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span className="text-caption text-fg-muted">
-                    {ui("openTasks", { count: openByProject.get(project.id) ?? 0 })}
-                  </span>
-                  {(blockedByProject.get(project.id) ?? 0) > 0 ? (
-                    <CountBadge tone="blocked">{blockedByProject.get(project.id)!}</CountBadge>
-                  ) : null}
-                </div>
-              </Link>
-            ))}
-          </div>
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <NextMeetings
+            meetings={meetings}
+            timeZone={session.organization.timezone}
+            today={dayKey(new Date(), session.organization.timezone)}
+          />
         </div>
-      ) : null}
 
-      <MyDeliverables items={myDeliverables} />
+        <div className="flex flex-col gap-4">
+          {myProjectMemberships.length > 0 ? (
+            <div id="my-projects">
+              <h2 className="text-heading font-display text-fg-default mb-2">{t("myProjects")}</h2>
+              <div className="grid grid-cols-1 gap-3">
+                {myProjectMemberships.map((project) => (
+                  <Link
+                    key={project.id}
+                    href={`/work/${project.key}`}
+                    className={cn(
+                      "border-border bg-surface-raised hover:bg-surface-hover rounded-card block border p-3",
+                      focusRing,
+                      transition,
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-caption text-fg-subtle truncate">{project.key}</p>
+                        <p className="text-body text-fg-default truncate font-medium">
+                          {project.name}
+                        </p>
+                      </div>
+                      <StatusPill tone={PROJECT_STATUS_TONE[project.status]} size="sm">
+                        {tProjectStatus(project.status)}
+                      </StatusPill>
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className="text-caption text-fg-muted">
+                        {ui("openTasks", { count: openByProject.get(project.id) ?? 0 })}
+                      </span>
+                      {(blockedByProject.get(project.id) ?? 0) > 0 ? (
+                        <CountBadge tone="blocked">{blockedByProject.get(project.id)!}</CountBadge>
+                      ) : null}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <MyDeliverables items={myDeliverables} />
+        </div>
+      </div>
 
       {myUnplanned.length > 0 ? (
         <div className="mt-6 flex flex-col gap-2">
@@ -447,7 +477,7 @@ async function MyDay({ name }: { name: string }) {
 
           <div className="mt-8 flex flex-col gap-6">
             {sections.map((section) => (
-              <section key={section.key}>
+              <section key={section.key} id={section.key}>
                 <div className="mb-2 flex items-baseline gap-2">
                   <h2 className="text-heading font-display text-fg-default">{t(section.key)}</h2>
                   <span className="text-caption text-fg-subtle tabular-nums">
@@ -536,7 +566,7 @@ async function MyDeliverables({ items }: { items: MyDeliverableRow[] }) {
   const format = await getFormatter();
 
   return (
-    <div className="mt-6">
+    <div>
       <div className="mb-2 flex items-baseline gap-2">
         <h2 className="text-heading font-display text-fg-default">{t("myDeliverables")}</h2>
         <span className="text-caption text-fg-subtle tabular-nums">{items.length}</span>
