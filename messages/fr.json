@@ -1580,6 +1580,10 @@
   "Ui": {
     "dataTable": "Tableau de données — faites défiler horizontalement pour voir les autres colonnes",
     "resizeColumn": "Redimensionner la colonne",
+    "moveColumnLeft": "Déplacer la colonne vers la gauche",
+    "moveColumnRight": "Déplacer la colonne vers la droite",
+    "columnPickedUp": "{title} pris.",
+    "columnMoved": "{title} déplacé à la position {position} sur {count}.",
     "searchAll": "Tout rechercher",
     "workGroup": "Votre travail",
     "planGroup": "Planifier et améliorer",

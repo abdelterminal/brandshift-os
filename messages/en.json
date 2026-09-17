@@ -1580,6 +1580,10 @@
   "Ui": {
     "dataTable": "Data table — scroll horizontally for more columns",
     "resizeColumn": "Resize column",
+    "moveColumnLeft": "Move column left",
+    "moveColumnRight": "Move column right",
+    "columnPickedUp": "Picked up {title}.",
+    "columnMoved": "{title} moved to position {position} of {count}.",
     "searchAll": "Search everything",
     "workGroup": "Your work",
     "planGroup": "Plan and improve",

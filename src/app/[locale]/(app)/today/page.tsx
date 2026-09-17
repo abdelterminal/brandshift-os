@@ -176,83 +176,93 @@ async function CoordinationQueue() {
         <div className="mt-6">
           <ResizableQueueColumns storageKey="today-coordination-queue">
             {[
-              ...columns.map((column) => (
-                <Card key={column.key} className="h-full w-full">
-                  <CardHeader>
-                    <div className="min-w-0">
-                      <CardTitle className="flex items-center gap-2">
-                        {t(column.key)}
-                        <CountBadge tone={column.tasks.length > 0 ? column.tone : "neutral"}>
-                          {column.tasks.length}
-                        </CountBadge>
-                      </CardTitle>
-                      <p className="text-caption text-fg-muted mt-1">{t(`${column.key}Body`)}</p>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="px-0 pt-1 pb-2">
-                    {/* An empty column stays true, but doesn't out-weigh the
-                        ones with something in them: a full-height EmptyState
-                        here reads as a fourth thing to look at on a day where
-                        it's actually the two columns beside it that matter. */}
-                    {column.tasks.length === 0 ? (
-                      <div className="flex items-center gap-2 px-4 py-2">
-                        <Check aria-hidden className="text-fg-subtle size-3.5 shrink-0" />
-                        <p className="text-caption text-fg-subtle">{t(`${column.key}Empty`)}</p>
+              ...columns.map((column) => ({
+                id: column.key,
+                title: t(column.key),
+                node: (
+                  <Card key={column.key} className="h-full w-full">
+                    <CardHeader>
+                      <div className="min-w-0">
+                        <CardTitle className="flex items-center gap-2">
+                          {t(column.key)}
+                          <CountBadge tone={column.tasks.length > 0 ? column.tone : "neutral"}>
+                            {column.tasks.length}
+                          </CountBadge>
+                        </CardTitle>
+                        <p className="text-caption text-fg-muted mt-1">{t(`${column.key}Body`)}</p>
                       </div>
-                    ) : (
-                      <TaskListFlat
-                        tasks={column.tasks}
-                        emptyTitle={t("allClear")}
-                        emptyBody={t(`${column.key}Body`)}
-                        max={8}
-                        todayIso={todayIso}
-                        assignablePeople={assignablePeople}
-                        viewer={viewer}
-                      />
-                    )}
-                  </CardContent>
-                  {column.tasks.length > 8 ? (
-                    <div className="border-border border-t px-4 py-2.5">
-                      <Button
-                        variant="link"
-                        render={<Link href={`/work/queue?bucket=${column.key}`} />}
-                      >
-                        {t("viewAll")}
-                      </Button>
-                    </div>
-                  ) : null}
-                </Card>
-              )),
-              <Card key="noPlan" className="h-full w-full">
-                <CardHeader>
-                  <div className="min-w-0">
-                    <CardTitle className="flex items-center gap-2">
-                      {t("noPlan")}
-                      <CountBadge tone={unplanned.length > 0 ? "attention" : "neutral"}>
-                        {unplanned.length}
-                      </CountBadge>
-                    </CardTitle>
-                    <p className="text-caption text-fg-muted mt-1">{t("noPlanBody")}</p>
-                  </div>
-                </CardHeader>
-                <CardContent className="px-0 pt-1 pb-2">
-                  {unplanned.length === 0 ? (
-                    <div className="flex items-center gap-2 px-4 py-2">
-                      <Check aria-hidden className="text-fg-subtle size-3.5 shrink-0" />
-                      <p className="text-caption text-fg-subtle">{t("noPlanEmpty")}</p>
-                    </div>
-                  ) : (
-                    <UnplannedList items={unplanned.slice(0, 8)} />
-                  )}
-                </CardContent>
-                {unplanned.length > 8 ? (
-                  <div className="border-border border-t px-4 py-2.5">
-                    <Button variant="link" render={<Link href="/work/queue?bucket=noPlan" />}>
-                      {t("viewAll")}
-                    </Button>
-                  </div>
-                ) : null}
-              </Card>,
+                    </CardHeader>
+                    <CardContent className="px-0 pt-1 pb-2">
+                      {/* An empty column stays true, but doesn't out-weigh the
+                          ones with something in them: a full-height EmptyState
+                          here reads as a fourth thing to look at on a day where
+                          it's actually the two columns beside it that matter. */}
+                      {column.tasks.length === 0 ? (
+                        <div className="flex items-center gap-2 px-4 py-2">
+                          <Check aria-hidden className="text-fg-subtle size-3.5 shrink-0" />
+                          <p className="text-caption text-fg-subtle">{t(`${column.key}Empty`)}</p>
+                        </div>
+                      ) : (
+                        <TaskListFlat
+                          tasks={column.tasks}
+                          emptyTitle={t("allClear")}
+                          emptyBody={t(`${column.key}Body`)}
+                          max={8}
+                          todayIso={todayIso}
+                          assignablePeople={assignablePeople}
+                          viewer={viewer}
+                        />
+                      )}
+                    </CardContent>
+                    {column.tasks.length > 8 ? (
+                      <div className="border-border border-t px-4 py-2.5">
+                        <Button
+                          variant="link"
+                          render={<Link href={`/work/queue?bucket=${column.key}`} />}
+                        >
+                          {t("viewAll")}
+                        </Button>
+                      </div>
+                    ) : null}
+                  </Card>
+                ),
+              })),
+              {
+                id: "noPlan",
+                title: t("noPlan"),
+                node: (
+                  <Card key="noPlan" className="h-full w-full">
+                    <CardHeader>
+                      <div className="min-w-0">
+                        <CardTitle className="flex items-center gap-2">
+                          {t("noPlan")}
+                          <CountBadge tone={unplanned.length > 0 ? "attention" : "neutral"}>
+                            {unplanned.length}
+                          </CountBadge>
+                        </CardTitle>
+                        <p className="text-caption text-fg-muted mt-1">{t("noPlanBody")}</p>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="px-0 pt-1 pb-2">
+                      {unplanned.length === 0 ? (
+                        <div className="flex items-center gap-2 px-4 py-2">
+                          <Check aria-hidden className="text-fg-subtle size-3.5 shrink-0" />
+                          <p className="text-caption text-fg-subtle">{t("noPlanEmpty")}</p>
+                        </div>
+                      ) : (
+                        <UnplannedList items={unplanned.slice(0, 8)} />
+                      )}
+                    </CardContent>
+                    {unplanned.length > 8 ? (
+                      <div className="border-border border-t px-4 py-2.5">
+                        <Button variant="link" render={<Link href="/work/queue?bucket=noPlan" />}>
+                          {t("viewAll")}
+                        </Button>
+                      </div>
+                    ) : null}
+                  </Card>
+                ),
+              },
             ]}
           </ResizableQueueColumns>
         </div>
