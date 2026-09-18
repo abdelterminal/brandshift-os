@@ -26,7 +26,11 @@ export const ORGANIZATION = {
   // Root-relative: served from public/brand/, not fetched from anywhere else.
   // getLetterhead() is what turns this into a real path under a sub-path
   // deployment -- see resolveLogoUrl() there.
-  logoUrl: "/brand/mediast-wordmark.svg",
+  //
+  // Deliberately the pre-rebrand "MEDIAST" wordmark, not mediast-wordmark.svg
+  // (the current in-app brand mark used by Wordmark/AnimatedWordmark) -- the
+  // finance letterhead is the one place asked to keep the old logo.
+  logoUrl: "/brand/mediast-wordmark-classic.svg",
 };
 
 export const DEPARTMENTS = [
