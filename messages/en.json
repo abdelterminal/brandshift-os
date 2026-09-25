@@ -36,7 +36,9 @@
     "playbook": "Playbook",
     "documents": "Documents",
     "templates": "Templates",
-    "reviews": "Reviews"
+    "reviews": "Reviews",
+    "collapseRail": "Collapse sidebar",
+    "expandRail": "Expand sidebar"
   },
   "Shell": {
     "skipToContent": "Skip to content",
@@ -187,14 +189,6 @@
     "myDeliverables": "My deliverables",
     "mine": "Mine",
     "mineBody": "Your own assigned work, alongside the queue below.",
-    "statBlocked": "Blocked",
-    "statOverdue": "Overdue",
-    "statUnassigned": "Unassigned",
-    "statMine": "Mine",
-    "statNow": "Now",
-    "statNext": "Next",
-    "statLater": "Later",
-    "statMyProjects": "My projects",
     "queueTitle": "Needs a decision",
     "queueBody": "Work that has stopped, slipped, or has nobody on it.",
     "blocked": "Blocked",
@@ -228,7 +222,10 @@
     "noPlan": "No plan",
     "noPlanBody": "Joined a project and still has nothing of their own on it.",
     "noPlanEmpty": "Everyone has something planned.",
-    "noPlanSince": "{hours, plural, one {# hour} other {# hours}} since joining"
+    "noPlanSince": "{hours, plural, one {# hour} other {# hours}} since joining",
+    "pressureSummary": "{count} items across {projects} projects",
+    "lunch": "Lunch",
+    "nothingScheduled": "Nothing in your calendar today."
   },
   "Work": {
     "title": "Work",

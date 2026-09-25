@@ -1,9 +1,9 @@
 import { getTranslations } from "next-intl/server";
 
+import { QueueLaneHeader } from "@/components/work/queue-lane-header";
 import { TaskListFlat } from "@/components/work/task-list";
 import { UnplannedList } from "@/components/work/unplanned-list";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CountBadge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { focusRing } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
 import { requirePermission } from "@/lib/auth/guards";
@@ -80,7 +80,7 @@ export default async function WorkQueuePage({
   const showNoPlan = !bucket || bucket === "noPlan";
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8">
+    <div className="px-5 py-8 sm:px-8">
       <BackLink />
 
       <header className="mt-5">
@@ -90,19 +90,14 @@ export default async function WorkQueuePage({
 
       <div className={cn("mt-6 grid gap-4", !bucket && "lg:grid-cols-2 xl:grid-cols-4")}>
         {columns.map((column) => (
-          <Card key={column.key} className="min-w-0">
-            <CardHeader>
-              <div className="min-w-0">
-                <CardTitle className="flex items-center gap-2">
-                  {t(column.key)}
-                  <CountBadge tone={column.tasks.length > 0 ? BUCKET_TONE[column.key] : "neutral"}>
-                    {column.tasks.length}
-                  </CountBadge>
-                </CardTitle>
-                <p className="text-caption text-fg-muted mt-1">{t(`${column.key}Body`)}</p>
-              </div>
-            </CardHeader>
-            <CardContent className="px-0 pt-1 pb-2">
+          <Card key={column.key} className="min-w-0 overflow-hidden">
+            <QueueLaneHeader
+              title={t(column.key)}
+              description={t(`${column.key}Body`)}
+              count={column.tasks.length}
+              tone={BUCKET_TONE[column.key]}
+            />
+            <CardContent className="px-0 pt-2 pb-2">
               <TaskListFlat
                 tasks={column.tasks}
                 emptyTitle={t(`${column.key}Empty`)}
@@ -116,19 +111,14 @@ export default async function WorkQueuePage({
         ))}
 
         {showNoPlan ? (
-          <Card className="min-w-0">
-            <CardHeader>
-              <div className="min-w-0">
-                <CardTitle className="flex items-center gap-2">
-                  {t("noPlan")}
-                  <CountBadge tone={unplanned.length > 0 ? BUCKET_TONE.noPlan : "neutral"}>
-                    {unplanned.length}
-                  </CountBadge>
-                </CardTitle>
-                <p className="text-caption text-fg-muted mt-1">{t("noPlanBody")}</p>
-              </div>
-            </CardHeader>
-            <CardContent className="px-0 pt-1 pb-2">
+          <Card className="min-w-0 overflow-hidden">
+            <QueueLaneHeader
+              title={t("noPlan")}
+              description={t("noPlanBody")}
+              count={unplanned.length}
+              tone={BUCKET_TONE.noPlan}
+            />
+            <CardContent className="px-0 pt-2 pb-2">
               <UnplannedList items={unplanned} />
             </CardContent>
           </Card>

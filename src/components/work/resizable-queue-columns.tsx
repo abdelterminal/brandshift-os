@@ -270,7 +270,7 @@ export function ResizableQueueColumns({
           role="region"
           tabIndex={0}
           aria-label={t("resizableColumnsRegion")}
-          className="flex flex-col gap-4 focus-visible:outline-focus-ring rounded-card lg:flex-row lg:items-stretch lg:overflow-x-auto lg:pb-1 lg:focus-visible:outline-2 lg:focus-visible:outline-offset-2"
+          className="flex flex-col gap-4 focus-visible:outline-focus-ring rounded-card lg:h-full lg:min-h-0 lg:flex-row lg:items-stretch lg:overflow-x-auto lg:pb-1 lg:focus-visible:outline-2 lg:focus-visible:outline-offset-2"
         >
           {order.map((id) => {
             const title = titleById.get(id) ?? "";
@@ -355,6 +355,9 @@ function QueueColumn({
       className={cn(
         "relative w-full min-w-0",
         "lg:w-[var(--pane-width)] lg:flex-none lg:shrink-0",
+        // Full height on desktop so the card inside can put the overflow on
+        // its own list instead of on the page.
+        "lg:flex lg:h-full lg:min-h-0 lg:flex-col",
         isDragging && "opacity-50",
       )}
     >

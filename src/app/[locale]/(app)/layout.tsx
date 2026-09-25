@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { cookies } from "next/headers";
 
 import { departmentLabel } from "@/components/ui/department-label";
 import { Breadcrumbs } from "@/components/shell/breadcrumbs";
@@ -116,6 +117,7 @@ export default async function AppLayout({ children, panel, params }: LayoutProps
             destinations={rail}
             organizationName={organization.name}
             counts={counts}
+            defaultRailed={(await cookies()).get("brandshift.rail")?.value === "1"}
             account={{
               name: user.name,
               email: user.email,

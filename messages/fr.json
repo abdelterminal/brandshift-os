@@ -36,7 +36,9 @@
     "playbook": "Playbook",
     "documents": "Documents",
     "templates": "Modèles",
-    "reviews": "Revues"
+    "reviews": "Revues",
+    "collapseRail": "Réduire la barre latérale",
+    "expandRail": "Élargir la barre latérale"
   },
   "Shell": {
     "skipToContent": "Aller au contenu",
@@ -187,14 +189,6 @@
     "myDeliverables": "Mes livrables",
     "mine": "Le mien",
     "mineBody": "Votre propre travail assigné, à côté de la file ci-dessous.",
-    "statBlocked": "Bloqué",
-    "statOverdue": "En retard",
-    "statUnassigned": "Non assigné",
-    "statMine": "Le mien",
-    "statNow": "Maintenant",
-    "statNext": "Ensuite",
-    "statLater": "Plus tard",
-    "statMyProjects": "Mes projets",
     "queueTitle": "Décisions à prendre",
     "queueBody": "Le travail arrêté, en retard, ou sans personne dessus.",
     "blocked": "Bloqué",
@@ -228,7 +222,10 @@
     "noPlan": "Pas de plan",
     "noPlanBody": "A rejoint un projet et n'y a encore rien de personnel.",
     "noPlanEmpty": "Tout le monde a quelque chose de planifié.",
-    "noPlanSince": "{hours, plural, one {# heure} other {# heures}} depuis l'arrivée"
+    "noPlanSince": "{hours, plural, one {# heure} other {# heures}} depuis l'arrivée",
+    "pressureSummary": "{count} éléments sur {projects} projets",
+    "lunch": "Déjeuner",
+    "nothingScheduled": "Rien dans votre agenda aujourd’hui."
   },
   "Work": {
     "title": "Travaux",

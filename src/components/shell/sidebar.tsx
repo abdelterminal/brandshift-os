@@ -1,12 +1,13 @@
 "use client";
 
-import { ChevronDown, ChevronRight, Star } from "lucide-react";
+import { ChevronDown, ChevronRight, PanelLeft, Star } from "lucide-react";
 import { useLinkStatus } from "next/link";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useSyncExternalStore, useTransition } from "react";
 
 import { CountBadge } from "@/components/ui/badge";
+import { SimpleTooltip } from "@/components/ui/tooltip";
 import { Link, usePathname } from "@/i18n/navigation";
 import { setChannelPinnedAction } from "@/lib/actions/channels";
 import { withBasePath } from "@/lib/base-path";
@@ -53,6 +54,43 @@ function parseCollapsed(json: string): Record<string, boolean> {
   } catch {
     return {};
   }
+}
+
+/**
+ * Whether the whole rail is folded down to icons.
+ *
+ * A cookie rather than `localStorage`, which is the one place this parts
+ * company with the section state above. The sections only change what is
+ * inside the rail; folding changes the rail from 224px to 64px, and every
+ * layout beside it. Kept in `localStorage`, the server would render the wide
+ * rail, hydration would snap it narrow, and the whole page would jump on every
+ * single load. A cookie is on the request, so the server renders the width the
+ * reader already chose and nothing moves.
+ *
+ * It is read from `document.cookie` on the client too, so there is exactly one
+ * source and the two renders cannot disagree.
+ */
+const RAIL_COOKIE = "brandshift.rail";
+const RAIL_EVENT = "brandshift:sidebar-railed";
+/** A year. A layout preference should not quietly expire mid-week. */
+const RAIL_MAX_AGE = 60 * 60 * 24 * 365;
+
+function subscribeRailed(notify: () => void) {
+  window.addEventListener(RAIL_EVENT, notify);
+  return () => window.removeEventListener(RAIL_EVENT, notify);
+}
+
+function readRailed(): boolean {
+  return document.cookie.split("; ").includes(`${RAIL_COOKIE}=1`);
+}
+
+function writeRailed(next: boolean) {
+  // `SameSite=Lax` because nothing cross-site has any business reading how
+  // wide somebody likes their sidebar.
+  document.cookie = next
+    ? `${RAIL_COOKIE}=1; path=/; max-age=${RAIL_MAX_AGE}; SameSite=Lax`
+    : `${RAIL_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
+  window.dispatchEvent(new Event(RAIL_EVENT));
 }
 
 /**
@@ -106,12 +144,15 @@ function RailLink({
   counts,
   nested = false,
   pinnable = false,
+  railed = false,
 }: {
   destination: Destination;
   counts?: Partial<Record<string, number>>;
   nested?: boolean;
   /** Only a channel row gets a pin toggle -- a department is not a thing you pin. */
   pinnable?: boolean;
+  /** Folded to icons: the label becomes a tooltip and the row centres. */
+  railed?: boolean;
 }) {
   const t = useTranslations("Nav");
   const pathname = usePathname();
@@ -135,31 +176,37 @@ function RailLink({
     });
   }
 
-  return (
-    <span
+  const label = destination.label ?? t(destination.id);
+
+  const link = (
+    <Link
+      href={destination.href}
+      aria-current={active ? "page" : undefined}
+      // Folded, the name is gone from the page but not from the accessibility
+      // tree -- the tooltip supplies it on hover and focus, and this keeps it
+      // for anyone reading the link out of context.
+      aria-label={railed ? label : undefined}
       className={cn(
-        "group relative flex items-center rounded-control",
+        "relative flex min-w-0 items-center gap-2.5 text-label",
+        // Folded, the row stops being a row: a 40px square target with the
+        // icon centred in it, rather than a full-width strip with a 16px mark
+        // floating in the middle of it.
+        railed
+          ? "size-10 flex-none justify-center rounded-control px-0"
+          : cn("flex-1 py-2", nested ? "pr-2 pl-8" : "pr-2 pl-3"),
+        focusRing,
+        transition,
         active
-          ? "bg-sidebar-active-bg"
-          : "hover:bg-sidebar-hover",
+          ? "text-accent-text font-semibold"
+          : unread
+            ? "text-sidebar-fg-active font-semibold"
+            : "text-sidebar-fg group-hover:text-sidebar-fg-active",
       )}
     >
-      <Link
-        href={destination.href}
-        aria-current={active ? "page" : undefined}
-        className={cn(
-          "relative flex min-w-0 flex-1 items-center gap-2.5 py-2 pr-2 text-label",
-          nested ? "pl-8" : "pl-3",
-          focusRing,
-          transition,
-          active
-            ? "text-accent-text font-semibold"
-            : unread
-              ? "text-sidebar-fg-active font-semibold"
-              : "text-sidebar-fg group-hover:text-sidebar-fg-active",
-        )}
-      >
-        {/* The red bar. Most of the rail's share of the 5% budget. */}
+      {/* The red bar. Most of the rail's share of the 5% budget. Folded there
+          is no strip for it to sit beside, so the tinted ground and the accent
+          icon carry "you are here" instead -- still two signals, not one. */}
+      {railed ? null : (
         <span
           aria-hidden
           className={cn(
@@ -167,26 +214,55 @@ function RailLink({
             active ? "bg-brand" : "bg-transparent",
           )}
         />
-        <NavigationDim>
-          <Icon aria-hidden className={cn("shrink-0", nested ? "size-3.5" : "size-4")} />
-          <span className="truncate">{destination.label ?? t(destination.id)}</span>
-        </NavigationDim>
+      )}
+      <NavigationDim>
+        <Icon
+          aria-hidden
+          className={cn("shrink-0", railed ? "size-5" : nested ? "size-3.5" : "size-4")}
+        />
+        {railed ? null : <span className="truncate">{label}</span>}
+      </NavigationDim>
 
-        {count > 0 ? (
-          <CountBadge tone="accent" className="ml-auto">
-            {count}
-          </CountBadge>
-        ) : null}
+      {count > 0 && !railed ? (
+        <CountBadge tone="accent" className="ml-auto">
+          {count}
+        </CountBadge>
+      ) : null}
 
-        {destination.expandableChildren && count === 0 && !destination.children?.length ? (
-          <ChevronRight
-            aria-hidden
-            className="text-fg-subtle ml-auto size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-          />
-        ) : null}
-      </Link>
+      {/* Folded there is no room for a number, but an unread channel still has
+          to be findable: a dot on the icon, the same signal the row's bold
+          text carries when the rail is open. */}
+      {count > 0 && railed ? (
+        <span
+          aria-hidden
+          className="bg-brand absolute top-1 right-1 size-1.5 rounded-pill"
+        />
+      ) : null}
 
-      {pinnable ? (
+      {destination.expandableChildren && count === 0 && !destination.children?.length && !railed ? (
+        <ChevronRight
+          aria-hidden
+          className="text-fg-subtle ml-auto size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+        />
+      ) : null}
+    </Link>
+  );
+
+  return (
+    <span
+      className={cn(
+        "group relative flex items-center rounded-control",
+        // Matched to the link inside it, so the active tint is a clean square
+        // tile rather than a band wider than the icon sitting in it.
+        railed && "mx-auto size-10 justify-center",
+        active
+          ? "bg-sidebar-active-bg"
+          : "hover:bg-sidebar-hover",
+      )}
+    >
+      {railed ? <SimpleTooltip content={label}>{link}</SimpleTooltip> : link}
+
+      {pinnable && !railed ? (
         <button
           type="button"
           disabled={pending}
@@ -214,9 +290,12 @@ export function Sidebar({
   organizationName,
   counts,
   account,
+  defaultRailed = false,
 }: {
   destinations: Destination[];
   organizationName: string;
+  /** Read from the rail cookie on the server, so SSR matches the first client render. */
+  defaultRailed?: boolean;
   /** Unread counts by destination id. Only real, actionable numbers belong here. */
   counts?: Partial<Record<string, number>>;
   /**
@@ -250,26 +329,48 @@ export function Sidebar({
     window.dispatchEvent(new Event(COLLAPSE_EVENT));
   }
 
+  // The server already read the cookie and passed it down, so the first client
+  // render matches the HTML and the rail never jumps width on load.
+  const railed = useSyncExternalStore(subscribeRailed, readRailed, () => defaultRailed);
+
   return (
     <nav
       aria-label={t("primary")}
       // Named for the tour, which rings the real rail rather than drawing a
       // picture of one.
       data-tour="rail"
-      className="bg-sidebar-surface border-sidebar-border hidden w-56 shrink-0 flex-col border-r md:flex"
+      className={cn(
+        "bg-sidebar-surface border-sidebar-border hidden shrink-0 flex-col border-r md:flex",
+        // A width transition, which is neither opacity nor colour, so it is a
+        // deliberate exception to that rule -- the third named one, after
+        // dnd-kit's drag transforms and the wordmark's arrival trace. Folding
+        // the rail moves every pixel of the page beside it; done instantly it
+        // reads as a glitch rather than as a thing the reader just did. 150ms
+        // sits inside the same 120-180ms window everything else uses, and the
+        // global `prefers-reduced-motion` rule in `globals.css` already
+        // collapses it to nothing for anyone who asked for that.
+        "transition-[width] duration-150 ease-out",
+        railed ? "w-16" : "w-56",
+      )}
     >
-      <div className="flex h-14 items-center justify-center px-4">
-        {/* eslint-disable-next-line @next/next/no-img-element -- a static
-            asset under public/, no JS needed. Colour-stable across both
-            themes (red + blue only -- see src/components/brand/wordmark.tsx),
-            so unlike the wordmark it needs no light/dark pair. Sized by
-            height, not `size-*` -- this mark is a wide lockup (943x204), not
-            square, so a fixed width would distort it. */}
+      <div className={cn("flex h-14 items-center justify-center", railed ? "px-2" : "px-4")}>
+        {/* A static asset under public/, no JS needed. Colour-stable across
+            both themes (red + blue only -- see
+            src/components/brand/wordmark.tsx), so unlike the wordmark it needs
+            no light/dark pair. Sized by height, not `size-*`: the open mark is
+            a wide lockup (943x204), so a fixed width would distort it.
+
+            Folded, that lockup has nowhere to go at 64px. The square icon is
+            the same mark's head, already the one used wherever space is tight
+            (it is the favicon). */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- see above. */}
         <img
-          src={withBasePath("/brand/mediast-creative-point.svg")}
+          src={withBasePath(
+            railed ? "/brand/mediast-icon.svg" : "/brand/mediast-creative-point.svg",
+          )}
           alt=""
           aria-hidden
-          className="h-5 w-auto shrink-0 object-contain"
+          className={cn("w-auto shrink-0 object-contain", railed ? "h-6" : "h-5")}
         />
         {/* Not shown -- the mark carries the brand on its own now -- but
             still announced, so a screen reader still gets which
@@ -277,7 +378,10 @@ export function Sidebar({
         <span className="sr-only">{organizationName}</span>
       </div>
 
-      <ul className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-2">
+      {/* `overflow-x-hidden` matters during the fold: expanding mounts the
+          labels at full width while the rail is still narrow, and without it
+          that overshoot flashes a horizontal scrollbar for a frame. */}
+      <ul className="flex flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden px-2 py-2">
         {destinations.map((destination) => {
           const hasChildren = (destination.children?.length ?? 0) > 0;
           const isCollapsed = hasChildren && collapsed[destination.id];
@@ -288,9 +392,9 @@ export function Sidebar({
           return (
             <li key={destination.id}>
               <div className="flex items-center">
-                <RailLink destination={destination} counts={counts} />
+                <RailLink destination={destination} counts={counts} railed={railed} />
 
-                {hasChildren ? (
+                {hasChildren && !railed ? (
                   <button
                     type="button"
                     onClick={() => toggleSection(destination.id)}
@@ -320,7 +424,9 @@ export function Sidebar({
                 keeps this rail scannable -- and because a project's channel
                 belongs to that work, not beside it.
               */}
-              {hasChildren && !isCollapsed ? (
+              {/* A 56px rail has no room for a tree. The children stay
+                  reachable from the destination's own page. */}
+              {hasChildren && !isCollapsed && !railed ? (
                 <ul className="mt-0.5 flex flex-col gap-0.5">
                   {destination.children!.map((child) => (
                     <li key={child.id}>
@@ -347,14 +453,39 @@ export function Sidebar({
         alone; moving it here means the header no longer needs it, not a
         second way to reach it.
       */}
+      <div className="border-sidebar-border border-t p-2">
+        <button
+          type="button"
+          onClick={() => writeRailed(!railed)}
+          aria-expanded={!railed}
+          aria-label={railed ? t("expandRail") : t("collapseRail")}
+          className={cn(
+            "text-sidebar-fg hover:bg-sidebar-hover hover:text-sidebar-fg-active rounded-control flex items-center gap-2.5 text-label",
+            railed ? "mx-auto size-10 justify-center px-0" : "w-full px-3 py-2",
+            focusRing,
+            transition,
+          )}
+        >
+          <PanelLeft aria-hidden className={cn("shrink-0", railed ? "size-5" : "size-4")} />
+          {railed ? null : <span className="truncate">{t("collapseRail")}</span>}
+        </button>
+      </div>
+
       {account ? (
-        <div className="border-sidebar-border border-t p-2">
+        <div
+          className={cn(
+            "border-sidebar-border border-t p-2",
+            // Folded it falls back to the avatar-only trigger the mobile
+            // header uses, which has no width of its own -- so centre it.
+            railed && "flex justify-center",
+          )}
+        >
           <AccountMenu
             name={account.name}
             email={account.email}
             role={account.role}
             avatarUrl={account.avatarUrl}
-            expanded
+            expanded={!railed}
           />
         </div>
       ) : null}
