@@ -13,6 +13,8 @@ import {
   createDeal,
   getDeal,
   moveDealToStage,
+  setCompanyArchived,
+  updateCompany,
   updateCompanyNotes,
   updateDeal,
 } from "@/lib/data/crm";
@@ -104,6 +106,78 @@ export async function saveCompanyNotes(companyId: string, notes: string): Promis
   const session = await requirePermissionForAction("crm.manage");
   const saved = await updateCompanyNotes(session.actor, id.data, text.data.trim());
   if (!saved) return { ok: false, error: "notFound" };
+
+  await revalidateCrm();
+  return { ok: true };
+}
+
+const editCompanySchema = companySchema.extend({ companyId: z.uuid() });
+
+/**
+ * Correcting a company's details after it exists.
+ *
+ * Same fields the creation dialog collects, minus the slug: renaming moves the
+ * label, not the address -- see `updateCompany()` for why.
+ */
+export async function editCompany(
+  input: z.input<typeof editCompanySchema>,
+): Promise<ActionResult> {
+  const parsed = editCompanySchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "invalid" };
+
+  const session = await requirePermissionForAction("crm.manage");
+  const { companyId, ...patch } = parsed.data;
+
+  const saved = await updateCompany(session.actor, companyId, {
+    name: patch.name,
+    website: patch.website || null,
+    industry: patch.industry || null,
+    status: patch.status,
+    ownerUserId: patch.ownerUserId ?? null,
+  });
+  if (!saved) return { ok: false, error: "notFound" };
+
+  await recordActivity(session.actor, {
+    verb: "company.updated",
+    subjectType: "company",
+    subjectId: companyId,
+    metadata: { name: patch.name },
+  });
+
+  await revalidateCrm();
+  return { ok: true };
+}
+
+const archiveCompanySchema = z.object({ companyId: z.uuid(), archived: z.boolean() });
+
+/**
+ * Archiving a client, and restoring one.
+ *
+ * A toggle rather than two actions, the same shape `archiveDocumentAction`
+ * uses. Nothing is deleted: quotes and invoices point at this row with
+ * `onDelete: "restrict"`, so a client that has ever been billed has to keep
+ * existing for those records to mean anything.
+ */
+export async function archiveCompanyAction(
+  input: z.input<typeof archiveCompanySchema>,
+): Promise<ActionResult> {
+  const parsed = archiveCompanySchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "invalid" };
+
+  const session = await requirePermissionForAction("crm.manage");
+
+  const done = await setCompanyArchived(
+    session.actor,
+    parsed.data.companyId,
+    parsed.data.archived,
+  );
+  if (!done) return { ok: false, error: "alreadyThere" };
+
+  await recordActivity(session.actor, {
+    verb: parsed.data.archived ? "company.archived" : "company.restored",
+    subjectType: "company",
+    subjectId: parsed.data.companyId,
+  });
 
   await revalidateCrm();
   return { ok: true };

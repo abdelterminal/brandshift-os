@@ -67,6 +67,7 @@ export type CompanyRow = {
   notes: string | null;
   ownerUserId: string | null;
   ownerName: string | null;
+  archivedAt: Date | null;
 };
 
 const COMPANY_FIELDS = {
@@ -79,6 +80,7 @@ const COMPANY_FIELDS = {
   notes: companies.notes,
   ownerUserId: companies.ownerUserId,
   ownerName: users.name,
+  archivedAt: companies.archivedAt,
 };
 
 /** Left: a company need not have an owner. */
@@ -86,7 +88,12 @@ const COMPANY_JOIN = [
   { table: users, on: eq(users.id, companies.ownerUserId), type: "left" as const },
 ];
 
-export type CompanyFilter = { query?: string; status?: CompanyStatus };
+export type CompanyFilter = {
+  query?: string;
+  status?: CompanyStatus;
+  /** Same flag `ProjectFilter` carries: off by default, so archived stays gone. */
+  includeArchived?: boolean;
+};
 
 export async function listCompanies(
   actor: Actor,
@@ -98,7 +105,7 @@ export async function listCompanies(
     companies,
     COMPANY_FIELDS,
     COMPANY_JOIN,
-    isNull(companies.archivedAt),
+    filter.includeArchived ? undefined : isNull(companies.archivedAt),
     filter.status ? eq(companies.status, filter.status) : undefined,
     trimmed
       ? or(ilike(companies.name, `%${trimmed}%`), ilike(companies.industry, `%${trimmed}%`))
@@ -499,4 +506,48 @@ export async function updateCompanyNotes(
     eq(companies.id, companyId),
   );
   return rows.length > 0;
+}
+
+export type CompanyUpdate = {
+  name: string;
+  website: string | null;
+  industry: string | null;
+  status: CompanyStatus;
+  ownerUserId: string | null;
+};
+
+/**
+ * Correcting a company's own details.
+ *
+ * `slug` is deliberately not in the patch. It is the URL
+ * (`/crm/companies/[slug]`) and it is what every existing link and bookmark
+ * points at, so a rename moves the label and leaves the address alone -- the
+ * same reason a project's `key` never changes either.
+ */
+export async function updateCompany(
+  actor: Actor,
+  companyId: string,
+  patch: CompanyUpdate,
+): Promise<boolean> {
+  const rows = await withOrg(actor.organizationId).update(
+    companies,
+    { ...patch, updatedAt: new Date() },
+    eq(companies.id, companyId),
+  );
+  return rows.length > 0;
+}
+
+export async function setCompanyArchived(
+  actor: Actor,
+  companyId: string,
+  archived: boolean,
+): Promise<boolean> {
+  const updated = await withOrg(actor.organizationId).update(
+    companies,
+    { archivedAt: archived ? new Date() : null, updatedAt: new Date() },
+    eq(companies.id, companyId),
+    // Only archive a live one / restore an archived one -- a no-op returns nothing.
+    archived ? isNull(companies.archivedAt) : undefined,
+  );
+  return updated.length > 0;
 }

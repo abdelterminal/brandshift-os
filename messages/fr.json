@@ -306,7 +306,10 @@
     "convertToDeliverable": "Convertir en livrable",
     "convertHint": "Cette tâche sera supprimée et un livrable prend sa place.",
     "noPlanYet": "Aucune tâche pour l'instant",
-    "noPlanYetBody": "Découpez votre travail en tâches pour que l'équipe voie votre plan."
+    "noPlanYetBody": "Découpez votre travail en tâches pour que l'équipe voie votre plan.",
+    "editProject": "Modifier",
+    "editProjectSubtitle": "Corrigez les informations de ce projet. Sa clé, son statut et son client ont chacun leur propre contrôle.",
+    "startDate": "Date de début"
   },
   "Task": {
     "bucketOverdue": "En retard",
@@ -515,7 +518,11 @@
     "deliverableCreated": "a ajouté le livrable {title}",
     "deliverableStatusChanged": "a déplacé {title} vers {to}",
     "deliverablePublished": "a publié {title}",
-    "deliverableConvertedFromTask": "a transformé {title} en livrable"
+    "deliverableConvertedFromTask": "a transformé {title} en livrable",
+    "projectUpdated": "a modifié les informations du projet",
+    "companyUpdated": "a modifié {name}",
+    "companyArchived": "a archivé ce client",
+    "companyRestored": "a rétabli ce client"
   },
   "ProjectStatus": {
     "planning": "En préparation",
@@ -930,7 +937,17 @@
     "pickCompany": "Choisissez d'abord une entreprise.",
     "openValue": "{value} sur {count, plural, one {# affaire ouverte} other {# affaires ouvertes}}",
     "editDeal": "Modifier",
-    "dealTitle": "Affaire"
+    "dealTitle": "Affaire",
+    "editCompany": "Modifier",
+    "editCompanySubtitle": "Corrigez les informations de ce client. L’adresse de cette page ne change pas.",
+    "archive": "Archiver",
+    "restore": "Rétablir",
+    "archived": "Archivé",
+    "archivedNote": "Ce client est archivé. Il reste hors des listes et des sélecteurs jusqu’à ce que vous le rétablissiez. Rien de ce qui y est rattaché n’a été supprimé.",
+    "archiveConfirm": "Archiver {name} ? Il quitte toutes les listes jusqu’à son rétablissement.",
+    "archiveConfirmButton": "Archiver",
+    "showArchived": "Afficher les archivés",
+    "hideArchived": "Masquer les archivés"
   },
   "QuoteStatus": {
     "draft": "Brouillon",

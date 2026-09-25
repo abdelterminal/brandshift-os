@@ -8,6 +8,7 @@ import { DeliverablesPanel } from "@/components/work/deliverables-panel";
 import { ProjectDocs } from "@/components/work/project-docs";
 import { ProjectClientControl } from "@/components/work/project-client-control";
 import { ProjectStageControl } from "@/components/work/project-stage-control";
+import { EditProjectDialog } from "@/components/work/edit-project-dialog";
 import { ProjectStatusControl } from "@/components/work/project-status-control";
 import { ProjectTabs } from "@/components/work/project-tabs";
 import { StageRail } from "@/components/work/stage-rail";
@@ -22,7 +23,7 @@ import { atLeast, can, hasModule } from "@/lib/authz";
 import { listProjectActivity } from "@/lib/data/activity";
 import { listCompanies } from "@/lib/data/crm";
 import { listProjectMeetings } from "@/lib/data/meetings";
-import { listAssignablePeople } from "@/lib/data/people";
+import { listAssignablePeople, listDepartments } from "@/lib/data/people";
 import { getProjectByKey, listProjectMembers } from "@/lib/data/projects";
 import { listProjectDeliverables } from "@/lib/data/deliverables";
 import { getPlaybook, stageSetupFor } from "@/lib/data/playbook";
@@ -85,6 +86,7 @@ export default async function ProjectPage({
     activity,
     meetings,
     assignablePeople,
+    departments,
   ] = await Promise.all([
     getTranslations("Work"),
     getTranslations("Channels"),
@@ -97,6 +99,7 @@ export default async function ProjectPage({
     siloed ? Promise.resolve([]) : listProjectActivity(session.actor, project.id),
     listProjectMeetings(session.actor, project.id),
     listAssignablePeople(session.actor),
+    listDepartments(session.actor),
   ]);
 
   // A member sees their own tasks and deliverables on the project; everyone
@@ -179,6 +182,28 @@ export default async function ProjectPage({
             <h1 className="text-display font-display text-fg-default mt-0.5">{project.name}</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {canSetStatus ? (
+              <EditProjectDialog
+                project={{
+                  id: project.id,
+                  name: project.name,
+                  description: project.description,
+                  departmentId: project.departmentId,
+                  ownerUserId: project.ownerUserId,
+                  startDate: project.startDate,
+                  dueDate: project.dueDate,
+                  priority: project.priority,
+                }}
+                departments={departments.map((department) => ({
+                  id: department.id,
+                  label: department.name,
+                }))}
+                people={assignablePeople.map((person) => ({
+                  id: person.userId,
+                  label: person.name,
+                }))}
+              />
+            ) : null}
             {canSetStatus ? (
               <ProjectStatusControl
                 projectId={project.id}

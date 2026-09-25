@@ -1,6 +1,7 @@
 import { getFormatter, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
+import { ArchiveCompanyControl, EditCompanyDialog } from "@/components/crm/company-controls";
 import { NewContactDialog, NewDealDialog } from "@/components/crm/create-dialogs";
 import { CompanyNotes } from "@/components/crm/stage-control";
 import { AvatarGroup, PersonAvatar } from "@/components/ui/avatar";
@@ -127,6 +128,11 @@ export default async function CompanyPage({ params }: PageProps<"/[locale]/crm/c
             <Badge tone={STATUS_TONE[company.status]} size="sm">
               {statuses(company.status)}
             </Badge>
+            {company.archivedAt ? (
+              <Badge tone="neutral" size="sm">
+                {t("archived")}
+              </Badge>
+            ) : null}
             {company.industry ? <span>{company.industry}</span> : null}
             {site?.kind === "link" ? (
               <a
@@ -149,6 +155,22 @@ export default async function CompanyPage({ params }: PageProps<"/[locale]/crm/c
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <EditCompanyDialog
+            company={{
+              id: company.id,
+              name: company.name,
+              website: company.website,
+              industry: company.industry,
+              status: company.status,
+              ownerUserId: company.ownerUserId,
+            }}
+            people={people.rows.map((person) => ({ id: person.userId, label: person.name }))}
+          />
+          <ArchiveCompanyControl
+            companyId={company.id}
+            companyName={company.name}
+            archived={company.archivedAt !== null}
+          />
           <NewContactDialog
             companies={companies.map((row) => ({ id: row.id, label: row.name }))}
             defaultCompanyId={company.id}
@@ -165,6 +187,12 @@ export default async function CompanyPage({ params }: PageProps<"/[locale]/crm/c
           />
         </div>
       </header>
+
+      {company.archivedAt ? (
+        <p className="border-border bg-surface-raised text-body text-fg-muted rounded-card mb-6 border px-4 py-3">
+          {t("archivedNote")}
+        </p>
+      ) : null}
 
       <section className="mb-8">
         <h2 className="text-label text-fg-default mb-2 font-semibold">{t("title")}</h2>

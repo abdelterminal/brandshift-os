@@ -272,3 +272,77 @@ export async function setProjectClient(
   revalidatePath(`/${locale}/work/${updated.key}`);
   return { ok: true };
 }
+
+/**
+ * Correcting a project's own details after it exists.
+ *
+ * Everything the creation wizard collected but nothing could ever change
+ * afterwards -- a project named with a typo stayed named that way. The field
+ * rules are `createProjectSchema`'s, so the two forms can never disagree about
+ * what a valid name is.
+ *
+ * Four fields are deliberately absent, each because it already has a control of
+ * its own and one value reachable two ways is a bug waiting to happen: `status`
+ * (`setProjectStatus`), `companyId` (`setProjectClient`), `stage` (the stage
+ * control), and `key` -- which is the URL and carries a unique index, so it
+ * stays put the way a slug does.
+ */
+const updateProjectSchema = z.object({
+  projectId: z.uuid(),
+  name: z.string().trim().min(2).max(120),
+  description: z.string().trim().max(2000).optional(),
+  departmentId: z.union([z.uuid(), z.literal("")]).optional(),
+  ownerUserId: z.union([z.uuid(), z.literal("")]).optional(),
+  startDate: z.union([z.iso.date(), z.literal("")]).optional(),
+  dueDate: z.union([z.iso.date(), z.literal("")]).optional(),
+  priority: z.enum(["low", "medium", "high", "urgent"]),
+});
+
+export type UpdateProjectInput = z.input<typeof updateProjectSchema>;
+
+export async function updateProjectDetails(
+  input: UpdateProjectInput,
+): Promise<{ ok: boolean; error?: string; fieldErrors?: Record<string, string> }> {
+  const session = await requirePermissionForAction("project.create");
+
+  const parsed = updateProjectSchema.safeParse(input);
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of parsed.error.issues) {
+      const field = String(issue.path[0] ?? "");
+      if (field) fieldErrors[field] = "invalid";
+    }
+    return { ok: false, error: "invalid", fieldErrors };
+  }
+
+  const data = parsed.data;
+
+  const [updated] = await withOrg(session.actor.organizationId).update(
+    projects,
+    {
+      name: data.name,
+      description: data.description || null,
+      departmentId: data.departmentId || null,
+      ownerUserId: data.ownerUserId || null,
+      startDate: data.startDate || null,
+      dueDate: data.dueDate || null,
+      priority: data.priority,
+      updatedAt: new Date(),
+    },
+    eq(projects.id, data.projectId),
+  );
+  if (!updated) return { ok: false, error: "notFound" };
+
+  await recordActivity(session.actor, {
+    verb: "project.updated",
+    subjectType: "project",
+    subjectId: updated.id,
+    projectId: updated.id,
+    metadata: { name: data.name },
+  });
+
+  const locale = await getLocale();
+  revalidatePath(`/${locale}/work`);
+  revalidatePath(`/${locale}/work/${updated.key}`);
+  return { ok: true };
+}

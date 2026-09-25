@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { NewCompanyDialog } from "@/components/crm/create-dialogs";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/feedback";
-import { focusRingInset, transition } from "@/components/ui/styles";
+import { focusRing, focusRingInset, transition } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
 import { requirePermission } from "@/lib/auth/guards";
 import { listCompanies, listDeals, type CompanyStatus } from "@/lib/data/crm";
@@ -31,13 +31,17 @@ export async function generateMetadata() {
   return { title: t("companies") };
 }
 
-export default async function CompaniesPage() {
+export default async function CompaniesPage({
+  searchParams,
+}: PageProps<"/[locale]/crm/companies">) {
   const session = await requirePermission("crm.view");
+  const params = await searchParams;
+  const showArchived = params.archived === "1";
 
   const [t, statuses, companies, deals, people] = await Promise.all([
     getTranslations("Crm"),
     getTranslations("CompanyStatus"),
-    listCompanies(session.actor),
+    listCompanies(session.actor, { includeArchived: showArchived }),
     listDeals(session.actor),
     listPeople(session.actor, { pageSize: 100 }),
   ]);
@@ -54,9 +58,24 @@ export default async function CompaniesPage() {
           <h1 className="text-display font-display text-fg-default">{t("companies")}</h1>
           <p className="text-body text-fg-muted mt-1.5">{t("companiesSubtitle")}</p>
         </div>
-        <NewCompanyDialog
-          people={people.rows.map((person) => ({ id: person.userId, label: person.name }))}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          {/* A link, not a checkbox: the view it produces is worth a URL somebody
+              can keep, and it needs no JavaScript to work. */}
+          <Link
+            href={showArchived ? "/crm/companies" : "/crm/companies?archived=1"}
+            className={cn(
+              "text-label text-fg-muted hover:text-fg-default rounded-control px-2 py-1.5",
+              "hover:bg-surface-hover",
+              focusRing,
+              transition,
+            )}
+          >
+            {showArchived ? t("hideArchived") : t("showArchived")}
+          </Link>
+          <NewCompanyDialog
+            people={people.rows.map((person) => ({ id: person.userId, label: person.name }))}
+          />
+        </div>
       </header>
 
       {companies.length === 0 ? (
@@ -92,6 +111,12 @@ export default async function CompaniesPage() {
                     <span className="text-caption text-fg-muted shrink-0 tabular-nums">
                       {t("openDeals", { count: open })}
                     </span>
+                  ) : null}
+
+                  {company.archivedAt ? (
+                    <Badge tone="neutral" size="sm" className="shrink-0">
+                      {t("archived")}
+                    </Badge>
                   ) : null}
 
                   <Badge tone={STATUS_TONE[company.status]} size="sm" className="shrink-0">

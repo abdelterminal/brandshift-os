@@ -306,7 +306,10 @@
     "convertToDeliverable": "Convert to deliverable",
     "convertHint": "This task will be removed and a deliverable takes its place.",
     "noPlanYet": "No tasks here yet",
-    "noPlanYetBody": "Break your work down into tasks so the team can see your plan."
+    "noPlanYetBody": "Break your work down into tasks so the team can see your plan.",
+    "editProject": "Edit",
+    "editProjectSubtitle": "Correct this project’s details. Its key, status and client each have their own control.",
+    "startDate": "Start date"
   },
   "Task": {
     "bucketOverdue": "Overdue",
@@ -515,7 +518,11 @@
     "deliverableCreated": "added the deliverable {title}",
     "deliverableStatusChanged": "moved {title} to {to}",
     "deliverablePublished": "published {title}",
-    "deliverableConvertedFromTask": "made {title} a deliverable"
+    "deliverableConvertedFromTask": "made {title} a deliverable",
+    "projectUpdated": "edited the project details",
+    "companyUpdated": "edited {name}",
+    "companyArchived": "archived this client",
+    "companyRestored": "restored this client"
   },
   "ProjectStatus": {
     "planning": "Planning",
@@ -930,7 +937,17 @@
     "pickCompany": "Pick a company first.",
     "openValue": "{value} across {count, plural, one {# open deal} other {# open deals}}",
     "editDeal": "Edit",
-    "dealTitle": "Deal"
+    "dealTitle": "Deal",
+    "editCompany": "Edit",
+    "editCompanySubtitle": "Correct this client’s details. The web address of this page does not change.",
+    "archive": "Archive",
+    "restore": "Restore",
+    "archived": "Archived",
+    "archivedNote": "This client is archived. It stays out of lists and pickers until you restore it. Nothing attached to it has been deleted.",
+    "archiveConfirm": "Archive {name}? It leaves every list until restored.",
+    "archiveConfirmButton": "Archive",
+    "showArchived": "Show archived",
+    "hideArchived": "Hide archived"
   },
   "QuoteStatus": {
     "draft": "Draft",
