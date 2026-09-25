@@ -1,6 +1,6 @@
 import "server-only";
 
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { deliverables } from "@/db/schema/deliverables";
@@ -89,6 +89,10 @@ export async function listMyDeliverables(actor: Actor): Promise<MyDeliverableRow
       { table: projects, on: eq(projects.id, deliverables.projectId), type: "inner" as const },
     ],
     eq(deliverables.assigneeUserId, actor.userId),
+    // Archiving a project takes its deliverables off Today with it, the same
+    // way it takes its tasks -- see `LIVE_PROJECT` in `./tasks`. The project's
+    // own page still lists them, so nothing becomes unreachable.
+    isNull(projects.archivedAt),
   )) as MyDeliverableRow[];
 
   return rows.filter((row) => isDeliverableOpen(row.status)).sort(compareByFlow);

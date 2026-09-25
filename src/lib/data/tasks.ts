@@ -59,6 +59,24 @@ export const OPEN_TASKS = or(
 )!;
 
 /**
+ * Tasks whose project is still live -- for the org-wide lists only.
+ *
+ * Archiving a project took it off every project list but left its open tasks
+ * on the assignees' Today and in the coordination queue, pointing at a project
+ * they could no longer open. Archiving has to take the work with it or it does
+ * not mean anything.
+ *
+ * The join is a left one, so a personal task with no project at all leaves
+ * `projects.archivedAt` null and passes this the same way it always did.
+ *
+ * Deliberately not applied to `listProjectTasks` or `getTask`: an archived
+ * project's own page still opens by URL, and it has to keep showing its tasks
+ * or there is no way to see what was archived -- or to pick a task back up
+ * after restoring it.
+ */
+const LIVE_PROJECT = isNull(projects.archivedAt);
+
+/**
  * Today in the organization's timezone, not the server's.
  *
  * A container running UTC would otherwise call a Paris task overdue for the
@@ -158,8 +176,8 @@ export async function listTaskBuckets(
   const conditions = filterConditions(filter);
 
   const [open, completed] = await Promise.all([
-    selectTasks(actor, OPEN_TASKS, ...conditions),
-    selectTasks(actor, eq(tasks.status, "done"), ...conditions),
+    selectTasks(actor, OPEN_TASKS, LIVE_PROJECT, ...conditions),
+    selectTasks(actor, eq(tasks.status, "done"), LIVE_PROJECT, ...conditions),
   ]);
 
   completed.sort((a, b) => b.title.localeCompare(a.title));
@@ -238,7 +256,7 @@ export function workloadFrom(open: TaskRow[], todayIso: string): Map<string, {
 
 /** Every open task in the org, for workload and for Today. */
 export async function listOpenTasks(actor: Actor): Promise<TaskRow[]> {
-  return selectTasks(actor, OPEN_TASKS);
+  return selectTasks(actor, OPEN_TASKS, LIVE_PROJECT);
 }
 
 export { BUCKET_ORDER };
