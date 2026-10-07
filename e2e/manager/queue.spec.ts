@@ -86,3 +86,25 @@ test("the way back is a link to Today", async ({ page }) => {
   await page.waitForURL("**/en/today");
   await expect(page.getByRole("heading", { name: "Today", level: 1 })).toBeVisible();
 });
+
+test("a coordinator can reach their own work in full, not just a summary", async ({ page }) => {
+  // Today is about everybody else for anyone from manager up, which left them
+  // with a three-row "Mine" card and nowhere to see the rest of their own
+  // list. The card is now always drawn -- it used to vanish when empty, which
+  // reads as "this screen does not do that" -- and carries the way through.
+  await page.goto("/en/today");
+  await expect(page.getByRole("heading", { name: "Mine" })).toBeVisible();
+
+  await page.getByRole("link", { name: "All of it" }).click();
+  await page.waitForURL("**/en/work/mine");
+
+  // The same Now / Next / Later a member gets on their own Today, under a
+  // name that says which of the two screens this is.
+  await expect(page.getByRole("heading", { name: "My work", level: 1 })).toBeVisible();
+  for (const section of ["Now", "Next", "Later"]) {
+    await expect(page.getByRole("heading", { name: section, exact: true })).toBeVisible();
+  }
+
+  // Their own work, not the queue's: nobody else's name is on these rows.
+  await expect(page.getByRole("heading", { name: "Unassigned" })).toHaveCount(0);
+});
