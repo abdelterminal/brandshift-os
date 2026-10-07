@@ -11,10 +11,12 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   changeMemberEmail,
+  resetMemberPassword,
   setMemberSuspended,
   updateMemberProfile,
   type PeopleResult,
 } from "@/lib/actions/people";
+import { sendPasswordReset } from "@/lib/actions/reset";
 
 /**
  * The admin-side controls on somebody else's page: fix their details, move
@@ -316,6 +318,193 @@ export function ChangeMemberEmailCard({
         </form>
 
         {action.needsReauth ? <ReauthPrompt onDone={action.onReauthDone} /> : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Giving somebody a new password, for when they have lost theirs.
+ *
+ * The flow this is shaped around is the one that actually happens: they tell
+ * an admin outside the app -- phone, desk, WhatsApp -- and the admin sets them
+ * a new one and reads it back. So the password is the product of this card,
+ * shown once, with a copy button, and never fetched again.
+ *
+ * The link route is kept underneath rather than replaced, because it is the
+ * better answer whenever the person *can* be reached by message: it never puts
+ * a working password in a second pair of hands.
+ *
+ * Not self-service in disguise -- see `resetMemberPassword` for why this gives
+ * an admin nothing the Outbox already gave them, and for what is deliberately
+ * missing (a forced change at next sign-in).
+ */
+export function ResetMemberPasswordCard({
+  person,
+  maySendLink,
+}: {
+  person: { userId: string; name: string };
+  /** `member.editRole`, which is what `sendPasswordReset` checks. */
+  maySendLink: boolean;
+}) {
+  const t = useTranslations("People");
+  const router = useRouter();
+
+  const [pending, startTransition] = useTransition();
+  const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState<MemberError | "cannotResetSelf" | null>(null);
+  const [needsReauth, setNeedsReauth] = useState(false);
+  /** The one copy there will ever be. Held in state, never re-fetched. */
+  const [password, setPassword] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const [linkPending, startLinkTransition] = useTransition();
+  const [linkSent, setLinkSent] = useState(false);
+
+  function reset() {
+    setError(null);
+    startTransition(async () => {
+      const result = await resetMemberPassword({ userId: person.userId });
+
+      if (!result.ok && result.error === "reauthRequired") {
+        setNeedsReauth(true);
+        return;
+      }
+
+      setNeedsReauth(false);
+      if (!result.ok) {
+        setError(result.error as MemberError);
+        setConfirming(false);
+        return;
+      }
+
+      setPassword(result.password);
+      setConfirming(false);
+      setCopied(false);
+      router.refresh();
+    });
+  }
+
+  async function copy() {
+    if (!password) return;
+    try {
+      await navigator.clipboard.writeText(password);
+      setCopied(true);
+    } catch {
+      // Clipboard access can be refused outright (insecure context, or a
+      // permission prompt declined). The password is on screen and
+      // selectable, so there is nothing to recover from -- only the
+      // confirmation to withhold, rather than claim a copy that never
+      // happened.
+      setCopied(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("resetPassword")}</CardTitle>
+      </CardHeader>
+      <CardContent className="pt-2">
+        <p className="text-body text-fg-muted max-w-md">{t("resetPasswordBody")}</p>
+
+        <div className="mt-4 flex max-w-md flex-col gap-4">
+          {password ? (
+            <div className="border-border bg-surface-inset rounded-control flex flex-col gap-2 border p-3">
+              <p className="text-label text-fg-default">{t("tempPassword")}</p>
+              {/*
+                `select-all` so one click takes the whole thing: this gets read
+                aloud or pasted, and a half-selected password is worse than
+                none. Tabular figures keep the groups aligned.
+              */}
+              <code className="text-body text-fg-default bg-surface-raised border-border rounded-control select-all border px-3 py-2 font-mono tracking-wide tabular-nums">
+                {password}
+              </code>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button size="sm" variant="secondary" onClick={copy}>
+                  {t("copy")}
+                </Button>
+                <span aria-live="polite" className="text-caption text-complete-text empty:hidden">
+                  {copied ? t("copied") : ""}
+                </span>
+              </div>
+              <p className="text-caption text-fg-muted">{t("tempPasswordNote")}</p>
+            </div>
+          ) : null}
+
+          <div aria-live="polite" className="empty:hidden">
+            {error ? <p className="text-body text-blocked-text">{t(error)}</p> : null}
+          </div>
+
+          {confirming ? (
+            <div className="border-border bg-surface-inset rounded-control flex flex-col gap-3 border p-3">
+              <p className="text-body text-fg-default">
+                {t("resetPasswordConfirm", { name: person.name })}
+              </p>
+              <p className="text-caption text-fg-muted">{t("resetPasswordConfirmNote")}</p>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="destructive" loading={pending} onClick={reset}>
+                  {t("resetPasswordConfirmButton")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={pending}
+                  onClick={() => setConfirming(false)}
+                >
+                  {t("cancel")}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              variant="primary"
+              className="w-fit"
+              onClick={() => {
+                setError(null);
+                setPassword(null);
+                setConfirming(true);
+              }}
+            >
+              {password ? t("resetPasswordAgain") : t("resetPassword")}
+            </Button>
+          )}
+
+          {needsReauth ? <ReauthPrompt onDone={reset} /> : null}
+
+          {maySendLink ? (
+            <div className="border-border flex flex-col gap-2 border-t pt-4">
+              <p className="text-caption text-fg-muted">{t("sendResetLinkInstead")}</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  size="sm"
+                  loading={linkPending}
+                  onClick={() =>
+                    startLinkTransition(async () => {
+                      await sendPasswordReset(person.userId);
+                      setLinkSent(true);
+                    })
+                  }
+                  className="w-fit"
+                >
+                  {t("sendResetLink")}
+                </Button>
+                {/*
+                  `role="status"` rather than a bare `aria-live` span, as the
+                  card this replaced had: it is the one confirmation here that
+                  reports an action completing rather than a UI nicety, so it
+                  earns the role (and its implicit polite announcement). The
+                  copy-button feedback above stays a plain live region, which
+                  also keeps exactly one `status` in this card for anything
+                  looking for it.
+                */}
+                <span role="status" className="text-caption text-complete-text empty:hidden">
+                  {linkSent ? t("resetLinkSent") : ""}
+                </span>
+              </div>
+            </div>
+          ) : null}
+        </div>
       </CardContent>
     </Card>
   );

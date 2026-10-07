@@ -234,6 +234,7 @@ async function recipientsFor(
     case "member.emailChanged":
     case "member.suspended":
     case "member.reinstated":
+    case "member.passwordReset":
     case "member.profileEdited": {
       // `subjectId` is the member acted on: the three actions in
       // `src/lib/actions/people.ts` that emit these verbs are the only

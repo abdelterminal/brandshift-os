@@ -98,6 +98,7 @@ export type Action =
   | "member.editProfile"
   | "member.changeEmail"
   | "member.suspend"
+  | "member.resetPassword"
   | "organization.switch"
   | "organization.editSettings";
 
@@ -307,6 +308,17 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   "member.editProfile": (actor) => atLeast(actor, "admin"),
   "member.changeEmail": (actor) => atLeast(actor, "admin"),
   "member.suspend": (actor) => atLeast(actor, "admin"),
+
+  /*
+    Setting somebody a new password outright, for when they have lost theirs
+    and have asked outside the app.
+
+    Admin and up, and deliberately *not* the `people` module escape: the
+    Outbox is open to that wider set (`member.invite`), and this is the same
+    power without the indirection, so it should not be reachable by more
+    people than can already change a role.
+  */
+  "member.resetPassword": (actor) => atLeast(actor, "admin"),
 
   "organization.switch": () => true,
   "organization.editSettings": (actor) => atLeast(actor, "admin"),

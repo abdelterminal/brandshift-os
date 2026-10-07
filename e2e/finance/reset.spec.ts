@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { SEED_PASSWORD } from "../people";
+
 /**
  * Password reset, by the only route that exists.
  *
@@ -123,6 +125,59 @@ test("the link sets a new password and signs them in", async ({ page, browser })
   await oldPage.goto("/en/login");
   await oldPage.getByLabel("Email").fill(email);
   await oldPage.getByLabel("Password", { exact: true }).fill("brandshift");
+  await oldPage.getByRole("button", { name: "Sign in" }).click();
+  await expect(oldPage).not.toHaveURL(/\/today$/);
+
+  await context.close();
+  await old.close();
+});
+
+test("an admin sets a password directly, and that is the one that works", async ({
+  page,
+  browser,
+}) => {
+  const email = "oscar.lindqvist@brandshift.test";
+
+  await openPerson(page, "Oscar Lindqvist");
+  const card = resetCard(page);
+
+  await card.getByRole("button", { name: "Reset password" }).click();
+  await card.getByRole("button", { name: "Set a new password" }).click();
+
+  // Either the password comes straight back, or the re-auth window has lapsed
+  // and it asks first. Which one depends on how long this run has taken to
+  // reach this file (`REAUTH_WINDOW_MS` is fifteen minutes from sign-in), so
+  // the test has to cope with both rather than assume the fast case.
+  const shown = card.locator("code");
+  const confirmButton = card.getByRole("button", { name: "Confirm" });
+  await expect(shown.or(confirmButton).first()).toBeVisible();
+
+  if (await confirmButton.isVisible()) {
+    await card.getByLabel("Password", { exact: true }).fill(SEED_PASSWORD);
+    await confirmButton.click();
+  }
+
+  await expect(shown).toBeVisible();
+  const password = (await shown.innerText()).trim();
+  // Four groups of three, from an alphabet with no character you would have to
+  // spell out -- see `generateTempPassword`.
+  expect(password).toMatch(/^[acdefghjkmnpqrtuvwxy34679]{3}(-[acdefghjkmnpqrtuvwxy34679]{3}){3}$/);
+
+  // The whole point: that string is the password now.
+  const context = await browser.newContext(anonymous);
+  const theirs = await context.newPage();
+  await theirs.goto("/en/login");
+  await theirs.getByLabel("Email").fill(email);
+  await theirs.getByLabel("Password", { exact: true }).fill(password);
+  await theirs.getByRole("button", { name: "Sign in" }).click();
+  await theirs.waitForURL("**/en/today");
+
+  // And the seeded one is not, so this replaced rather than added.
+  const old = await browser.newContext(anonymous);
+  const oldPage = await old.newPage();
+  await oldPage.goto("/en/login");
+  await oldPage.getByLabel("Email").fill(email);
+  await oldPage.getByLabel("Password", { exact: true }).fill(SEED_PASSWORD);
   await oldPage.getByRole("button", { name: "Sign in" }).click();
   await expect(oldPage).not.toHaveURL(/\/today$/);
 

@@ -20,6 +20,7 @@ import { createToken } from "@/lib/auth/tokens";
 import { inviteMessage } from "@/lib/mail/templates";
 import { flush, queue } from "@/lib/mail/transport";
 import { hashPassword } from "@/lib/password";
+import { generateTempPassword } from "@/lib/temp-password";
 import { slugify } from "@/lib/slug";
 
 /**
@@ -267,7 +268,7 @@ const ownerGuard = mayActOnTarget;
  * `revokeDevice` already uses in `lib/auth/actions.ts`; only the error-string
  * wrapper differs.
  */
-async function recentAuthOrRefuse(): Promise<PeopleResult | null> {
+async function recentAuthOrRefuse(): Promise<{ ok: false; error: string } | null> {
   try {
     await requireRecentAuth();
     return null;
@@ -480,6 +481,100 @@ export async function setMemberSuspended(
   revalidatePath(`/${locale}/people`);
   revalidatePath(`/${locale}/people/${parsed.data.userId}`);
   return { ok: true };
+}
+
+/** Like `PeopleResult`, but the success case carries the one thing to show. */
+export type ResetPasswordResult =
+  | { ok: true; password: string }
+  | { ok: false; error: string };
+
+const resetPasswordSchema = z.object({ userId: z.uuid() });
+
+/**
+ * Set somebody a new password and hand it back once, for the admin to pass on.
+ *
+ * The answer to the actual question people ask -- "I have lost my password" --
+ * put to an admin outside the app, by phone or in person. The alternative
+ * already here, `sendPasswordReset`, mints a link instead; that is the better
+ * shape in general and is kept, but it means hunting through the Outbox for a
+ * URL and then getting that URL to somebody who, by definition, is having
+ * trouble getting in. This is the direct version.
+ *
+ * **It grants an admin no power they did not already hold.** The reset link
+ * `sendPasswordReset` writes lands in the Outbox, which every admin can read
+ * in full -- so an admin could already spend one and take any non-owner
+ * account. If anything this is the tighter of the two: the password is
+ * returned to the one caller who asked for it and is never written down, where
+ * a link sits in `messages` indefinitely (see `KNOWN-GAPS.md` on outbox
+ * retention).
+ *
+ * Fenced the same way the other sensitive acts in this file are:
+ *
+ * 1. `requireRecentAuth()`, so a borrowed session is not enough.
+ * 2. An owner's password can only be reset by an owner.
+ * 3. Never yourself -- Settings already changes your own password, and it asks
+ *    for the current one, which is the right question there and impossible
+ *    here.
+ * 4. Every session the target holds is revoked, and `passwordChangedAt` moves,
+ *    which refuses anything issued earlier even if a revocation were missed.
+ * 5. Recorded, and the person is told in the app.
+ *
+ * The password itself is deliberately absent from the activity row, the
+ * notification and every log: the only copy is the one returned here, and once
+ * the caller's screen is gone it cannot be recovered -- only replaced.
+ *
+ * There is no forced change at next sign-in -- asked for and declined, to keep
+ * a schema migration out of it. The consequence, which the UI says in as many
+ * words: whoever ran this knows a working password until its owner replaces
+ * it. `KNOWN-GAPS.md` carries it.
+ */
+export async function resetMemberPassword(
+  input: z.input<typeof resetPasswordSchema>,
+): Promise<ResetPasswordResult> {
+  const session = await requirePermissionForAction("member.resetPassword");
+  const lapsed = await recentAuthOrRefuse();
+  if (lapsed) return { ok: false, error: lapsed.error };
+
+  const parsed = resetPasswordSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "invalid" };
+
+  if (parsed.data.userId === session.actor.userId) {
+    return { ok: false, error: "cannotResetSelf" };
+  }
+
+  const target = await findTarget(session.actor.organizationId, parsed.data.userId);
+  if (!target) return { ok: false, error: "notFound" };
+  if (!ownerGuard(target.role, session.actor.role)) {
+    return { ok: false, error: "onlyOwnerCanEditOwner" };
+  }
+
+  const password = generateTempPassword();
+
+  await db
+    .update(users)
+    .set({
+      passwordHash: await hashPassword(password),
+      // Refuses every session created before now, the same way spending a
+      // reset token does -- belt as well as the braces below.
+      passwordChangedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, parsed.data.userId));
+
+  await revokeAllSessions(parsed.data.userId);
+
+  await recordActivity(session.actor, {
+    verb: "member.passwordReset",
+    subjectType: "user",
+    subjectId: parsed.data.userId,
+    // No metadata on purpose. An activity row is readable by more people than
+    // the one who ran this, and forever.
+  });
+
+  const locale = await getLocale();
+  revalidatePath(`/${locale}/people`);
+  revalidatePath(`/${locale}/people/${parsed.data.userId}`);
+  return { ok: true, password };
 }
 
 const departmentSchema = z.object({

@@ -99,6 +99,16 @@ from the code once the route is dark:
   the Outbox becomes the way to find out which addresses exist). Both are still implemented
   and still commented in `requestReset`; the tests went when the only entry point to them
   did, and that spec now covers the admin path instead. Put them back with the route.
+- **A directly-set password is not forced to be changed.** `resetMemberPassword` sets a new
+  password and shows it to the admin once; nothing then obliges its owner to replace it. So
+  whoever ran the reset knows a working password for that account until the person changes it
+  of their own accord, and may never be prompted to. Asked for and declined deliberately, to
+  keep a schema migration out of that change: closing it wants a `must_change_password`
+  boolean on `users`, a gate in the auth path, and the existing "Choose a new password" screen
+  reused for a signed-in person rather than a token holder. The card and the in-app notice both
+  say to change it in the meantime, which is persuasion, not enforcement. Worth noting this
+  grants an admin nothing new -- the reset *link* already lands in an Outbox every admin can
+  read -- so the gap is the lingering copy, not the capability.
 - **The one-live-token rule only guards the public path.** `requestReset` enforces a
   five-minute cooldown via `recentResetFor`; `sendPasswordReset` calls `createToken`
   directly and has no equivalent, so an admin pressing the button repeatedly mints a live

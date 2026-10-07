@@ -131,6 +131,9 @@ export default async function PersonPage({ params }: PageProps<"/[locale]/people
             editProfile: can(session.actor, "member.editProfile") && mayActOnTarget(person.role, session.actor.role),
             changeEmail: can(session.actor, "member.changeEmail") && mayActOnTarget(person.role, session.actor.role),
             suspend: can(session.actor, "member.suspend") && mayActOnTarget(person.role, session.actor.role),
+            resetPassword:
+              can(session.actor, "member.resetPassword") &&
+              mayActOnTarget(person.role, session.actor.role),
           }}
           isSelf={session.actor.userId === person.userId}
           activity={<ActivityFeed events={activity} />}
