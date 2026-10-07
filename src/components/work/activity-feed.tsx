@@ -42,20 +42,38 @@ export async function ActivityFeed({ events }: { events: ActivityRow[] }) {
 
   // A verb with no translation still renders a sensible line rather than the
   // key itself, which is what a missing entry would otherwise put on screen.
+  /**
+   * Every placeholder any message might name, supplied whether or not this
+   * row happens to carry it.
+   *
+   * ICU throws on a placeholder it was not given, and the `catch` below turns
+   * that into "made a change" -- so a message naming a value this function
+   * forgot is indistinguishable from one with no translation at all. That is
+   * not hypothetical: this used to hand over exactly four values, while ten
+   * shipped strings named `{number}` or `{days}`, and every quote, invoice and
+   * time-off line in the feed read "made a change" because of it.
+   *
+   * So the row's own metadata is passed through wholesale rather than picked
+   * from, and the names used by current messages are then backfilled with ""
+   * so a row that never stored one still renders. An unused value is ignored;
+   * only a missing one is fatal.
+   */
+  const SPOKEN = ["title", "status", "to", "name", "number", "days"] as const;
+
   const describe = (event: ActivityRow) => {
-    const metadata = event.metadata as Record<string, string | undefined>;
+    const metadata = (event.metadata ?? {}) as Record<string, unknown>;
+
+    const values: Record<string, string> = {};
+    for (const [key, value] of Object.entries(metadata)) {
+      values[key] = value === null || value === undefined ? "" : String(value);
+    }
+    for (const key of SPOKEN) values[key] ??= "";
+
     try {
-      return t(messageKey(event.verb) as "taskCompleted", {
-        title: metadata.title ?? "",
-        status: metadata.status ?? "",
-        to: metadata.to ?? "",
-        // `member.profileEdited` names whose details moved. Absent on every
-        // other verb, and an unused parameter is harmless -- a *missing* one
-        // throws, which is what the catch below would turn into "made a
-        // change".
-        name: metadata.name ?? "",
-      });
+      return t(messageKey(event.verb) as "taskCompleted", values);
     } catch {
+      // A verb with no entry at all. Still renders a sensible line rather than
+      // the key itself, which is what a missing entry would otherwise show.
       return t("unknown");
     }
   };

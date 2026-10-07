@@ -49,6 +49,11 @@ export type CurrentUser = {
     locale: "en" | "fr" | null;
     /** Null until they have been shown around. The shell reads this. */
     tourCompletedAt: Date | null;
+    /**
+     * Somebody else chose their password and they have not replaced it yet.
+     * `requireUser()` holds them at `/new-password` while this is true.
+     */
+    mustChangePassword: boolean;
   };
   membership: {
     role: Actor["role"];
@@ -216,6 +221,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       avatarUrl: row.user.avatarUrl,
       locale: row.user.locale,
       tourCompletedAt: row.user.tourCompletedAt,
+      mustChangePassword: row.user.mustChangePassword,
     },
     membership: {
       role: current.role,

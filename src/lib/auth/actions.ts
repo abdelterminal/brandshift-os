@@ -323,6 +323,11 @@ export async function changePassword(
     .set({
       passwordHash: await hashPassword(parsed.data.newPassword),
       passwordChangedAt: changedAt,
+      // They have now chosen their own, which is the whole requirement -- so
+      // whatever an admin set for them stops being outstanding. Cleared here
+      // and when a reset or invite link is spent; nowhere else sets a password
+      // its owner picked.
+      mustChangePassword: false,
       updatedAt: changedAt,
     })
     .where(eq(users.id, person.id));

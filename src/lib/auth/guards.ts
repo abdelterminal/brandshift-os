@@ -1,6 +1,9 @@
 import "server-only";
 
+import { getLocale } from "next-intl/server";
 import { forbidden, unauthorized } from "next/navigation";
+
+import { redirect } from "@/i18n/navigation";
 
 import { can, type Action, type Resource } from "../authz";
 import { getCurrentUser, type CurrentUser } from "./session";
@@ -50,6 +53,24 @@ export const REAUTH_WINDOW_MS = 15 * 60 * 1000;
 export async function requireUser(): Promise<CurrentUser> {
   const session = await getCurrentUser();
   if (!session) unauthorized();
+
+  /*
+    A password somebody else chose gets replaced before anything else happens.
+
+    Here rather than in the app layout so it covers every page that asks who
+    you are -- the shell, the print routes, anything added later -- instead of
+    one group that a future route could be added outside of. It is a gate on
+    pages, not on the session: they are signed in, and `/new-password` reads
+    that session to know whose password to change.
+
+    That page must therefore not call this function, or it would send itself in
+    a circle. It calls `getCurrentUser()` directly, which is the only caller
+    that legitimately does.
+  */
+  if (session.user.mustChangePassword) {
+    redirect({ href: "/new-password", locale: await getLocale() });
+  }
+
   return session;
 }
 

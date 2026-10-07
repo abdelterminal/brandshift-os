@@ -150,6 +150,34 @@ test("the link sets a new password and signs them in", async ({ page, browser })
   await old.close();
 });
 
+/**
+ * Sign in with a password an admin chose, which never lands straight in the
+ * app: `mustChangePassword` holds them at `/new-password` until they pick
+ * their own. Returns once they are actually through to Today.
+ */
+async function signInAndChoosePassword(
+  page: Page,
+  email: string,
+  temporary: string,
+  chosen: string,
+) {
+  await page.goto("/en/login");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password", { exact: true }).fill(temporary);
+  await page.getByRole("button", { name: "Sign in" }).click();
+
+  await page.waitForURL("**/en/new-password");
+  await expect(page.getByRole("heading", { name: "Choose your own password" })).toBeVisible();
+
+  await page.getByLabel("Current password").fill(temporary);
+  await page.getByLabel("New password", { exact: true }).fill(chosen);
+  await page.getByLabel("Confirm new password").fill(chosen);
+  await page.getByRole("button", { name: "Set password and continue" }).click();
+
+  // The page re-runs its own guard once the flag is gone and lets them past.
+  await page.waitForURL("**/en/today");
+}
+
 test("an admin sets a password directly, and that is the one that works", async ({
   page,
   browser,
@@ -163,14 +191,12 @@ test("an admin sets a password directly, and that is the one that works", async 
   // spell out -- see `generateTempPassword`.
   expect(password).toMatch(/^[acdefghjkmnpqrtuvwxy34679]{3}(-[acdefghjkmnpqrtuvwxy34679]{3}){3}$/);
 
-  // The whole point: that string is the password now.
+  // The whole point: that string is the password now -- and it gets them only
+  // as far as choosing their own, which is the point of the one after that.
+  const chosen = "oscar-picked-this-one";
   const context = await browser.newContext(anonymous);
   const theirs = await context.newPage();
-  await theirs.goto("/en/login");
-  await theirs.getByLabel("Email").fill(email);
-  await theirs.getByLabel("Password", { exact: true }).fill(password);
-  await theirs.getByRole("button", { name: "Sign in" }).click();
-  await theirs.waitForURL("**/en/today");
+  await signInAndChoosePassword(theirs, email, password, chosen);
 
   // And the seeded one is not, so this replaced rather than added.
   const old = await browser.newContext(anonymous);
@@ -215,18 +241,54 @@ test("a never-accepted invitation can be turned into a working account", async (
   // The whole point: they can actually get in, and stay in.
   const context = await browser.newContext(anonymous);
   const theirs = await context.newPage();
-  await theirs.goto("/en/login");
-  await theirs.getByLabel("Email").fill(email);
-  await theirs.getByLabel("Password", { exact: true }).fill(password);
-  await theirs.getByRole("button", { name: "Sign in" }).click();
+  await signInAndChoosePassword(theirs, email, password, "pending-picked-this");
 
-  // Landing on Today is not enough on its own -- the old bug got this far too,
+  // Reaching Today is not enough on its own -- the old bug got this far too,
   // then bounced on the next request. So move again and check we are still in.
-  await theirs.waitForURL("**/en/today");
   await theirs.goto("/en/people");
   await expect(theirs.getByRole("heading", { name: "People", level: 1 })).toBeVisible();
 
   await context.close();
+});
+
+test("a password an admin chose cannot be kept", async ({ page, browser }) => {
+  const email = "marc.dubois@brandshift.test";
+
+  await openPerson(page, "Marc Dubois");
+  const password = await readNewPassword(page);
+
+  const context = await browser.newContext(anonymous);
+  const theirs = await context.newPage();
+  await theirs.goto("/en/login");
+  await theirs.getByLabel("Email").fill(email);
+  await theirs.getByLabel("Password", { exact: true }).fill(password);
+  await theirs.getByRole("button", { name: "Sign in" }).click();
+  await theirs.waitForURL("**/en/new-password");
+
+  // Not a suggestion: every other page sends them back here, because
+  // `requireUser()` is the thing doing the sending.
+  for (const path of ["/en/today", "/en/people", "/en/settings"]) {
+    await theirs.goto(path);
+    await expect(theirs).toHaveURL(/\/en\/new-password$/);
+  }
+
+  // And the admin's copy dies the moment their own is set.
+  const chosen = "marc-chose-this-himself";
+  await theirs.getByLabel("Current password").fill(password);
+  await theirs.getByLabel("New password", { exact: true }).fill(chosen);
+  await theirs.getByLabel("Confirm new password").fill(chosen);
+  await theirs.getByRole("button", { name: "Set password and continue" }).click();
+  await theirs.waitForURL("**/en/today");
+  await context.close();
+
+  const stale = await browser.newContext(anonymous);
+  const stalePage = await stale.newPage();
+  await stalePage.goto("/en/login");
+  await stalePage.getByLabel("Email").fill(email);
+  await stalePage.getByLabel("Password", { exact: true }).fill(password);
+  await stalePage.getByRole("button", { name: "Sign in" }).click();
+  await expect(stalePage).not.toHaveURL(/\/(today|new-password)$/);
+  await stale.close();
 });
 
 test("somebody whose access is suspended is told so, not signed out", async ({ page, browser }) => {

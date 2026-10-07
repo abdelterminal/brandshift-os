@@ -160,6 +160,10 @@ export async function spendToken(
         // Every existing session is refused from here, which matters most for a
         // reset: whoever was signed in with the old password is signed out.
         passwordChangedAt: new Date(),
+        // Chosen by its owner, so any outstanding "replace the one an admin
+        // gave you" is satisfied -- arriving here by link is one of the two
+        // ways to do that.
+        mustChangePassword: false,
         updatedAt: new Date(),
       })
       .where(eq(users.id, check.userId));

@@ -55,6 +55,22 @@ export const users = pgTable(
       .defaultNow(),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
     /**
+     * Somebody else chose this password; its owner has to replace it.
+     *
+     * Set by `resetMemberPassword`, where an admin sets a password and reads it
+     * aloud. Without this the admin keeps a working password indefinitely,
+     * because nothing ever obliges the person to pick their own -- and the
+     * admin's copy is the whole point of that feature, so it cannot simply be
+     * trusted to go stale.
+     *
+     * Cleared the moment they choose one, by either route that sets a password
+     * they picked themselves: `changePassword` and spending an invite or reset
+     * token. `requireUser()` sends them to `/new-password` until then, so it
+     * gates pages rather than the session -- they are signed in, just not
+     * anywhere else yet.
+     */
+    mustChangePassword: boolean("must_change_password").notNull().default(false),
+    /**
      * When this person finished the guided tour, or dismissed it.
      *
      * On the user rather than in `localStorage`, because "have I been shown

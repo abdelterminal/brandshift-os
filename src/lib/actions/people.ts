@@ -585,6 +585,10 @@ export async function resetMemberPassword(
         // Refuses every session created before now, the same way spending a
         // reset token does -- belt as well as the braces below.
         passwordChangedAt: now,
+        // Somebody else chose this one. They are made to replace it before
+        // they can reach anything, which is what stops the copy read out here
+        // from working forever.
+        mustChangePassword: true,
         updatedAt: now,
       })
       .where(eq(users.id, parsed.data.userId));

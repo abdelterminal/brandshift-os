@@ -99,16 +99,6 @@ from the code once the route is dark:
   the Outbox becomes the way to find out which addresses exist). Both are still implemented
   and still commented in `requestReset`; the tests went when the only entry point to them
   did, and that spec now covers the admin path instead. Put them back with the route.
-- **A directly-set password is not forced to be changed.** `resetMemberPassword` sets a new
-  password and shows it to the admin once; nothing then obliges its owner to replace it. So
-  whoever ran the reset knows a working password for that account until the person changes it
-  of their own accord, and may never be prompted to. Asked for and declined deliberately, to
-  keep a schema migration out of that change: closing it wants a `must_change_password`
-  boolean on `users`, a gate in the auth path, and the existing "Choose a new password" screen
-  reused for a signed-in person rather than a token holder. The card and the in-app notice both
-  say to change it in the meantime, which is persuasion, not enforcement. Worth noting this
-  grants an admin nothing new -- the reset *link* already lands in an Outbox every admin can
-  read -- so the gap is the lingering copy, not the capability.
 - **The one-live-token rule only guards the public path.** `requestReset` enforces a
   five-minute cooldown via `recentResetFor`; `sendPasswordReset` calls `createToken`
   directly and has no equivalent, so an admin pressing the button repeatedly mints a live
@@ -146,7 +136,6 @@ section below.
 
 | Thing | Why |
 |---|---|
-| Fifteen activity verbs read as "made a change" | `ActivityFeed` turns a verb into a message key (`task.completed` → `taskCompleted`) and falls back to `Activity.unknown` when the catalogue has no entry. Fifteen verbs that are genuinely recorded have no entry, so the feed prints the fallback instead of a sentence: `channel.joinRequested` / `joinApproved` / `joinDeclined`, `department.renamed`, `member.passwordResetSent`, `objective.created`, `project.clientChanged`, `project.completed`, `review.published`, `sop.created`, `sop.reviewed`, `task.cancelled`, `task.reopened`, `task.updated`, `template.created`. The fallback is deliberate -- a missing key would otherwise render as the key itself -- so nothing is broken, it is just mute. Each one needs an `Activity` string in `en` and `fr`; `describe()` already passes `title`, `status`, `to` and `name`, so anything needing a different placeholder needs that added alongside. Found by walking every `verb: "..."` in `src/` against the catalogue, which is also how a sixteenth would be found. |
 | There is no `apple-icon.png` | `icon.svg` covers the browser-tab favicon for every evergreen browser (full vector, `mediast-icon.svg`), but an iOS home-screen bookmark wants a rasterized PNG, and this environment has no SVG-to-raster tool (no `sharp`, no ImageMagick, no `rsvg-convert`). Drop a 512×512 PNG export of `public/brand/mediast-icon.svg` at `src/app/apple-icon.png` -- Next's file convention picks it up and links it automatically, no code change needed. |
 | The working day is hard-coded | `DayRibbon` (`src/components/today/day-ribbon.tsx`) draws 09:00–18:00 with lunch 13:00–14:00, which is Mediast's day as the owner gave it. In a multi-tenant app that is one tenant's hours compiled into a component: right here, wrong for the next organization. It wants four columns on `organizations` (day start, day end, break start, break end) and a Settings field, at which point the constants become props. Same shape of shortcut as `organizationToday()`'s default timezone in `src/lib/data/tasks.ts`. |
 | A contact cannot be archived, or edited | The same half-finished shape companies had until this pass: `contacts.archivedAt` exists and `listContacts` already filters it out, but nothing ever writes it, and a contact's name, email, phone and job title are write-once. Companies now have both (`editCompany` / `archiveCompanyAction`, with `EditCompanyDialog` and `ArchiveCompanyControl`); contacts were left out because they have no detail page to hang the controls on -- they exist only as rows on `/crm/contacts` and inside a company -- so it wants a row-level edit dialog and an archive toggle beside it. |
