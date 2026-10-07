@@ -136,6 +136,13 @@ test("reporting a blocker demands a reason and then shows it", async ({ page }) 
   await page.getByRole("tab", { name: "Tasks" }).click();
 
   await page.getByRole("button", { name: "Open task" }).first().click();
+
+  // Held on to so the last assertion can name the task it blocked, rather
+  // than settling for "a Blocked lane exists".
+  const drawer = page.getByRole("dialog");
+  const title = (await drawer.getByRole("heading").first().innerText()).trim();
+  expect(title).not.toBe("");
+
   await page.getByRole("button", { name: "Report blocker" }).click();
 
   // "Blocked" with no reason is not information anyone can act on, which is
@@ -150,8 +157,20 @@ test("reporting a blocker demands a reason and then shows it", async ({ page }) 
 
   await expect(page.getByRole("dialog")).toBeHidden();
 
-  // It now shows up where a coordinator will find it.
-  await page.goto("/en/today");
-  const blocked = page.locator("div").filter({ hasText: /^Blocked/ }).first();
-  await expect(blocked).toBeVisible();
+  // It now shows up where a coordinator will find it, named rather than
+  // merely counted.
+  //
+  // Asserted on the uncapped bucket page rather than Today's own lane, for a
+  // reason the previous version of this test never had to care about: Today
+  // truncates a column past eight rows behind "View all", the seed already
+  // puts six in Blocked, and `board.spec` and `inbox.spec` both block tasks
+  // of their own before this file runs -- so by here the lane is at or past
+  // its cap and this task is not guaranteed to be on screen. The bucket page
+  // is the same query without the limit, which makes it the honest place to
+  // ask whether the blocker was recorded at all.
+  await page.goto("/en/work/queue?bucket=blocked");
+  await expect(page.getByRole("heading", { name: "Blocked" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Open task" }).filter({ hasText: title }),
+  ).toBeVisible();
 });

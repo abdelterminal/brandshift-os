@@ -15,10 +15,19 @@ test("an overdue task reads as late without waiting for someone to mark it block
 }) => {
   await page.goto("/en/today");
 
-  const overdue = page.locator("div").filter({ hasText: /^Overdue/ }).first();
+  // Scoped by the column's own card rather than by text: the lane header puts
+  // its count badge before the heading, so a `hasText: /^Overdue/` filter
+  // matches the heading's wrapper -- which holds the title and description and
+  // none of the rows -- instead of the column.
+  const overdue = page
+    .locator('[data-slot="card"]')
+    .filter({ has: page.getByRole("heading", { name: "Overdue" }) });
+
   // The overdue band is seeded `in_progress`, never `blocked` -- so this text
   // existing at all is the fix: before it, only a `blocked` task's date ever
-  // read in anything but a plain "d MMM".
+  // read in anything but a plain "d MMM". It is always within the window
+  // `dueDateLabel` spells out in days, because `planTask` seeds that band at
+  // `-randomInt(1, 6)`.
   await expect(overdue.getByText(/\d+ days? late/).first()).toBeVisible();
 });
 

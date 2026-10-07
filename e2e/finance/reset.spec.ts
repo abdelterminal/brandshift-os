@@ -1,15 +1,20 @@
 import { expect, test, type Page } from "@playwright/test";
 
 /**
- * Password reset.
+ * Password reset, by the only route that exists.
  *
- * The last piece of a chain whose other parts were built with invitations: the
- * token, the transport, and the screen that spends one. This is the form that
- * mints one, and it is the only unauthenticated action in the app that writes
- * anything -- which is what most of these tests are about.
+ * These tests used to drive the public `/forgot` form. That form is asleep --
+ * `ForgotPage` short-circuits to `/login`, and the login footer says to ask an
+ * admin instead -- so every test here now follows the path that actually
+ * ships: an admin sends a one-time link from somebody's own page, it is
+ * written to the outbox in full, and whoever can read the outbox passes it on.
+ * `ForgotForm` and `requestReset` behind it are untouched and still wired, so
+ * re-enabling self-service is a revert of one redirect; the day that happens,
+ * the enumeration-resistance tests this file used to carry (one answer for
+ * every address, a stranger's request writing nothing) come back with it.
  *
- * In the `finance` project because reading the outbox needs an admin; the
- * public half of each test uses an explicitly anonymous context.
+ * In the `finance` project because both halves need an admin: sending the
+ * link, and reading the outbox it lands in.
  */
 
 const main = (page: Page) => page.locator("#main");
@@ -17,83 +22,89 @@ const main = (page: Page) => page.locator("#main");
 /** No session at all -- `browser.newContext()` alone inherits the project's. */
 const anonymous = { storageState: { cookies: [], origins: [] } };
 
-test("the form is reachable without a session", async ({ browser }) => {
-  const context = await browser.newContext(anonymous);
-  const page = await context.newPage();
+/** The one card on a person's page that sends a link, found by its heading. */
+function resetCard(page: Page) {
+  return main(page)
+    .locator('[data-slot="card"]')
+    .filter({ has: page.getByRole("heading", { name: "Reset password" }) });
+}
 
-  // It was not, at first: `/forgot` was missing from the public paths, so the
-  // one screen for people who cannot sign in redirected them to sign in.
-  await page.goto("/en/login");
-  await page.getByRole("link", { name: /Forgotten/ }).click();
+/** Open somebody's page from the directory, the way an admin would reach it. */
+async function openPerson(page: Page, name: string) {
+  await page.goto("/en/people");
+  await main(page).getByRole("link", { name }).first().click();
+  await expect(page.getByRole("heading", { name, level: 1 })).toBeVisible();
+}
 
-  await expect(page).toHaveURL(/\/en\/forgot$/);
-  await expect(page.getByRole("heading", { name: "Reset your password" })).toBeVisible();
+/** Send a reset from that person's page and wait for it to be acknowledged. */
+async function sendReset(page: Page, name: string) {
+  await openPerson(page, name);
 
-  await context.close();
-});
+  const card = resetCard(page);
+  await expect(card).toBeVisible();
+  await card.getByRole("button", { name: "Send reset link" }).click();
+  await expect(card.getByRole("status")).toContainText("Sent");
+}
 
-test("says the same thing whether or not the address exists", async ({ browser }) => {
-  const real = await browser.newContext(anonymous);
-  const stranger = await browser.newContext(anonymous);
-
-  const known = await real.newPage();
-  await known.goto("/en/forgot");
-  await known.getByLabel("Email").fill("lukas.weber@brandshift.test");
-  await known.getByRole("button", { name: "Send the link" }).click();
-  const first = await known.getByRole("status").innerText();
-
-  const unknown = await stranger.newPage();
-  await unknown.goto("/en/forgot");
-  await unknown.getByLabel("Email").fill("nobody-at-all@example.com");
-  await unknown.getByRole("button", { name: "Send the link" }).click();
-  const second = await unknown.getByRole("status").innerText();
-
-  // Word for word. A reset form that says "no such account" hands back
-  // everything sign-in refuses to give.
-  expect(first).toBe(second);
-
-  await real.close();
-  await stranger.close();
-});
-
-test("a stranger's request writes nothing at all", async ({ page, browser }) => {
-  const context = await browser.newContext(anonymous);
-  const stranger = await context.newPage();
-
-  await stranger.goto("/en/forgot");
-  await stranger.getByLabel("Email").fill("definitely-nobody@example.com");
-  await stranger.getByRole("button", { name: "Send the link" }).click();
-  await expect(stranger.getByRole("status")).toBeVisible();
-  await context.close();
-
-  // Not even a queued row: otherwise the outbox itself becomes the way to find
-  // out which addresses are real.
+/** The link itself, read out of the outbox exactly as an admin would. */
+async function linkFromOutbox(page: Page, email: string): Promise<string> {
   await page.goto("/en/settings");
-  await expect(main(page).getByText("definitely-nobody@example.com")).toHaveCount(0);
-});
 
-test("the link sets a new password and signs them in", async ({ page, browser }) => {
-  const email = "yusuf.karim@brandshift.test";
-
-  const asking = await browser.newContext(anonymous);
-  const asker = await asking.newPage();
-  await asker.goto("/en/forgot");
-  await asker.getByLabel("Email").fill(email);
-  await asker.getByRole("button", { name: "Send the link" }).click();
-  await expect(asker.getByRole("status")).toBeVisible();
-  await asking.close();
-
-  // Read the link out of the outbox, exactly as an admin on a LAN would.
-  await page.goto("/en/settings");
   const row = main(page).locator("li", { hasText: email }).first();
   await row.getByRole("button", { name: "Show message" }).click();
   // The body renders on a state change, so reading the row straight after the
   // click can beat React to it.
   await expect(row.locator("pre")).toBeVisible();
 
-  const match = (await row.innerText()).match(/https?:\/\/[^\s]+\/en\/reset\/[A-Za-z0-9_-]+/);
+  // Either locale: the message is written in the *recipient's* language, and
+  // some of the cast are seeded `fr`. Looking only for `/en/` used to fail
+  // here, which was the locale feature working rather than a bug.
+  const match = (await row.innerText()).match(
+    /https?:\/\/[^\s]+\/(?:en|fr)\/reset\/[A-Za-z0-9_-]+/,
+  );
   expect(match, "the reset body should carry a link").not.toBeNull();
-  const link = match![0].replace(/:\d+/, `:${new URL(page.url()).port}`);
+
+  // The seeded origin is not the port this suite runs on.
+  return match![0].replace(/:\d+/, `:${new URL(page.url()).port}`);
+}
+
+test("self-service is asleep, and says so rather than 404ing", async ({ browser }) => {
+  const context = await browser.newContext(anonymous);
+  const page = await context.newPage();
+
+  // `/forgot` is still a public path -- it has to be, it is reached by
+  // somebody who cannot sign in -- so this is a redirect, not a refusal.
+  await page.goto("/en/forgot");
+  await expect(page).toHaveURL(/\/en\/login$/);
+
+  // And the screen they land on tells them what to actually do, instead of
+  // leaving them on a sign-in form with no way forward.
+  await expect(
+    page.getByText("Forgotten your password? Ask an admin to send you a reset link."),
+  ).toBeVisible();
+
+  // No public form anywhere on it: this is what used to be driven here.
+  await expect(page.getByRole("button", { name: "Send the link" })).toHaveCount(0);
+
+  await context.close();
+});
+
+test("an admin sends a link, and it is written to the outbox in full", async ({ page }) => {
+  const email = "claire.moreau@brandshift.test";
+
+  await sendReset(page, "Claire Moreau");
+
+  // The acknowledgement points at the outbox because that is genuinely where
+  // it went -- nothing is delivered on this deployment.
+  const link = await linkFromOutbox(page, email);
+  expect(link).toMatch(/\/reset\/[A-Za-z0-9_-]+$/);
+});
+
+test("the link sets a new password and signs them in", async ({ page, browser }) => {
+  const email = "yusuf.karim@brandshift.test";
+
+  await sendReset(page, "Yusuf Karim");
+  const link = await linkFromOutbox(page, email);
 
   const context = await browser.newContext(anonymous);
   const resetting = await context.newPage();
@@ -119,52 +130,43 @@ test("the link sets a new password and signs them in", async ({ page, browser })
   await old.close();
 });
 
-test("asking twice in a row does not queue a second message", async ({ page, browser }) => {
-  const email = "claire.moreau@brandshift.test";
-
-  const context = await browser.newContext(anonymous);
-  const asker = await context.newPage();
-
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    await asker.goto("/en/forgot");
-    await asker.getByLabel("Email").fill(email);
-    await asker.getByRole("button", { name: "Send the link" }).click();
-    await expect(asker.getByRole("status")).toBeVisible();
-  }
-  await context.close();
-
-  // One live token per person, so nobody can fill an inbox by holding down a
-  // button. There is still no rate limiting -- the standing gap -- and this is
-  // what stops the obvious abuse in the meantime.
-  await page.goto("/en/settings");
-  await expect(main(page).locator("li", { hasText: email })).toHaveCount(1);
-});
-
 test("a reset link cannot be spent as an invitation", async ({ page, browser }) => {
   const email = "nadia.haddad@brandshift.test";
 
-  const context = await browser.newContext(anonymous);
-  const asker = await context.newPage();
-  await asker.goto("/en/forgot");
-  await asker.getByLabel("Email").fill(email);
-  await asker.getByRole("button", { name: "Send the link" }).click();
-  await expect(asker.getByRole("status")).toBeVisible();
-
-  await page.goto("/en/settings");
-  const row = main(page).locator("li", { hasText: email }).first();
-  await row.getByRole("button", { name: "Show message" }).click();
-  // The body renders on a state change, so reading the row straight after the
-  // click can beat React to it.
-  await expect(row.locator("pre")).toBeVisible();
-  // Either locale: the message is written in the *recipient's* language, and
-  // this one is seeded as `fr`. Looking only for `/en/` failed here, which was
-  // the locale feature working rather than a bug.
-  const token = (await row.innerText()).match(/\/(?:en|fr)\/reset\/([A-Za-z0-9_-]+)/)?.[1];
+  await sendReset(page, "Nadia Haddad");
+  const link = await linkFromOutbox(page, email);
+  const token = link.match(/\/reset\/([A-Za-z0-9_-]+)$/)?.[1];
   expect(token).toBeTruthy();
 
+  const context = await browser.newContext(anonymous);
+  const spender = await context.newPage();
+
   // The purpose is checked against the token, not taken from the URL.
-  await asker.goto(`/en/accept/${token}`);
-  await expect(asker.getByRole("heading", { name: "That link is not valid" })).toBeVisible();
+  await spender.goto(`/en/accept/${token}`);
+  await expect(spender.getByRole("heading", { name: "That link is not valid" })).toBeVisible();
 
   await context.close();
+});
+
+test("an admin is offered nothing at all on an owner's page", async ({ page }) => {
+  // The sharpest of the owner guards: the reset link is written to the outbox
+  // every admin can read, so an admin who could send one for an owner could
+  // set themselves a password for the most privileged account in the
+  // organization -- straight around the fence on changing an owner's email.
+  // `sendPasswordReset` refuses it, and the control is not drawn either, so
+  // the two cannot disagree.
+  await openPerson(page, "Amina Benali");
+
+  await expect(resetCard(page)).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Send reset link" })).toHaveCount(0);
+
+  // The rest of the admin panel stands down on an owner for the same reason.
+  for (const heading of [
+    "Change role and access",
+    "Edit details",
+    "Change sign-in email",
+    "Suspend access",
+  ]) {
+    await expect(page.getByRole("heading", { name: heading })).toHaveCount(0);
+  }
 });
