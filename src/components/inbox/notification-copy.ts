@@ -46,6 +46,10 @@ export function notificationHref(
 ): string {
   if (item.subjectType === "meeting") return `/calendar/${item.subjectId}`;
   if (item.subjectType === "leave") return "/leave";
+  // Something was done to your own account -- your email moved, your details
+  // were corrected, your access changed. Your profile is where you can see
+  // what it now says; Today, the fallback below, shows none of it.
+  if (item.subjectType === "user") return "/profile";
   if (item.subjectType === "channel" && item.channelSlug) return `/channels/${item.channelSlug}`;
   if (item.projectKey && item.taskId) return `/work/${item.projectKey}?task=${item.taskId}`;
   if (item.projectKey) return `/work/${item.projectKey}`;
