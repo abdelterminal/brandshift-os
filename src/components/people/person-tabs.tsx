@@ -4,6 +4,11 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import {
+  ChangeMemberEmailCard,
+  EditMemberProfileCard,
+  SuspendMemberCard,
+} from "@/components/people/member-admin-controls";
 import { StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,15 +41,19 @@ export function PersonTabs({
   viewer,
   projects,
   canEditRole,
+  admin,
   isSelf,
   activity,
 }: {
   person: {
     userId: string;
+    name: string;
+    email: string;
     role: Role;
     permissions: ModulePermissions;
     departmentId: string | null;
     jobTitle: string | null;
+    suspended: boolean;
   };
   openCount: number;
   overdueCount: number;
@@ -56,6 +65,12 @@ export function PersonTabs({
   viewer: TaskDrawerViewer;
   projects: Array<{ id: string; key: string; name: string; status: keyof typeof PROJECT_STATUS_TONE }>;
   canEditRole: boolean;
+  /**
+   * Which admin controls the server decided this viewer may see. Three flags
+   * rather than one, because `authz.ts` answers them separately and collapsing
+   * them here would let the UI show a control the action then refuses.
+   */
+  admin: { editProfile: boolean; changeEmail: boolean; suspend: boolean };
   isSelf: boolean;
   activity: React.ReactNode;
 }) {
@@ -131,10 +146,26 @@ export function PersonTabs({
           </Card>
         </div>
 
-        {canEditRole ? (
+        {/*
+          The admin section. Every card below acts on somebody *else's*
+          account, which is why the whole block stands down on your own page:
+          your name and job title belong to Settings in the avatar menu (the
+          design rule keeps profile in exactly one place), suspending yourself
+          is refused server-side anyway, and moving your own address here would
+          revoke the session you are reading this with.
+        */}
+        {canEditRole || (!isSelf && (admin.editProfile || admin.changeEmail || admin.suspend)) ? (
           <div className="mt-4 flex flex-col gap-4">
-            <RoleEditor person={person} isSelf={isSelf} />
-            {isSelf ? null : <ResetPasswordCard userId={person.userId} />}
+            {canEditRole ? <RoleEditor person={person} isSelf={isSelf} /> : null}
+
+            {isSelf ? null : (
+              <>
+                {admin.editProfile ? <EditMemberProfileCard person={person} /> : null}
+                {canEditRole ? <ResetPasswordCard userId={person.userId} /> : null}
+                {admin.changeEmail ? <ChangeMemberEmailCard person={person} /> : null}
+                {admin.suspend ? <SuspendMemberCard person={person} /> : null}
+              </>
+            )}
           </div>
         ) : null}
       </TabsPanel>

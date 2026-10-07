@@ -49,6 +49,11 @@ export async function ActivityFeed({ events }: { events: ActivityRow[] }) {
         title: metadata.title ?? "",
         status: metadata.status ?? "",
         to: metadata.to ?? "",
+        // `member.profileEdited` names whose details moved. Absent on every
+        // other verb, and an unused parameter is harmless -- a *missing* one
+        // throws, which is what the catch below would turn into "made a
+        // change".
+        name: metadata.name ?? "",
       });
     } catch {
       return t("unknown");

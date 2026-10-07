@@ -11,6 +11,7 @@ import { requirePermissionForAction } from "@/lib/auth/guards";
 import { findMembershipsForUser } from "@/db/tenancy";
 import { recordActivity } from "@/lib/data/activity";
 import { getPerson } from "@/lib/data/people";
+import { mayActOnTarget } from "@/lib/member-guards";
 import { resetMessage } from "@/lib/mail/templates";
 import { flush, queue } from "@/lib/mail/transport";
 
@@ -124,6 +125,14 @@ export async function sendPasswordReset(userId: string): Promise<ResetResult> {
 
   const person = await getPerson(session.actor, parsedId.data);
   if (!person) return { ok: true };
+
+  // An owner's account is an owner's business, the same rule the rest of the
+  // admin panel applies. This one matters most of all: the reset link is
+  // written to the outbox, which every admin can already read, so without this
+  // an admin could issue themselves a password for the owner's account and
+  // walk straight around the fence on `changeMemberEmail`. Silent, like every
+  // other refusal in this file.
+  if (!mayActOnTarget(person.role, session.actor.role)) return { ok: true };
 
   const token = await createToken(session.actor.organizationId, person.userId, "reset");
 

@@ -308,6 +308,25 @@ export async function revokeOtherSessions(userId: string, keepSessionId: string)
   return revoked.length;
 }
 
+/**
+ * Revoke every session a person has, including the one they are using.
+ *
+ * For acts that change who an account *is* rather than what it can do: their
+ * email being rewritten, or their membership being suspended. A live token
+ * issued before either of those should not outlive it, so this keeps no
+ * exception -- unlike `revokeOtherSessions`, which is somebody signing
+ * themselves out elsewhere and keeping the tab they are holding.
+ */
+export async function revokeAllSessions(userId: string): Promise<number> {
+  const revoked = await db
+    .update(sessions)
+    .set({ revokedAt: new Date() })
+    .where(and(eq(sessions.userId, userId), isNull(sessions.revokedAt)))
+    .returning({ id: sessions.id });
+
+  return revoked.length;
+}
+
 /** Mark the current session as freshly re-authenticated. */
 export async function markReauthenticated(sessionId: string): Promise<void> {
   await db

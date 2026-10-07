@@ -95,6 +95,9 @@ export type Action =
   | "review.manage"
   | "member.invite"
   | "member.editRole"
+  | "member.editProfile"
+  | "member.changeEmail"
+  | "member.suspend"
   | "organization.switch"
   | "organization.editSettings";
 
@@ -289,6 +292,21 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
 
   "member.invite": (actor) => atLeast(actor, "admin") || hasModule(actor, "people"),
   "member.editRole": (actor) => atLeast(actor, "admin"),
+
+  /*
+    Editing somebody else's account. Admin and up only -- deliberately without
+    the `people` module escape `member.invite` allows, because inviting someone
+    creates an account nobody was using and these three reach into one that is
+    already in service.
+
+    `member.changeEmail` is the sharp one: email is both the credential people
+    sign in with and where a password reset is sent, so whoever can rewrite it
+    can take an account over. It carries a re-auth check and an owner guard in
+    the action on top of this.
+  */
+  "member.editProfile": (actor) => atLeast(actor, "admin"),
+  "member.changeEmail": (actor) => atLeast(actor, "admin"),
+  "member.suspend": (actor) => atLeast(actor, "admin"),
 
   "organization.switch": () => true,
   "organization.editSettings": (actor) => atLeast(actor, "admin"),

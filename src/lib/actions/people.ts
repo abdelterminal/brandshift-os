@@ -8,8 +8,14 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { departments, memberships, users, type ModulePermissions } from "@/db/schema/people";
 import { withOrg } from "@/db/tenancy";
-import { requirePermissionForAction } from "@/lib/auth/guards";
+import {
+  ReauthRequiredError,
+  requirePermissionForAction,
+  requireRecentAuth,
+} from "@/lib/auth/guards";
+import { revokeAllSessions } from "@/lib/auth/session";
 import { recordActivity } from "@/lib/data/activity";
+import { guardSuspend, mayActOnTarget } from "@/lib/member-guards";
 import { createToken } from "@/lib/auth/tokens";
 import { inviteMessage } from "@/lib/mail/templates";
 import { flush, queue } from "@/lib/mail/transport";
@@ -218,6 +224,256 @@ export async function updateMemberRole(
     subjectType: "user",
     subjectId: parsed.data.userId,
     metadata: { from: target.role, to: parsed.data.role, permissions: parsed.data.permissions },
+  });
+
+  const locale = await getLocale();
+  revalidatePath(`/${locale}/people`);
+  revalidatePath(`/${locale}/people/${parsed.data.userId}`);
+  return { ok: true };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Acting on somebody else's account                                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Whoever is being acted on, with the two facts every guard below needs.
+ * Scoped by `withOrg`, so a user id from another tenant simply is not found.
+ */
+async function findTarget(organizationId: string, userId: string) {
+  const [row] = await withOrg(organizationId).selectFields(
+    memberships,
+    { role: memberships.role, status: memberships.status, userId: memberships.userId },
+    eq(memberships.userId, userId),
+  );
+  return row ?? null;
+}
+
+/**
+ * Exactly the rule `updateMemberRole` applies: an owner is an owner's business.
+ * The rule itself lives in `lib/member-guards.ts`, where it can be tested
+ * without a database -- see that file's own note.
+ */
+const ownerGuard = mayActOnTarget;
+
+/**
+ * `requireRecentAuth()` as a result rather than a throw.
+ *
+ * The guard signals a lapsed re-auth window by throwing, which is right for a
+ * page -- the error boundary catches it. From a Server Action it has to come
+ * back as data instead: a rejected promise reaches the client as an opaque
+ * "server error", and the caller needs to tell "prove your password" apart
+ * from "something broke" in order to show the prompt. Same shape
+ * `revokeDevice` already uses in `lib/auth/actions.ts`; only the error-string
+ * wrapper differs.
+ */
+async function recentAuthOrRefuse(): Promise<PeopleResult | null> {
+  try {
+    await requireRecentAuth();
+    return null;
+  } catch (error) {
+    if (error instanceof ReauthRequiredError) return { ok: false, error: "reauthRequired" };
+    throw error;
+  }
+}
+
+const memberProfileSchema = z.object({
+  userId: z.uuid(),
+  name: z.string().trim().min(2).max(120),
+  jobTitle: z.string().trim().max(120).optional(),
+});
+
+/**
+ * Fix somebody's name or job title.
+ *
+ * The admin-side twin of `updateProfile`, which only ever reaches the caller's
+ * own row. Routine, so it does not ask for a password -- correcting a typo in a
+ * directory is not the kind of act re-auth exists for, and prompting on
+ * ordinary saves is what taught people at the old app to type their password
+ * without reading the dialog.
+ */
+export async function updateMemberProfile(
+  input: z.input<typeof memberProfileSchema>,
+): Promise<PeopleResult> {
+  const session = await requirePermissionForAction("member.editProfile");
+  const parsed = memberProfileSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "invalid" };
+
+  const target = await findTarget(session.actor.organizationId, parsed.data.userId);
+  if (!target) return { ok: false, error: "notFound" };
+  if (!ownerGuard(target.role, session.actor.role)) {
+    return { ok: false, error: "onlyOwnerCanEditOwner" };
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(users)
+      .set({ name: parsed.data.name, updatedAt: new Date() })
+      .where(eq(users.id, parsed.data.userId));
+
+    await withOrg(session.actor.organizationId, tx).update(
+      memberships,
+      { jobTitle: parsed.data.jobTitle || null, updatedAt: new Date() },
+      eq(memberships.userId, parsed.data.userId),
+    );
+  });
+
+  await recordActivity(session.actor, {
+    verb: "member.profileEdited",
+    subjectType: "user",
+    subjectId: parsed.data.userId,
+    metadata: { name: parsed.data.name },
+  });
+
+  const locale = await getLocale();
+  revalidatePath(`/${locale}/people`);
+  revalidatePath(`/${locale}/people/${parsed.data.userId}`);
+  return { ok: true };
+}
+
+const memberEmailSchema = z.object({
+  userId: z.uuid(),
+  email: z.string().trim().toLowerCase().pipe(z.email()),
+});
+
+/**
+ * Change the address somebody signs in with.
+ *
+ * The most dangerous write in this file, and the reason it is fenced the way it
+ * is: email is both the credential and where a password reset is delivered, so
+ * whoever can rewrite it can take the account. Four things stand in the way --
+ *
+ * 1. `requireRecentAuth()`, so a borrowed session is not enough; the admin has
+ *    to prove the password again. This is the "destructive or sensitive"
+ *    exception CLAUDE.md reserves re-auth for.
+ * 2. An owner's address can only be changed by an owner.
+ * 3. Every session the target holds is revoked. Their identity just moved and
+ *    their tokens should not outlive it.
+ * 4. It is recorded, and the person it happened to is notified in the app --
+ *    see `recipientsFor`. A change nobody can see afterwards is the whole
+ *    attack.
+ *
+ * There is deliberately no confirmation link sent to the new address. That
+ * would be the stronger design, and it is written up in `KNOWN-GAPS.md`: this
+ * deployment sends no mail at all yet, so a link would confirm nothing.
+ */
+export async function changeMemberEmail(
+  input: z.input<typeof memberEmailSchema>,
+): Promise<PeopleResult> {
+  const session = await requirePermissionForAction("member.changeEmail");
+  const lapsed = await recentAuthOrRefuse();
+  if (lapsed) return lapsed;
+
+  const parsed = memberEmailSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "invalid", fieldErrors: { email: "invalid" } };
+
+  const target = await findTarget(session.actor.organizationId, parsed.data.userId);
+  if (!target) return { ok: false, error: "notFound" };
+  if (!ownerGuard(target.role, session.actor.role)) {
+    return { ok: false, error: "onlyOwnerCanEditOwner" };
+  }
+
+  const [current] = await db
+    .select({ email: users.email })
+    .from(users)
+    .where(eq(users.id, parsed.data.userId));
+  if (!current) return { ok: false, error: "notFound" };
+  if (current.email === parsed.data.email) return { ok: true };
+
+  // Checked up front so the answer names the field, rather than surfacing as a
+  // unique-constraint violation. `users.email` is global, not per-tenant, so
+  // this looks across every organization.
+  const [taken] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, parsed.data.email));
+  if (taken) return { ok: false, error: "emailTaken", fieldErrors: { email: "emailTaken" } };
+
+  await db
+    .update(users)
+    .set({ email: parsed.data.email, updatedAt: new Date() })
+    .where(eq(users.id, parsed.data.userId));
+
+  await revokeAllSessions(parsed.data.userId);
+
+  await recordActivity(session.actor, {
+    verb: "member.emailChanged",
+    subjectType: "user",
+    subjectId: parsed.data.userId,
+    metadata: { from: current.email, to: parsed.data.email },
+  });
+
+  const locale = await getLocale();
+  revalidatePath(`/${locale}/people`);
+  revalidatePath(`/${locale}/people/${parsed.data.userId}`);
+  return { ok: true };
+}
+
+const suspendSchema = z.object({ userId: z.uuid(), suspended: z.boolean() });
+
+/**
+ * Take somebody's access away, or give it back.
+ *
+ * Suspension rather than deletion: they have written tasks, comments and
+ * activity, and an account that authored half a project's history cannot be
+ * removed without either destroying that history or orphaning it.
+ *
+ * Nothing in the auth path needed changing for this to bite.
+ * `findMembershipsForUser` already filters `status = 'active'`, and a session
+ * with no membership resolves to nothing -- so a suspended person is refused on
+ * their very next request. Their sessions are revoked as well, so it is
+ * immediate rather than merely inevitable.
+ */
+export async function setMemberSuspended(
+  input: z.input<typeof suspendSchema>,
+): Promise<PeopleResult> {
+  const session = await requirePermissionForAction("member.suspend");
+  const lapsed = await recentAuthOrRefuse();
+  if (lapsed) return lapsed;
+
+  const parsed = suspendSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "invalid" };
+
+  const target = await findTarget(session.actor.organizationId, parsed.data.userId);
+  if (!target) return { ok: false, error: "notFound" };
+
+  const scope = withOrg(session.actor.organizationId);
+
+  // Counted only when the answer could possibly be "last owner": every other
+  // refusal is decided from the two roles alone, and this is a table scan.
+  const ownerCount =
+    parsed.data.suspended && target.role === "owner"
+      ? (
+          await scope.selectFields(
+            memberships,
+            { id: memberships.id },
+            eq(memberships.role, "owner"),
+          )
+        ).length
+      : Number.POSITIVE_INFINITY;
+
+  const refusal = guardSuspend({
+    actorUserId: session.actor.userId,
+    actorRole: session.actor.role,
+    targetUserId: parsed.data.userId,
+    targetRole: target.role,
+    suspended: parsed.data.suspended,
+    ownerCount,
+  });
+  if (refusal) return { ok: false, error: refusal };
+
+  await scope.update(
+    memberships,
+    { status: parsed.data.suspended ? "suspended" : "active", updatedAt: new Date() },
+    eq(memberships.userId, parsed.data.userId),
+  );
+
+  if (parsed.data.suspended) await revokeAllSessions(parsed.data.userId);
+
+  await recordActivity(session.actor, {
+    verb: parsed.data.suspended ? "member.suspended" : "member.reinstated",
+    subjectType: "user",
+    subjectId: parsed.data.userId,
   });
 
   const locale = await getLocale();

@@ -2,17 +2,12 @@
 
 import { Laptop, Smartphone } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
-import { useActionState, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PasswordField } from "@/components/auth/password-field";
-import {
-  confirmPassword,
-  revokeAllOtherDevices,
-  revokeDevice,
-  type FormState,
-} from "@/lib/auth/actions";
+import { ReauthPrompt } from "@/components/auth/reauth-prompt";
+import { revokeAllOtherDevices, revokeDevice, type FormState } from "@/lib/auth/actions";
 import type { DeviceSession } from "@/lib/auth/session";
 
 /**
@@ -151,36 +146,5 @@ export function SessionsPanel({ devices }: { devices: DeviceSession[] }) {
         ) : null}
       </CardContent>
     </Card>
-  );
-}
-
-/** The re-auth window has lapsed; prove the password once and carry on. */
-function ReauthPrompt({ onDone }: { onDone: () => void }) {
-  const t = useTranslations("Auth");
-  const [state, formAction, pending] = useActionState<FormState, FormData>(
-    async (previous, formData) => {
-      const result = await confirmPassword(previous, formData);
-      if (result.ok) onDone();
-      return result;
-    },
-    {},
-  );
-
-  return (
-    <form
-      action={formAction}
-      className="border-border bg-surface-inset rounded-control mt-4 flex flex-col gap-3 border p-3"
-    >
-      <p className="text-label text-fg-default">{t("confirmToContinue")}</p>
-      <PasswordField
-        name="password"
-        label={t("password")}
-        autoComplete="current-password"
-        error={state.error ? t(state.error) : undefined}
-      />
-      <Button type="submit" size="sm" variant="primary" loading={pending} className="w-fit">
-        {t("confirm")}
-      </Button>
-    </form>
   );
 }

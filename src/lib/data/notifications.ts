@@ -222,6 +222,26 @@ async function recipientsFor(
   }
 
   switch (event.verb) {
+    /*
+      Something was done to your account by somebody else.
+
+      These go to the person it happened to, and that is the point rather than a
+      courtesy: an administrator rewriting the address somebody signs in with is
+      how an account gets taken over, and the defence is that it cannot be done
+      quietly. No mail leaves this deployment yet, so this in-app notice is the
+      only way they find out -- see `KNOWN-GAPS.md`.
+    */
+    case "member.emailChanged":
+    case "member.suspended":
+    case "member.reinstated":
+    case "member.profileEdited": {
+      // `subjectId` is the member acted on: the three actions in
+      // `src/lib/actions/people.ts` that emit these verbs are the only
+      // writers, and each records the target's user id.
+      recipients.add(event.subjectId);
+      break;
+    }
+
     // Being given work is the one thing everybody wants to hear about.
     case "task.assigned": {
       const assignee = event.metadataAssignee ?? (await taskAssignee());
