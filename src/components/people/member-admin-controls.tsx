@@ -343,7 +343,7 @@ export function ResetMemberPasswordCard({
   person,
   maySendLink,
 }: {
-  person: { userId: string; name: string };
+  person: { userId: string; name: string; pending: boolean; suspended: boolean };
   /** `member.editRole`, which is what `sendPasswordReset` checks. */
   maySendLink: boolean;
 }) {
@@ -356,6 +356,7 @@ export function ResetMemberPasswordCard({
   const [needsReauth, setNeedsReauth] = useState(false);
   /** The one copy there will ever be. Held in state, never re-fetched. */
   const [password, setPassword] = useState<string | null>(null);
+  const [activated, setActivated] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const [linkPending, startLinkTransition] = useTransition();
@@ -379,6 +380,7 @@ export function ResetMemberPasswordCard({
       }
 
       setPassword(result.password);
+      setActivated(result.activated);
       setConfirming(false);
       setCopied(false);
       router.refresh();
@@ -408,6 +410,23 @@ export function ResetMemberPasswordCard({
       <CardContent className="pt-2">
         <p className="text-body text-fg-muted max-w-md">{t("resetPasswordBody")}</p>
 
+        {/*
+          What this will actually achieve for somebody who cannot sign in yet.
+          Said before the act rather than after it: a password handed to a
+          pending member used to look like it worked and then left them staring
+          at "your session ended", which is the bug this note exists to
+          prevent a second time.
+        */}
+        {person.pending ? (
+          <p className="text-caption text-attention-text mt-2 max-w-md">
+            {t("resetPasswordPendingNote")}
+          </p>
+        ) : person.suspended ? (
+          <p className="text-caption text-attention-text mt-2 max-w-md">
+            {t("resetPasswordSuspendedNote")}
+          </p>
+        ) : null}
+
         <div className="mt-4 flex max-w-md flex-col gap-4">
           {password ? (
             <div className="border-border bg-surface-inset rounded-control flex flex-col gap-2 border p-3">
@@ -428,6 +447,9 @@ export function ResetMemberPasswordCard({
                   {copied ? t("copied") : ""}
                 </span>
               </div>
+              {activated ? (
+                <p className="text-caption text-complete-text">{t("tempPasswordActivated")}</p>
+              ) : null}
               <p className="text-caption text-fg-muted">{t("tempPasswordNote")}</p>
             </div>
           ) : null}

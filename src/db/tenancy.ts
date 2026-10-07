@@ -156,6 +156,35 @@ export async function findMembershipsForUser(userId: string, executor: Executor 
     .orderBy(organizations.name);
 }
 
+/**
+ * Why somebody with no *active* membership still cannot sign in.
+ *
+ * `findMembershipsForUser` filters to `active`, which is what every scope
+ * downstream needs -- but it makes "invited and never accepted", "suspended"
+ * and "never belonged anywhere" indistinguishable, all of them an empty array.
+ * Sign-in has to tell them apart to say anything useful, and saying nothing
+ * useful is what produced the bug this exists to fix: a session minted for
+ * somebody with nowhere to be, refused on the next request, surfacing as "your
+ * session ended".
+ *
+ * Here for the same reason as `findMembershipsForUser`, and narrow in the same
+ * way: one person's own rows, filtered by a verified `userId`, read before
+ * there is any organization to scope by. Only ever used to choose a message.
+ */
+export async function findMembershipStandingForUser(
+  userId: string,
+  executor: Executor = db,
+): Promise<Array<{ status: string }>> {
+  if (!UUID_RE.test(userId)) {
+    throw new Error("findMembershipStandingForUser() needs a verified user id.");
+  }
+
+  return executor
+    .select({ status: memberships.status })
+    .from(memberships)
+    .where(eq(memberships.userId, userId));
+}
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**

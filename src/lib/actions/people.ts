@@ -1,11 +1,12 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { getLocale } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { db } from "@/db/client";
+import { authTokens } from "@/db/schema/mail";
 import { departments, memberships, users, type ModulePermissions } from "@/db/schema/people";
 import { withOrg } from "@/db/tenancy";
 import {
@@ -485,7 +486,12 @@ export async function setMemberSuspended(
 
 /** Like `PeopleResult`, but the success case carries the one thing to show. */
 export type ResetPasswordResult =
-  | { ok: true; password: string }
+  /**
+   * `activated` is true when this also turned a never-accepted invitation into
+   * a working membership -- the UI says so, because it is the difference
+   * between "they can sign in now" and "they already could".
+   */
+  | { ok: true; password: string; activated: boolean }
   | { ok: false; error: string };
 
 const resetPasswordSchema = z.object({ userId: z.uuid() });
@@ -549,17 +555,62 @@ export async function resetMemberPassword(
   }
 
   const password = generateTempPassword();
+  const passwordHash = await hashPassword(password);
+  const now = new Date();
 
-  await db
-    .update(users)
-    .set({
-      passwordHash: await hashPassword(password),
-      // Refuses every session created before now, the same way spending a
-      // reset token does -- belt as well as the braces below.
-      passwordChangedAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .where(eq(users.id, parsed.data.userId));
+  /*
+    Somebody who was invited and never accepted has no active membership, and
+    without one a password is useless to them: sign-in now refuses outright,
+    and before it did something worse -- it let them in and the next request
+    threw them out with "your session ended". So setting a password for a
+    pending member activates them too.
+
+    This is exactly the pair of writes spending an invite token already makes
+    (`spendToken`, for `purpose === "invite"`): set the password, mark the
+    membership active. The two paths now agree, and it grants an admin nothing
+    -- the invite link sitting in the Outbox they can already read activates
+    that person in precisely the same way.
+
+    A suspended membership is deliberately *not* touched. Suspension is a
+    decision somebody made; quietly undoing it as a side effect of a password
+    reset would be the surprising behaviour. Reinstating is its own control.
+  */
+  const activating = target.status === "invited";
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(users)
+      .set({
+        passwordHash,
+        // Refuses every session created before now, the same way spending a
+        // reset token does -- belt as well as the braces below.
+        passwordChangedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(users.id, parsed.data.userId));
+
+    if (activating) {
+      await withOrg(session.actor.organizationId, tx).update(
+        memberships,
+        { status: "active", joinedAt: now, updatedAt: now },
+        eq(memberships.userId, parsed.data.userId),
+      );
+
+      // Their outstanding invitation is retired in the same breath. Leaving it
+      // live would mean a link in the Outbox could still set a third password
+      // weeks later, silently replacing the one just handed over.
+      await tx
+        .update(authTokens)
+        .set({ usedAt: now })
+        .where(
+          and(
+            eq(authTokens.userId, parsed.data.userId),
+            eq(authTokens.purpose, "invite"),
+            isNull(authTokens.usedAt),
+          ),
+        );
+    }
+  });
 
   await revokeAllSessions(parsed.data.userId);
 
@@ -574,7 +625,7 @@ export async function resetMemberPassword(
   const locale = await getLocale();
   revalidatePath(`/${locale}/people`);
   revalidatePath(`/${locale}/people/${parsed.data.userId}`);
-  return { ok: true, password };
+  return { ok: true, password, activated: activating };
 }
 
 const departmentSchema = z.object({

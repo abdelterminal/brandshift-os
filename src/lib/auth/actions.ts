@@ -7,7 +7,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { db } from "@/db/client";
-import { findMembershipsForUser, withOrg } from "@/db/tenancy";
+import {
+  findMembershipStandingForUser,
+  findMembershipsForUser,
+  withOrg,
+} from "@/db/tenancy";
 import { memberships, users } from "@/db/schema/people";
 import { organizations } from "@/db/schema/organizations";
 import { sessions } from "@/db/schema/sessions";
@@ -105,6 +109,43 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
   // because it is what decides the scope -- see findMembershipsForUser().
   const membershipRows = await findMembershipsForUser(person.id);
 
+  /*
+    No active membership: say so here, rather than letting them "in".
+
+    This used to fall through -- `membershipRows[0]?.organizationId ?? null`
+    minted a session for somebody with nowhere to be, and `getCurrentUser()`
+    then refused it on the very next request, which renders as "You are signed
+    out. Your session ended, either because it expired or because it was signed
+    out from another device." Every word of that is wrong, and it arrives after
+    a sign-in that looked like it worked, with `lastLoginAt` written to prove
+    it. Reported from the live deployment by somebody whose invitation had
+    never been accepted.
+
+    Naming the reason is safe precisely here and nowhere earlier in this
+    function: the password has already verified, so this is the account's owner
+    being told about their own account, not a stranger being handed an
+    enumeration oracle.
+  */
+  if (membershipRows.length === 0) {
+    // Read through `tenancy.ts`, which owns the handful of bootstrap reads that
+    // cannot be scoped by organization -- see its own doc, and the guard in
+    // `tenancy.test.ts` that refuses a raw `memberships` query anywhere else.
+    const standing = await findMembershipStandingForUser(person.id);
+    const statuses = new Set(standing.map((row) => row.status));
+
+    return {
+      error:
+        // Invited wins over suspended: of the two it is the one with a way
+        // forward, and somebody holding both wants to hear about that one.
+        statuses.has("invited")
+          ? "invitationNotAccepted"
+          : statuses.has("suspended")
+            ? "accessSuspended"
+            : "noOrganization",
+      values: { email: parsed.data.email },
+    };
+  }
+
   // The cost may have been raised since this hash was made; sign-in is the one
   // moment the plaintext is available to upgrade it.
   if (needsRehash(stored)) {
@@ -115,7 +156,8 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
   }
 
   await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, person.id));
-  await createSession(person.id, membershipRows[0]?.organizationId ?? null);
+  // Non-null by here: the empty case returned above.
+  await createSession(person.id, membershipRows[0]!.organizationId);
 
   const locale = await getLocale();
   redirect(safeNext(parsed.data.next, locale));

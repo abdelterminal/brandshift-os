@@ -54,6 +54,7 @@ export function PersonTabs({
     departmentId: string | null;
     jobTitle: string | null;
     suspended: boolean;
+    pending: boolean;
   };
   openCount: number;
   overdueCount: number;

@@ -98,6 +98,9 @@ export default async function PersonPage({ params }: PageProps<"/[locale]/people
             departmentId: person.departmentId,
             jobTitle: person.jobTitle,
             suspended: person.status === "suspended",
+            // Invited and never accepted. They have no active membership, so
+            // nothing can sign in to the account until one exists.
+            pending: person.status === "invited",
           }}
           openCount={openCount}
           overdueCount={buckets.overdue.length}

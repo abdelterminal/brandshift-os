@@ -70,6 +70,24 @@ async function linkFromOutbox(page: Page, email: string): Promise<string> {
   return match![0].replace(/:\d+/, `:${new URL(page.url()).port}`);
 }
 
+/** Reads the generated password off the card, clearing re-auth if it is asked. */
+async function readNewPassword(page: Page): Promise<string> {
+  const card = resetCard(page);
+  await card.getByRole("button", { name: "Reset password" }).click();
+  await card.getByRole("button", { name: "Set a new password" }).click();
+
+  const shown = card.locator("code");
+  const confirmButton = card.getByRole("button", { name: "Confirm" });
+  await expect(shown.or(confirmButton).first()).toBeVisible();
+  if (await confirmButton.isVisible()) {
+    await card.getByLabel("Password", { exact: true }).fill(SEED_PASSWORD);
+    await confirmButton.click();
+  }
+
+  await expect(shown).toBeVisible();
+  return (await shown.innerText()).trim();
+}
+
 test("self-service is asleep, and says so rather than 404ing", async ({ browser }) => {
   const context = await browser.newContext(anonymous);
   const page = await context.newPage();
@@ -139,26 +157,8 @@ test("an admin sets a password directly, and that is the one that works", async 
   const email = "oscar.lindqvist@brandshift.test";
 
   await openPerson(page, "Oscar Lindqvist");
-  const card = resetCard(page);
 
-  await card.getByRole("button", { name: "Reset password" }).click();
-  await card.getByRole("button", { name: "Set a new password" }).click();
-
-  // Either the password comes straight back, or the re-auth window has lapsed
-  // and it asks first. Which one depends on how long this run has taken to
-  // reach this file (`REAUTH_WINDOW_MS` is fifteen minutes from sign-in), so
-  // the test has to cope with both rather than assume the fast case.
-  const shown = card.locator("code");
-  const confirmButton = card.getByRole("button", { name: "Confirm" });
-  await expect(shown.or(confirmButton).first()).toBeVisible();
-
-  if (await confirmButton.isVisible()) {
-    await card.getByLabel("Password", { exact: true }).fill(SEED_PASSWORD);
-    await confirmButton.click();
-  }
-
-  await expect(shown).toBeVisible();
-  const password = (await shown.innerText()).trim();
+  const password = await readNewPassword(page);
   // Four groups of three, from an alphabet with no character you would have to
   // spell out -- see `generateTempPassword`.
   expect(password).toMatch(/^[acdefghjkmnpqrtuvwxy34679]{3}(-[acdefghjkmnpqrtuvwxy34679]{3}){3}$/);
@@ -183,6 +183,93 @@ test("an admin sets a password directly, and that is the one that works", async 
 
   await context.close();
   await old.close();
+});
+
+test("a never-accepted invitation can be turned into a working account", async ({
+  page,
+  browser,
+}) => {
+  // The bug this covers, reported from the live deployment: an admin set a
+  // password for somebody whose invitation was never accepted, that person
+  // signed in successfully, and the next request threw them out with "your
+  // session ended" -- because a pending membership is not an active one.
+  const email = `pending${String(Date.now()).slice(-7)}@brandshift.test`;
+  const name = "Pending Tester";
+
+  await page.goto("/en/people");
+  await page.getByRole("button", { name: "Invite someone" }).first().click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Name").fill(name);
+  await dialog.getByLabel("Email").fill(email);
+  await dialog.getByRole("button", { name: "Add to organization" }).click();
+  await expect(dialog).toBeHidden();
+
+  await openPerson(page, name);
+
+  // The card warns what it is about to do, before it is pressed.
+  await expect(resetCard(page).getByText(/has not accepted their invitation/)).toBeVisible();
+
+  const password = await readNewPassword(page);
+  await expect(resetCard(page).getByText("They are now active and can sign in.")).toBeVisible();
+
+  // The whole point: they can actually get in, and stay in.
+  const context = await browser.newContext(anonymous);
+  const theirs = await context.newPage();
+  await theirs.goto("/en/login");
+  await theirs.getByLabel("Email").fill(email);
+  await theirs.getByLabel("Password", { exact: true }).fill(password);
+  await theirs.getByRole("button", { name: "Sign in" }).click();
+
+  // Landing on Today is not enough on its own -- the old bug got this far too,
+  // then bounced on the next request. So move again and check we are still in.
+  await theirs.waitForURL("**/en/today");
+  await theirs.goto("/en/people");
+  await expect(theirs.getByRole("heading", { name: "People", level: 1 })).toBeVisible();
+
+  await context.close();
+});
+
+test("somebody whose access is suspended is told so, not signed out", async ({ page, browser }) => {
+  const email = "ines.ferreira@brandshift.test";
+  const name = "Inès Ferreira";
+
+  await openPerson(page, name);
+  const suspend = main(page)
+    .locator('[data-slot="card"]')
+    .filter({ has: page.getByRole("heading", { name: "Suspend access" }) });
+
+  await suspend.getByRole("button", { name: "Suspend access" }).click();
+  await suspend.getByRole("button", { name: "Suspend them" }).click();
+
+  const confirmButton = suspend.getByRole("button", { name: "Confirm" });
+  const done = page.getByRole("heading", { name: "Reinstate access" });
+  await expect(done.or(confirmButton).first()).toBeVisible();
+  if (await confirmButton.isVisible()) {
+    await suspend.getByLabel("Password", { exact: true }).fill(SEED_PASSWORD);
+    await confirmButton.click();
+  }
+  await expect(done).toBeVisible();
+
+  // Their password is still correct, so sign-in verifies it and then has to
+  // decide what to say. It must name the reason rather than minting a session
+  // that the next request refuses.
+  const context = await browser.newContext(anonymous);
+  const theirs = await context.newPage();
+  await theirs.goto("/en/login");
+  await theirs.getByLabel("Email").fill(email);
+  await theirs.getByLabel("Password", { exact: true }).fill(SEED_PASSWORD);
+  await theirs.getByRole("button", { name: "Sign in" }).click();
+
+  await expect(theirs.getByText("Your access has been suspended. Ask an admin to restore it.")).toBeVisible();
+  await expect(theirs).toHaveURL(/\/en\/login/);
+  await context.close();
+
+  // Put them back, so the rest of the suite sees the roster it expects.
+  const reinstate = main(page)
+    .locator('[data-slot="card"]')
+    .filter({ has: page.getByRole("heading", { name: "Reinstate access" }) });
+  await reinstate.getByRole("button", { name: "Reinstate access" }).click();
+  await expect(page.getByRole("heading", { name: "Suspend access" })).toBeVisible();
 });
 
 test("a reset link cannot be spent as an invitation", async ({ page, browser }) => {
