@@ -1072,7 +1072,8 @@
     "wizardBody": "Optional. Write it now, or skip and add it on the project afterwards — the questions below are the ones a brief should answer.",
     "wizardWillCreate": "{count, plural, =0 {Nothing answered yet, so no brief will be created.} one {A brief with # section will be created.} other {A brief with # sections will be created.}}",
     "wizardWillSkip": "Leave the title blank to skip this and add a brief later.",
-    "noSectionsHint": "Use Edit to add sections — the questions a brief should answer are in the template."
+    "noSectionsHint": "Use Edit to add sections — the questions a brief should answer are in the template.",
+    "orAttach": "Or attach the brief you were sent — a PDF or a photo is a brief too."
   },
   "QuoteStatus": {
     "draft": "Draft",

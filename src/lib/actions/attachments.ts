@@ -8,9 +8,12 @@ import { revalidatePath } from "next/cache";
 import { requirePermissionForAction } from "@/lib/auth/guards";
 import {
   countAttachments,
+  createDocument,
   deleteAttachmentRow,
   getAttachment,
+  getCompanyBrief,
   getDocumentById,
+  getProjectBrief,
   recordAttachment,
 } from "@/lib/data/documents";
 import { recordActivity } from "@/lib/data/activity";
@@ -27,6 +30,58 @@ import { storage } from "@/lib/storage/transport";
  */
 
 export type AttachmentResult = { ok: true; id: string } | { ok: false; error: string };
+
+/**
+ * The brief to attach a file to, making an empty one if there is not one yet.
+ *
+ * Because the brief is not always a written document. "As a text, notes, PDF"
+ * was the ask, and for plenty of jobs the brief simply *is* the PDF the client
+ * sent -- so requiring somebody to write a sectioned document before they are
+ * allowed to attach it had the dependency backwards.
+ *
+ * Returns the existing brief's id when there is one, rather than failing on
+ * the partial unique index. Two people pressing this at once is a race that
+ * ends with one of them getting the other's brief, which is the right answer.
+ */
+export async function startBrief(input: {
+  projectId?: string;
+  companyId?: string;
+  title: string;
+}): Promise<AttachmentResult> {
+  const session = await requirePermissionForAction("brief.edit");
+
+  if (!input.projectId && !input.companyId) return { ok: false, error: "invalid" };
+
+  const existing = input.projectId
+    ? await getProjectBrief(session.actor, input.projectId)
+    : await getCompanyBrief(session.actor, input.companyId!);
+  if (existing) return { ok: true, id: existing.id };
+
+  const created = await createDocument(session.actor, {
+    title: input.title.trim().slice(0, 200) || "Brief",
+    summary: null,
+    kind: "brief",
+    projectId: input.projectId ?? null,
+    companyId: input.companyId ?? null,
+    departmentId: null,
+    // Deliberately none. A brief whose content is an attached PDF is a real
+    // shape, and inventing empty sections to fill the screen would be the app
+    // pretending something was written.
+    sections: [],
+  });
+  if (!created) return { ok: false, error: "invalid" };
+
+  await recordActivity(session.actor, {
+    verb: "document.created",
+    subjectType: "document",
+    subjectId: created.id,
+    projectId: input.projectId ?? null,
+    metadata: { title: input.title },
+  });
+
+  revalidatePath(`/${await getLocale()}`, "layout");
+  return { ok: true, id: created.id };
+}
 
 /**
  * Store one file.

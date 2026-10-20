@@ -109,6 +109,27 @@ export async function BriefPanel({
               />
             </div>
           ) : null}
+
+          {/*
+            Attaching the brief rather than writing it.
+
+            Often the brief *is* the PDF the client sent, and the first build
+            of this screen made that impossible: the files card only appeared
+            once a written brief existed, so the one thing somebody wanted to
+            upload was behind a document they did not want to write. This
+            makes the empty brief for them.
+          */}
+          {mayEdit ? (
+            <div className="border-border mx-4 mb-6 border-t pt-4">
+              <p className="text-caption text-fg-muted mb-2">{t("orAttach")}</p>
+              <AttachmentUploader
+                createFor={{
+                  ...briefTarget,
+                  title: t("defaultTitle", { name: target.name }),
+                }}
+              />
+            </div>
+          ) : null}
         </div>
         {clientLink}
       </div>

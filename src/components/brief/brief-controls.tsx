@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input, Textarea } from "@/components/ui/input";
-import { removeAttachment, uploadAttachment } from "@/lib/actions/attachments";
+import { removeAttachment, startBrief, uploadAttachment } from "@/lib/actions/attachments";
 import { createDocumentAction, updateDocumentAction } from "@/lib/actions/documents";
 import { briefTemplate } from "@/lib/brief-template";
 import { ALLOWED_TYPES, MAX_FILE_BYTES } from "@/lib/storage/limits";
@@ -299,7 +299,23 @@ export function EditBriefDialog({
  * a 40 MB video is told before it is uploaded rather than after -- the server
  * refuses it either way, and this only saves them the wait.
  */
-export function AttachmentUploader({ documentId }: { documentId: string }) {
+export function AttachmentUploader({
+  documentId,
+  createFor,
+}: {
+  /** The brief to attach to, when there already is one. */
+  documentId?: string;
+  /**
+   * Where to make one first, when there is not.
+   *
+   * The brief is not always a written document -- for plenty of jobs it *is*
+   * the PDF the client sent -- so attaching a file has to be able to come
+   * first. Given this, the uploader makes an empty brief and hangs the file
+   * off it, rather than asking somebody to write a document they do not want
+   * before letting them attach the one they do.
+   */
+  createFor?: { projectId?: string; companyId?: string; title: string };
+}) {
   const t = useTranslations("Brief");
   const errorText = useBriefErrors();
   const router = useRouter();
@@ -327,11 +343,29 @@ export function AttachmentUploader({ documentId }: { documentId: string }) {
           }
 
           setError(null);
-          const body = new FormData();
-          body.set("documentId", documentId);
-          body.set("file", file);
 
           startTransition(async () => {
+            // Make the brief first if there is not one. Done here rather than
+            // inside `uploadAttachment` so that action keeps one job and one
+            // permission question.
+            let target = documentId;
+            if (!target && createFor) {
+              const started = await startBrief(createFor);
+              if (!started.ok) {
+                setError(errorText(started.error));
+                return;
+              }
+              target = started.id;
+            }
+            if (!target) {
+              setError(errorText("invalid"));
+              return;
+            }
+
+            const body = new FormData();
+            body.set("documentId", target);
+            body.set("file", file);
+
             const result = await uploadAttachment(body);
             if (!result.ok) {
               setError(errorText(result.error));

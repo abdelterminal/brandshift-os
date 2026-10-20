@@ -53,6 +53,23 @@ test("somebody who has never written a brief is handed the questions", async ({ 
   await expect(main(page).getByText("Background")).toBeVisible();
 });
 
+test("the brief can be the PDF, with nothing written first", async ({ page }) => {
+  // The first build of this got the dependency backwards: the files card only
+  // appeared once a written brief existed, so somebody whose brief simply *is*
+  // the PDF a client sent could not attach it without first writing a document
+  // they did not want. Reported from the live deployment as "I can't upload".
+  await openBrief(page, "ATL");
+  await expect(main(page).getByText("No brief yet")).toBeVisible();
+
+  await main(page)
+    .locator('input[type="file"]')
+    .setInputFiles({ name: "client-brief.pdf", mimeType: "application/pdf", buffer: PDF });
+
+  // The brief is made for them, and the file is on it.
+  await expect(main(page).locator("li", { hasText: "client-brief.pdf" })).toBeVisible();
+  await expect(main(page).getByText("No brief yet")).toHaveCount(0);
+});
+
 test("a file survives the round trip to disk and back", async ({ page }) => {
   await openBrief(page, "HAR");
 

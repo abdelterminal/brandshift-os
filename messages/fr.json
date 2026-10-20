@@ -1072,7 +1072,8 @@
     "wizardBody": "Facultatif. Rédigez-le maintenant, ou passez cette étape et ajoutez-le ensuite sur le projet — les questions ci-dessous sont celles auxquelles un brief doit répondre.",
     "wizardWillCreate": "{count, plural, =0 {Aucune réponse pour l’instant : aucun brief ne sera créé.} one {Un brief avec # section sera créé.} other {Un brief avec # sections seront créées.}}",
     "wizardWillSkip": "Laissez le titre vide pour passer cette étape et ajouter un brief plus tard.",
-    "noSectionsHint": "Utilisez Modifier pour ajouter des sections — les questions auxquelles un brief doit répondre sont dans le modèle."
+    "noSectionsHint": "Utilisez Modifier pour ajouter des sections — les questions auxquelles un brief doit répondre sont dans le modèle.",
+    "orAttach": "Ou joignez le brief qui vous a été envoyé — un PDF ou une photo est aussi un brief."
   },
   "QuoteStatus": {
     "draft": "Brouillon",
