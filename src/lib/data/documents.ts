@@ -3,7 +3,7 @@ import "server-only";
 import { eq, inArray, isNull } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { departments, documentSections, documents, projects, users } from "@/db/schema";
+import { attachments, companies, departments, documentSections, documents, projects, users } from "@/db/schema";
 import { withOrg } from "@/db/tenancy";
 import type { Actor } from "@/lib/authz";
 import { slugify } from "@/lib/slug";
@@ -37,6 +37,9 @@ export type DocumentView = {
   projectId: string | null;
   projectKey: string | null;
   projectName: string | null;
+  companyId: string | null;
+  companyName: string | null;
+  companySlug: string | null;
   departmentId: string | null;
   departmentName: string | null;
   ownerUserId: string | null;
@@ -56,6 +59,9 @@ const DOCUMENT_FIELDS = {
   projectId: documents.projectId,
   projectKey: projects.key,
   projectName: projects.name,
+  companyId: documents.companyId,
+  companyName: companies.name,
+  companySlug: companies.slug,
   departmentId: documents.departmentId,
   departmentName: departments.name,
   ownerUserId: documents.ownerUserId,
@@ -67,6 +73,7 @@ const DOCUMENT_FIELDS = {
 
 const DOCUMENT_JOINS = [
   { table: projects, on: eq(documents.projectId, projects.id), type: "left" as const },
+  { table: companies, on: eq(documents.companyId, companies.id), type: "left" as const },
   { table: departments, on: eq(documents.departmentId, departments.id), type: "left" as const },
   { table: users, on: eq(documents.ownerUserId, users.id), type: "left" as const },
 ];
@@ -90,6 +97,9 @@ type DocumentFieldRow = {
   projectId: string | null;
   projectKey: string | null;
   projectName: string | null;
+  companyId: string | null;
+  companyName: string | null;
+  companySlug: string | null;
   departmentId: string | null;
   departmentName: string | null;
   ownerUserId: string | null;
@@ -216,6 +226,7 @@ export async function createDocument(
     summary: string | null;
     kind: DocumentKind;
     projectId: string | null;
+    companyId: string | null;
     departmentId: string | null;
     sections: SectionInput[];
   },
@@ -231,6 +242,7 @@ export async function createDocument(
       summary: input.summary,
       kind: input.kind,
       projectId: input.projectId,
+      companyId: input.companyId,
       departmentId: input.departmentId,
       ownerUserId: actor.userId,
       createdByUserId: actor.userId,
@@ -256,7 +268,19 @@ export async function createDocument(
 export async function updateDocument(
   actor: Actor,
   documentId: string,
-  input: { title: string; summary: string | null; kind: DocumentKind },
+  input: {
+    title: string;
+    summary: string | null;
+    kind: DocumentKind;
+    /**
+     * Both are re-targetable, where the project used to be fixed at creation.
+     * A brief is routinely written before anybody has decided which project it
+     * belongs to, and "can be added at the beginning or later" was the ask.
+     * `undefined` leaves a field alone; `null` clears it.
+     */
+    projectId?: string | null;
+    companyId?: string | null;
+  },
 ): Promise<boolean> {
   const updated = await withOrg(actor.organizationId).update(
     documents,
@@ -264,6 +288,8 @@ export async function updateDocument(
       title: input.title,
       summary: input.summary,
       kind: input.kind,
+      ...(input.projectId === undefined ? {} : { projectId: input.projectId }),
+      ...(input.companyId === undefined ? {} : { companyId: input.companyId }),
       updatedAt: new Date(),
     },
     eq(documents.id, documentId),
@@ -315,4 +341,139 @@ export async function setDocumentArchived(
     archived ? isNull(documents.archivedAt) : undefined,
   );
   return updated.length > 0;
+}
+
+// ---------------------------------------------------------------------------
+// Briefs
+// ---------------------------------------------------------------------------
+
+/**
+ * The one live brief on a project, or on a client.
+ *
+ * Singular by construction, not by convention: two partial unique indexes
+ * (`documents_org_project_brief_key` and its company twin) make a second live
+ * brief impossible, so these never have to decide which of several to show.
+ *
+ * Archived ones are excluded. Retiring a brief is how it gets replaced, and a
+ * screen asking for "the brief" means the one in force.
+ */
+async function briefWhere(
+  actor: Actor,
+  column: typeof documents.projectId | typeof documents.companyId,
+  id: string,
+): Promise<DocumentView | null> {
+  if (!isUuid(id)) return null;
+
+  const rows = (await withOrg(actor.organizationId).selectJoined(
+    documents,
+    DOCUMENT_FIELDS,
+    DOCUMENT_JOINS,
+    eq(column, id),
+    eq(documents.kind, "brief"),
+    isNull(documents.archivedAt),
+  )) as DocumentFieldRow[];
+
+  const [view] = await decorate(actor, rows, true);
+  return view ?? null;
+}
+
+export function getProjectBrief(actor: Actor, projectId: string): Promise<DocumentView | null> {
+  return briefWhere(actor, documents.projectId, projectId);
+}
+
+export function getCompanyBrief(actor: Actor, companyId: string): Promise<DocumentView | null> {
+  return briefWhere(actor, documents.companyId, companyId);
+}
+
+// ---------------------------------------------------------------------------
+// Attachments
+// ---------------------------------------------------------------------------
+
+export type AttachmentView = {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdAt: Date;
+};
+
+/** What a brief carries, oldest first -- the order they were added. */
+export async function listAttachments(
+  actor: Actor,
+  documentId: string,
+): Promise<AttachmentView[]> {
+  if (!isUuid(documentId)) return [];
+
+  const rows = await withOrg(actor.organizationId).selectFields(
+    attachments,
+    {
+      id: attachments.id,
+      fileName: attachments.fileName,
+      mimeType: attachments.mimeType,
+      sizeBytes: attachments.sizeBytes,
+      createdAt: attachments.createdAt,
+    },
+    eq(attachments.documentId, documentId),
+  );
+
+  return rows.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+}
+
+/**
+ * One attachment, with the storage key the download route needs.
+ *
+ * Scoped by `withOrg` like everything else, which is what stops an id from
+ * another tenant resolving at all -- the download route never has to compare
+ * organizations itself.
+ */
+export async function getAttachment(actor: Actor, attachmentId: string) {
+  if (!isUuid(attachmentId)) return null;
+  const [row] = await withOrg(actor.organizationId).select(
+    attachments,
+    eq(attachments.id, attachmentId),
+  );
+  return row ?? null;
+}
+
+export async function countAttachments(actor: Actor, documentId: string): Promise<number> {
+  return withOrg(actor.organizationId).count(attachments, eq(attachments.documentId, documentId));
+}
+
+/**
+ * The row for a file already on disk.
+ *
+ * `id` is supplied rather than generated here, because the storage key is
+ * derived from it -- the bytes have to be written before the row can point at
+ * them, and the key has to be known before the bytes can be written. The
+ * caller mints the id, writes the file, then calls this.
+ */
+export async function recordAttachment(
+  actor: Actor,
+  input: {
+    id: string;
+    documentId: string;
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+    storageKey: string;
+  },
+): Promise<{ id: string } | null> {
+  const [created] = await withOrg(actor.organizationId).insert(attachments, {
+    id: input.id,
+    documentId: input.documentId,
+    fileName: input.fileName,
+    mimeType: input.mimeType,
+    sizeBytes: input.sizeBytes,
+    storageKey: input.storageKey,
+    uploadedByUserId: actor.userId,
+  });
+  return created ? { id: created.id } : null;
+}
+
+export async function deleteAttachmentRow(actor: Actor, attachmentId: string): Promise<boolean> {
+  const removed = await withOrg(actor.organizationId).delete(
+    attachments,
+    eq(attachments.id, attachmentId),
+  );
+  return removed.length > 0;
 }

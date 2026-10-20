@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { ProjectMeetings } from "@/components/calendar/project-meetings";
 import { ActivityFeed } from "@/components/work/activity-feed";
 import { DeliverablesPanel } from "@/components/work/deliverables-panel";
+import { BriefPanel } from "@/components/brief/brief-panel";
+import { getCompanyBrief } from "@/lib/data/documents";
 import { ProjectDocs } from "@/components/work/project-docs";
 import { ProjectClientControl } from "@/components/work/project-client-control";
 import { ProjectStageControl } from "@/components/work/project-stage-control";
@@ -171,6 +173,24 @@ export default async function ProjectPage({
   const done = tasks.filter((task) => task.status === "done");
   const blocked = tasks.filter((task) => task.status === "blocked");
   const todayIso = organizationToday();
+
+  /*
+    Whether this project's client has a standing brief of its own, so the tab
+    can offer the way up to it.
+
+    Resolved here rather than inside the panel, and only when the project has
+    a client at all: the link is drawn only if there is something at the other
+    end, because sending somebody to an empty page to discover that is the
+    dead end this is meant to avoid.
+  */
+  const clientBrief =
+    project.companyId && project.companyName && project.companySlug
+      ? {
+          companyName: project.companyName,
+          companySlug: project.companySlug,
+          exists: (await getCompanyBrief(session.actor, project.companyId)) !== null,
+        }
+      : null;
   const buckets = bucketTasks(open, done, todayIso);
 
   return (
@@ -331,7 +351,11 @@ export default async function ProjectPage({
           defaultTab={
             typeof task === "string" && task
               ? "tasks"
-              : tab === "deliverables" || tab === "docs" || tab === "team" || tab === "activity"
+              : tab === "brief" ||
+                  tab === "deliverables" ||
+                  tab === "docs" ||
+                  tab === "team" ||
+                  tab === "activity"
                 ? tab
                 : "overview"
           }
@@ -360,6 +384,13 @@ export default async function ProjectPage({
             />
           }
           docs={<ProjectDocs actor={session.actor} projectId={project.id} />}
+          brief={
+            <BriefPanel
+              actor={session.actor}
+              target={{ kind: "project", projectId: project.id, name: project.name }}
+              clientBrief={clientBrief}
+            />
+          }
           deliverables={
             <DeliverablesPanel
               projectId={project.id}

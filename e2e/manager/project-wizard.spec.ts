@@ -13,7 +13,7 @@ function uniqueKey(): string {
   return Array.from({ length: 4 }, () => letters[Math.floor(Math.random() * 26)]).join("");
 }
 
-test("walks five steps and publishes in one go", async ({ page }) => {
+test("walks six steps and publishes in one go", async ({ page }) => {
   const key = uniqueKey();
   await page.goto("/en/work/new");
 
@@ -43,7 +43,10 @@ test("walks five steps and publishes in one go", async ({ page }) => {
     .fill("Discovery workshop\nBrand audit\nConcept directions");
   await page.getByRole("button", { name: "Continue" }).click();
 
-  // 5. Review. Nothing exists yet.
+  // 6. Review. Nothing exists yet.
+  // Brief -- optional, and skipped here. Its own coverage is brief.spec.ts.
+  await page.getByRole("button", { name: /Continue|Skip/ }).click();
+
   await expect(page.getByRole("heading", { name: "Ready to publish" })).toBeVisible();
   await expect(page.getByText("Cobalt brand sprint")).toBeVisible();
   await expect(page.getByText("Discovery workshop")).toBeVisible();
@@ -73,7 +76,8 @@ test("refuses a key another project already uses", async ({ page }) => {
   // Nothing optional gets filled in on the way through, so the advance button
   // honestly reads "Skip for now" rather than "Continue" once past the first
   // step (see new-project-wizard.tsx) -- either is the same action here.
-  for (let step = 0; step < 4; step += 1) {
+  // Five, not four: essentials, department, assignment, deliverables, brief.
+  for (let step = 0; step < 5; step += 1) {
     await page.getByRole("button", { name: /^(Continue|Skip for now)$/ }).click();
   }
   await page.getByRole("button", { name: "Publish project" }).click();

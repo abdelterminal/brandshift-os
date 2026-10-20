@@ -447,6 +447,56 @@ operational story to attach them to.
 moves somewhere with a backup story; or an invoice needs to carry a PDF attachment rather than
 being read on screen. The first is the honest trigger and the other two make it cheap.
 
+> **Woken, 20 October 2026.** The first trigger fired: the owner asked for briefs carrying
+> PDFs and photographs. See "File storage, woken for briefs" below -- the objection was
+> answered rather than waived, so the reasoning above still stands for anything built next.
+
+## File storage, woken for briefs
+
+Reversed deliberately, on the trigger the decision above names. A brief that cannot hold the
+signed proposal or the photographs the work is judged against is a brief somebody keeps in
+their inbox instead, which is the problem the feature exists to end.
+
+**The objection was answered, not waived.** What blocked this was never the upload; it was
+that a file nobody backs up looks like safekeeping while being the opposite. So the volume and
+the backup landed together:
+
+- `backup.ps1` archives the `uploads-data` volume in the same run as the `pg_dump`, and **exits
+  non-zero if it cannot**. A run that dumps the database and quietly skips the files would be
+  exactly the failure the original decision described, so the script treats half a backup as a
+  failed one. The volume name is read from `docker compose config` rather than derived: a
+  wrong guess reads as "no files to back up", which is the one wrong answer it must never give
+  quietly.
+- **Disk growth is bounded by two numbers, not one.** 10 MB per file *and* 20 files per brief.
+  A per-file cap alone is no cap at all once somebody uploads two hundred of them.
+- **An allowlist, not a blocklist.** PDF, PNG, JPEG, WebP. SVG is deliberately absent -- it is
+  an image format that can carry script -- and the extension on disk comes from the allowlist
+  rather than from the uploaded name, so the two can never disagree.
+
+**The name on disk is never the name that was uploaded.** A key is
+`{organizationId}/{attachmentId}`, both ids this app generated. A filename from a browser is
+attacker-controlled text, and deriving the path from ids ends both path traversal and the
+boring collision -- two people uploading `brief.pdf` -- without sanitising anything. The typed
+name survives in `attachments.file_name`, which is shown and used for the download, and never
+touches a filesystem.
+
+**Nothing is served statically.** Every byte leaves through an authenticated route that
+resolves the row via `withOrg()` first, so an id from another tenant does not resolve at all.
+Always `Content-Disposition: attachment`, never inline: inline is nicer to use and is also how
+a file served from this origin gets to run script in it.
+
+**The driver interface is `MAIL_DRIVER`'s shape, with one difference.** There is no "pretend"
+setting. A message that was not sent can still be read in the outbox; a file that was not
+stored cannot be shown later, and there is nothing honest to display in its place.
+
+**Still deliberately deferred:** expense receipts, channel attachments and diagrams in a
+procedure. The storage layer now exists and each is cheap, but each is also its own permission
+question, and widening `attachments` from `document_id` to a polymorphic pair would answer none
+of them while making every query unprovable.
+
+**What this does not fix:** backups are still run by hand. Files now *can* be backed up; nobody
+is yet obliged to. That gap is in `KNOWN-GAPS.md`.
+
 ## Everything downstream of email, deliberately asleep
 
 This deployment has no SMTP server and is not going to have one: it runs on one machine on a

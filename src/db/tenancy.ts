@@ -7,6 +7,7 @@ import { activityEvents } from "./schema/activity";
 import { channelMembers, channels, messages } from "./schema/channels";
 import { companies, contacts, deals } from "./schema/crm";
 import { deliverables } from "./schema/deliverables";
+import { attachments } from "./schema/attachments";
 import { documents, documentSections } from "./schema/documents";
 import { projectStageSetup, stagePlaybook } from "./schema/playbook";
 import { expenses, invoiceLines, invoices, quoteLines, quotes } from "./schema/finance";
@@ -83,6 +84,7 @@ export const TENANT_TABLES = {
   sopSteps,
   documents,
   documentSections,
+  attachments,
   deliverables,
   stagePlaybook,
   projectStageSetup,

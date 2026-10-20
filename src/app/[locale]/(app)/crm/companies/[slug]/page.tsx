@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { ArchiveCompanyControl, EditCompanyDialog } from "@/components/crm/company-controls";
 import { NewContactDialog, NewDealDialog } from "@/components/crm/create-dialogs";
+import { BriefPanel } from "@/components/brief/brief-panel";
 import { CompanyNotes } from "@/components/crm/stage-control";
 import { AvatarGroup, PersonAvatar } from "@/components/ui/avatar";
 import { Badge, CountBadge, StatusPill } from "@/components/ui/badge";
@@ -72,9 +73,10 @@ export default async function CompanyPage({ params }: PageProps<"/[locale]/crm/c
   const company = await getCompanyBySlug(session.actor, slug);
   if (!company) notFound();
 
-  const [t, work, ui, statuses, stages, projectStatuses, format, contacts, deals, companies, people, projects, openTasks] =
+  const [t, brief, work, ui, statuses, stages, projectStatuses, format, contacts, deals, companies, people, projects, openTasks] =
     await Promise.all([
       getTranslations("Crm"),
+      getTranslations("Brief"),
       getTranslations("Work"),
       getTranslations("Ui"),
       getTranslations("CompanyStatus"),
@@ -193,6 +195,22 @@ export default async function CompanyPage({ params }: PageProps<"/[locale]/crm/c
           {t("archivedNote")}
         </p>
       ) : null}
+
+      {/*
+        The client brief, above the deals.
+
+        What this client is like to work for -- their tone, their brand rules,
+        the standing do's and don'ts -- rather than what we are selling them.
+        First on the page because it is the thing somebody new to the account
+        needs before any of the rest of it means anything.
+      */}
+      <section className="mb-8">
+        <h2 className="text-label text-fg-default mb-2 font-semibold">{brief("clientBrief")}</h2>
+        <BriefPanel
+          actor={session.actor}
+          target={{ kind: "company", companyId: company.id, name: company.name }}
+        />
+      </section>
 
       <section className="mb-8">
         <h2 className="text-label text-fg-default mb-2 font-semibold">{t("title")}</h2>

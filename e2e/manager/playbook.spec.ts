@@ -95,11 +95,12 @@ test("the wizard can start a project straight onto the flow", async ({ page }) =
   await main(page).locator('input[name="name"]').fill("Flow launch test");
   await main(page).locator("#project-key").fill(key);
 
-  // Walk to the review step, skipping the optional ones.
+  // Walk to the review step, skipping the optional ones: department,
+  // assignment, deliverables and the brief.
   const next = main(page).getByRole("button", { name: "Continue" });
   await expect(next).toBeEnabled();
   await next.click();
-  for (let i = 0; i < 3; i += 1) {
+  for (let i = 0; i < 4; i += 1) {
     await main(page).getByRole("button", { name: "Skip for now" }).click();
   }
   await expect(main(page).getByRole("heading", { name: "Ready to publish" })).toBeVisible();

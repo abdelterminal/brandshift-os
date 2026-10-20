@@ -63,6 +63,26 @@ const envSchema = z.object({
    * the browser Playwright installed for the e2e suite is found instead.
    */
   PDF_CHROMIUM_PATH: z.string().optional(),
+  /**
+   * Where uploaded files go, if anywhere.
+   *
+   * `disk` is the default and what this deployment runs: a directory on a
+   * named Compose volume, backed up by `backup.ps1` alongside the database.
+   * The driver interface exists so `s3` can be added without a caller
+   * changing, the same way `MAIL_DRIVER` is shaped -- but unlike mail there is
+   * no "pretend" setting, because a file that was not stored cannot be shown
+   * later and there is nothing honest to display in its place.
+   */
+  STORAGE_DRIVER: z.enum(["disk"]).default("disk"),
+  /**
+   * The root of that directory, inside the container.
+   *
+   * Must be on a volume. The app's filesystem is otherwise ephemeral, so a
+   * default pointing anywhere else would lose every upload on the next
+   * `docker compose up --build` -- quietly, and only noticed by whoever went
+   * looking for a file months later.
+   */
+  STORAGE_ROOT: z.string().min(1).default("/data/uploads"),
 });
 
 export type Env = z.infer<typeof envSchema>;

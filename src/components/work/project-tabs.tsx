@@ -40,6 +40,7 @@ export function ProjectTabs({
   activity,
   meetings,
   docs,
+  brief,
   deliverables,
   stageRail,
   stageControl,
@@ -47,7 +48,14 @@ export function ProjectTabs({
   stageProcedure,
 }: {
   /** Which tab opens first. `tasks` when the URL names a task. */
-  defaultTab?: "overview" | "tasks" | "deliverables" | "team" | "activity" | "docs";
+  defaultTab?:
+    | "overview"
+    | "brief"
+    | "tasks"
+    | "deliverables"
+    | "team"
+    | "activity"
+    | "docs";
   description: string | null;
   priority: string;
   projectId: string;
@@ -76,6 +84,12 @@ export function ProjectTabs({
   meetings: React.ReactNode;
   /** The Docs tab's content -- server-rendered, handed in like `activity`. */
   docs: React.ReactNode;
+  /**
+   * The Brief tab. First after Overview because it is what somebody opens a
+   * project to check: Docs is everything written about the job, the brief is
+   * the one thing that says what was agreed to.
+   */
+  brief: React.ReactNode;
   /** The Deliverables tab's content -- a Client Component slot. */
   deliverables: React.ReactNode;
   /** The eight-stage progress rail, server-rendered. */
@@ -93,6 +107,7 @@ export function ProjectTabs({
     <Tabs defaultValue={defaultTab}>
       <TabsList>
         <TabsTab value="overview">{t("overview")}</TabsTab>
+        <TabsTab value="brief">{t("brief")}</TabsTab>
         <TabsTab value="tasks">{t("tasks")}</TabsTab>
         <TabsTab value="deliverables">{t("deliverables")}</TabsTab>
         <TabsTab value="docs">{t("docs")}</TabsTab>
@@ -145,6 +160,8 @@ export function ProjectTabs({
           canEditBoard={canEditBoard}
         />
       </TabsPanel>
+
+      <TabsPanel value="brief">{brief}</TabsPanel>
 
       <TabsPanel value="deliverables">{deliverables}</TabsPanel>
 

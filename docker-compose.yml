@@ -77,6 +77,20 @@ services:
       # its Compose name instead, so this overrides whatever .env says.
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+    # Uploaded files. This container's filesystem is otherwise ephemeral, so
+    # without the volume every attachment would vanish on the next
+    # `docker compose up --build` -- quietly, and noticed only by whoever went
+    # looking for a file months later. The mount point is created in the
+    # Dockerfile and owned by the `nextjs` user, because Docker would
+    # otherwise create it as root and this service drops every capability it
+    # would need to fix that.
+    #
+    # `backup.ps1` archives this volume alongside the database dump. Not a
+    # nicety: file storage was refused for a long time precisely because a
+    # file nobody backs up looks like safekeeping while being the opposite,
+    # and the volume and the backup are two halves of one decision.
+    volumes:
+      - uploads-data:/data/uploads
     # APP_PORT only moves the host-side port; the container always listens on
     # 3000. Bound on all interfaces on purpose -- this is a LAN deployment.
     ports:
@@ -96,3 +110,4 @@ services:
 
 volumes:
   db-data:
+  uploads-data:

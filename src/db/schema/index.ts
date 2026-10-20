@@ -19,6 +19,7 @@ export * from "./finance";
 export * from "./objectives";
 export * from "./sops";
 export * from "./documents";
+export * from "./attachments";
 export * from "./templates";
 export * from "./playbook";
 export * from "./deliverables";

@@ -109,21 +109,22 @@ from the code once the route is dark:
 
 ---
 
-## Asleep: file storage
+## Awake, but only for briefs: file storage
 
-Deferred deliberately, and written up in `DECISIONS.md`. The storage was never the hard
-part -- a directory in the Compose volume needs no hardware. What is missing is a backup
-story, a retention rule and anything bounding disk growth, and holding somebody's only copy
-of a signed contract without those is worse than not holding it.
+File storage was woken on 20 October 2026 for brief attachments -- see "File storage, woken
+for briefs" in `DECISIONS.md`. There is now a driver, a Compose volume, a size and type
+allowlist, and `backup.ps1` archives the volume alongside the database dump.
 
-Each of these keeps an honest shape in the meantime: a reference rather than a receipt, a
-step rather than a diagram. They wake up when somebody asks twice, or when the deployment
-moves somewhere with backups.
+So the rows below are no longer *impossible*. Each is now a small piece of work with its own
+permission question, rather than a feature waiting on infrastructure that did not exist.
 
 | Thing | Why |
 |---|---|
-| A procedure has no attachments and no images | Steps are text. A procedure that needs a diagram, a template file or a screenshot cannot hold one, which for a creative agency is a real limit -- "here is the frame we shoot" is a picture. It waits on the same file storage a receipt, a signed proposal and a channel attachment all wait on. |
-| An expense has a receipt *reference*, not a receipt | A string somebody types, because there is nowhere to put a file. The same gap blocks a signed proposal on a deal and an attachment in a channel: this deployment has no file storage, and picking one is a decision about backups as much as about uploads. |
+| Nothing makes anybody run the backup | The real remaining gap, and the one that matters most now there are files. `backup.ps1` archives the uploads volume and refuses to report success if it cannot -- but it is still run by hand, from a Windows machine, against a server in a datacentre. A row somebody forgot to back up can be retyped; a photograph cannot. It wants a cron on the VPS, which is the same scheduler four other gaps already wait on. |
+| Only briefs can carry files | `attachments` points at `document_id`, not at a polymorphic `(subject_type, subject_id)` pair. That was deliberate -- a pair that can point anywhere answers no permission question while making every query unprovable -- so widening it to expenses, deals or channels is a migration plus that feature's own rule about who may attach and who may read. |
+| A procedure has no attachments and no images | Steps are text. A procedure that needs a diagram, a template file or a screenshot cannot hold one, which for a creative agency is a real limit -- "here is the frame we shoot" is a picture. Now unblocked: it needs `attachments` widened past `document_id`, and a decision about whether `sop.manage` or something narrower governs it. |
+| An expense has a receipt *reference*, not a receipt | A string somebody types. The same widening unblocks it, plus a view of who may see a receipt -- an expense is not readable by everyone the way a brief is, so it cannot reuse the brief's "any signed-in member" download rule. |
+| Nothing prunes or counts uploaded files | 10 MB per file and 20 per brief bound the growth, but nothing reports how much is used, nothing reclaims the file left behind when an upload crashes between writing bytes and inserting the row, and nothing removes files for an organization that is deleted. None is urgent at this size; all three are the kind of thing noticed only when a volume fills. |
 | No threads, no mentions, no attachments, no reactions | Each is a feature in its own right rather than a corner of this one. Mentions are the first that matters, because they are the reason a message would ever belong in the inbox -- see the note in `src/lib/data/channels.ts`. |
 
 ---

@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -8,6 +9,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { companies } from "./crm";
 import { documentKindEnum } from "./enums";
 import { organizations } from "./organizations";
 import { departments, users } from "./people";
@@ -48,6 +50,18 @@ export const documents = pgTable(
      * if its project is removed; it becomes an org-level one.
      */
     projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+    /**
+     * The client this belongs to, for a document about the relationship rather
+     * than about one job -- a client brief, which holds the tone, the brand
+     * rules and the standing do's and don'ts every project for them inherits.
+     *
+     * Independent of `projectId` rather than derived through it: a project's
+     * brief is about that job, and the client's is about the client, and a
+     * project can be reassigned to another company without its own brief
+     * becoming someone else's. `set null` for the same reason the project
+     * reference uses it -- the prose outlives the row it hung on.
+     */
+    companyId: uuid("company_id").references(() => companies.id, { onDelete: "set null" }),
     departmentId: uuid("department_id").references(() => departments.id, {
       onDelete: "set null",
     }),
@@ -64,6 +78,23 @@ export const documents = pgTable(
     uniqueIndex("documents_org_slug_key").on(t.organizationId, t.slug),
     index("documents_org_kind_idx").on(t.organizationId, t.kind),
     index("documents_org_project_idx").on(t.organizationId, t.projectId),
+    index("documents_org_company_idx").on(t.organizationId, t.companyId),
+    /*
+      "The brief" has to mean one thing.
+
+      Every screen that shows a brief asks for *the* brief of a project or a
+      client and renders the row it gets back, so two live ones would make
+      which of them people see a matter of row order. Partial, so it binds
+      only briefs -- a project may still carry any number of notes, shoot
+      plans and case studies -- and only live ones, so archiving a brief frees
+      the slot for its replacement rather than blocking it.
+    */
+    uniqueIndex("documents_org_project_brief_key")
+      .on(t.organizationId, t.projectId)
+      .where(sql`${t.kind} = 'brief' and ${t.archivedAt} is null`),
+    uniqueIndex("documents_org_company_brief_key")
+      .on(t.organizationId, t.companyId)
+      .where(sql`${t.kind} = 'brief' and ${t.archivedAt} is null`),
   ],
 );
 

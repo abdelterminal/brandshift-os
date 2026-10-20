@@ -50,6 +50,9 @@ export const TABLE_TOPIC: Readonly<Record<string, LiveTopic>> = {
   deliverables: "deliverables",
   documents: "documents",
   document_sections: "documents",
+  // A file attached to a brief is a change to that brief as far as anybody
+  // watching is concerned, so it rides the same topic rather than earning one.
+  attachments: "documents",
   stage_playbook: "playbook",
   project_stage_setup: "playbook",
   meetings: "meetings",

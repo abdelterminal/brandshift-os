@@ -54,6 +54,13 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules/playwright-core ./node_modules/playwright-core
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+# Where uploaded files go. Created here, owned by the user the server runs as,
+# because Docker creates a volume's mount point as root if it does not already
+# exist in the image -- and this process has `cap_drop: ALL`, so it cannot
+# chown its way out of that. Made now, the volume inherits this ownership on
+# first mount and the first upload is not a permission error.
+RUN mkdir -p /data/uploads && chown -R nextjs:nodejs /data
 USER nextjs
 EXPOSE 3000
 CMD ["node", "server.js"]

@@ -88,6 +88,7 @@ export type Action =
   | "document.create"
   | "document.edit"
   | "document.archive"
+  | "brief.edit"
   | "playbook.manage"
   | "deliverable.work"
   | "deliverable.convert"
@@ -255,6 +256,21 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   "document.create": (actor) => atLeast(actor, "manager") || hasModule(actor, "people"),
   "document.edit": (actor) => atLeast(actor, "manager") || hasModule(actor, "people"),
   "document.archive": (actor) => atLeast(actor, "admin"),
+
+  /*
+    A brief is stricter than the documents around it, and deliberately so.
+
+    `document.edit` admits anyone holding the `people` module as well as
+    managers, which is right for a note or a case study -- shared knowledge
+    somebody from operations may well keep. A brief is the agreement with a
+    client: what was promised, for how much, by when. Changing it is a
+    commercial act, so it stays with the people who answer for the
+    relationship -- manager, admin, owner -- with no module flag as a way in.
+
+    Reading one is still `document.view`, which is everyone. The brief being
+    visible to the whole studio is the point of it.
+  */
+  "brief.edit": (actor) => atLeast(actor, "manager"),
 
   // Configuring what a stage sets up -- its template and its expected
   // documents -- is the same kind of decision as writing a template.

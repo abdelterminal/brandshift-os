@@ -78,6 +78,9 @@ test("a newly-unplanned project shows the banner, and adding a task clears it", 
   // Deliverables: left empty on purpose.
   await page.getByRole("button", { name: "Continue" }).click();
 
+  // Brief -- optional, and skipped here. Its own coverage is in brief.spec.ts.
+  await page.getByRole("button", { name: /Continue|Skip/ }).click();
+
   await expect(page.getByRole("heading", { name: "Ready to publish" })).toBeVisible();
   await page.getByRole("button", { name: "Publish project" }).click();
   await page.waitForURL(`**/en/work/${key}`);

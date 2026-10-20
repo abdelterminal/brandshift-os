@@ -54,6 +54,7 @@ const createSchema = z.object({
   summary: z.string().trim().max(2000).optional(),
   kind: z.enum(KINDS),
   projectId: z.union([z.uuid(), z.literal("")]).optional(),
+  companyId: z.union([z.uuid(), z.literal("")]).optional(),
   departmentId: z.union([z.uuid(), z.literal("")]).optional(),
   sections: z.array(sectionSchema).min(1).max(50),
 });
@@ -71,6 +72,7 @@ export async function createDocumentAction(
     summary: parsed.data.summary || null,
     kind: parsed.data.kind,
     projectId: parsed.data.projectId || null,
+    companyId: parsed.data.companyId || null,
     departmentId: parsed.data.departmentId || null,
     sections: toSections(parsed.data.sections),
   });
@@ -94,6 +96,9 @@ const updateSchema = z.object({
   title: z.string().trim().min(1).max(200),
   summary: z.string().trim().max(2000).optional(),
   kind: z.enum(KINDS),
+  /** Absent leaves it where it is; "" clears it. See `updateDocument`. */
+  projectId: z.union([z.uuid(), z.literal("")]).optional(),
+  companyId: z.union([z.uuid(), z.literal("")]).optional(),
   sections: z.array(sectionSchema).min(1).max(50),
 });
 
@@ -112,6 +117,8 @@ export async function updateDocumentAction(
     title: parsed.data.title,
     summary: parsed.data.summary || null,
     kind: parsed.data.kind,
+    projectId: parsed.data.projectId === undefined ? undefined : parsed.data.projectId || null,
+    companyId: parsed.data.companyId === undefined ? undefined : parsed.data.companyId || null,
   });
   const sectionsOk = await replaceDocumentSections(
     session.actor,

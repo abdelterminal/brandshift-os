@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { stagePlaybook, projectStageSetup } from "@/db/schema/playbook";
+import { documentSections, documents } from "@/db/schema/documents";
 import { projectMembers, projects } from "@/db/schema/projects";
 import { tasks } from "@/db/schema/tasks";
 import { withOrg } from "@/db/tenancy";
@@ -50,6 +51,29 @@ const createProjectSchema = z.object({
   deliverables: z.array(z.string().trim().min(2).max(200)).default([]),
   /** Put the project on the delivery flow and run onboarding's setup. */
   startOnFlow: z.boolean().default(false),
+  /**
+   * The brief, if one was written in the wizard.
+   *
+   * Optional at every level: the step is skippable, a brief can be written on
+   * the project's own Brief tab at any point afterwards, and a project with no
+   * client does not need one at all. Absent means no document is created --
+   * not an empty one.
+   */
+  brief: z
+    .object({
+      title: z.string().trim().min(1).max(200),
+      summary: z.string().trim().max(2000).optional(),
+      sections: z
+        .array(
+          z.object({
+            title: z.string().trim().min(1).max(300),
+            detail: z.string().trim().max(4000).optional(),
+          }),
+        )
+        .max(50)
+        .default([]),
+    })
+    .optional(),
 });
 
 export type CreateProjectInput = z.input<typeof createProjectSchema>;
@@ -102,6 +126,11 @@ export async function createProject(input: CreateProjectInput): Promise<CreatePr
       stubs.push({ slug: await uniqueDocumentSlug(session.actor, title), title, kind });
     }
   }
+
+  // Alongside the stub slugs above, and for the same reason:
+  // `uniqueDocumentSlug` reads, and a read inside the transaction that opens
+  // below would be a query against rows it has not committed.
+  const briefSlug = data.brief ? await uniqueDocumentSlug(session.actor, data.brief.title) : null;
 
   const created = await db.transaction(async (tx) => {
     const txScope = withOrg(session.actor.organizationId, tx);
@@ -170,6 +199,46 @@ export async function createProject(input: CreateProjectInput): Promise<CreatePr
         documentCount: counts.documentCount,
         setUpByUserId: session.actor.userId,
       });
+    }
+
+    /*
+      The brief, written in the wizard.
+
+      After the stage playbook on purpose. Onboarding's `expectedDocKinds` can
+      itself include `brief`, which would leave a blank stub and a written
+      brief competing for the one slot the partial unique index allows -- so
+      the stub is cleared first and the real one takes its place. Somebody who
+      wrote a brief meant that one.
+    */
+    if (data.brief && briefSlug) {
+      await txScope.delete(
+        documents,
+        eq(documents.projectId, project!.id),
+        eq(documents.kind, "brief"),
+      );
+
+      const [briefDoc] = await txScope.insert(documents, {
+        slug: briefSlug,
+        title: data.brief.title,
+        summary: data.brief.summary || null,
+        kind: "brief",
+        projectId: project!.id,
+        companyId: data.companyId || null,
+        ownerUserId: data.ownerUserId || session.actor.userId,
+        createdByUserId: session.actor.userId,
+      });
+
+      if (briefDoc && data.brief.sections.length > 0) {
+        await txScope.insert(
+          documentSections,
+          data.brief.sections.map((section, index) => ({
+            documentId: briefDoc.id,
+            position: index,
+            title: section.title,
+            detail: section.detail || null,
+          })),
+        );
+      }
     }
 
     return project!;

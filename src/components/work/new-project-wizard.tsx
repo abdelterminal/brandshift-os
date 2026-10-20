@@ -10,6 +10,8 @@ import { PersonAvatar } from "@/components/ui/avatar";
 import { Badge, CountBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SectionFields, type DraftSection } from "@/components/documents/controls";
+import { briefTemplate } from "@/lib/brief-template";
 import { Textarea } from "@/components/ui/input";
 import { focusRing, transition } from "@/components/ui/styles";
 import { createProject } from "@/lib/actions/projects";
@@ -36,7 +38,7 @@ export type WizardPerson = {
   overdue: number;
 };
 
-const STEPS = ["essentials", "department", "assignment", "deliverables", "review"] as const;
+const STEPS = ["essentials", "department", "assignment", "deliverables", "brief", "review"] as const;
 type Step = (typeof STEPS)[number];
 
 const STEP_LABEL: Record<Step, string> = {
@@ -44,6 +46,7 @@ const STEP_LABEL: Record<Step, string> = {
   department: "stepDepartment",
   assignment: "stepAssignment",
   deliverables: "stepDeliverables",
+  brief: "stepBrief",
   review: "stepReview",
 };
 
@@ -60,6 +63,7 @@ export function NewProjectWizard({
   const t = useTranslations("NewProject");
   const ui = useTranslations("Ui");
   const work = useTranslations("Work");
+  const brief = useTranslations("Brief");
   const stepRef = useRef<HTMLHeadingElement>(null);
   const priorities = useTranslations("Priority");
 
@@ -79,7 +83,21 @@ export function NewProjectWizard({
     memberIds: [] as string[],
     deliverables: "",
     startOnFlow: false,
+    briefTitle: "",
+    briefSummary: "",
   });
+
+  /*
+    The brief's sections, seeded from the template.
+
+    Separate from `form` because `SectionFields` owns an array and wants its
+    own setter. Seeded once on mount rather than when the step opens: a
+    `useEffect` keyed on the step would overwrite whatever had been typed the
+    second time somebody stepped back to it.
+  */
+  const [briefSections, setBriefSections] = useState<DraftSection[]>(() =>
+    briefTemplate((key) => brief(key)),
+  );
 
   useEffect(() => { stepRef.current?.focus(); }, [step]);
   const index = STEPS.indexOf(step);
@@ -117,6 +135,16 @@ export function NewProjectWizard({
           .map((line) => line.trim())
           .filter((line) => line.length >= 2),
         startOnFlow: form.startOnFlow,
+        // Omitted entirely unless somebody actually wrote something. A brief
+        // of eight untouched prompts looks written and is worse than none --
+        // the Brief tab's own empty state is the better prompt in that case.
+        brief: briefTitle
+          ? {
+              title: briefTitle,
+              summary: form.briefSummary.trim() || undefined,
+              sections: answeredSections,
+            }
+          : undefined,
       });
 
       // A successful create redirects, so reaching here means it failed.
@@ -131,6 +159,21 @@ export function NewProjectWizard({
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.length >= 2);
+
+  /*
+    A section counts as answered when its detail differs from the prompt the
+    template put there. Comparing against the template is what lets somebody
+    fill in three of eight and still get a brief with three sections, rather
+    than one carrying five unanswered questions.
+  */
+  const templateDetail = new Map(
+    briefTemplate((key) => brief(key)).map((section) => [section.title, section.detail]),
+  );
+  const answeredSections = briefSections
+    .filter((section) => section.title.trim().length > 0)
+    .filter((section) => section.detail.trim() !== (templateDetail.get(section.title) ?? ""))
+    .map((section) => ({ title: section.title.trim(), detail: section.detail.trim() }));
+  const briefTitle = form.briefTitle.trim();
 
   const team = people.filter((person) => form.memberIds.includes(person.userId));
 
@@ -439,6 +482,54 @@ export function NewProjectWizard({
             </div>
           ) : null}
 
+          {step === "brief" ? (
+            <div className="flex max-w-lg flex-col gap-4">
+              <div>
+                <h2 className="text-heading font-display text-fg-default">{brief("writeTitle")}</h2>
+                <p className="text-body text-fg-muted mt-1">{brief("wizardBody")}</p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label htmlFor="project-brief-title" className="text-label text-fg-default w-fit">
+                  {brief("fieldTitle")}
+                </label>
+                <input
+                  id="project-brief-title"
+                  className={inputClass}
+                  value={form.briefTitle}
+                  onChange={(event) =>
+                    setForm((previous) => ({ ...previous, briefTitle: event.target.value }))
+                  }
+                  placeholder={brief("defaultTitle", { name: form.name || "…" })}
+                  maxLength={200}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label htmlFor="project-brief-summary" className="text-label text-fg-default w-fit">
+                  {brief("fieldSummary")}
+                </label>
+                <Textarea
+                  id="project-brief-summary"
+                  rows={2}
+                  value={form.briefSummary}
+                  onChange={(event) =>
+                    setForm((previous) => ({ ...previous, briefSummary: event.target.value }))
+                  }
+                  maxLength={2000}
+                />
+              </div>
+
+              <SectionFields sections={briefSections} setSections={setBriefSections} />
+
+              <p className="text-caption text-fg-subtle">
+                {briefTitle
+                  ? brief("wizardWillCreate", { count: answeredSections.length })
+                  : brief("wizardWillSkip")}
+              </p>
+            </div>
+          ) : null}
+
           {step === "review" ? (
             <div>
               <h2 className="text-heading font-display text-fg-default">{t("review")}</h2>
@@ -536,7 +627,16 @@ export function NewProjectWizard({
             disabled={!canContinue()}
             onClick={() => setStep(STEPS[index + 1]!)}
           >
-            {index > 0 && !form.departmentId && !form.ownerUserId && !form.memberIds.length && !deliverables.length ? ui("skip") : t("continue")}
+            {index > 0 &&
+            !form.departmentId &&
+            !form.ownerUserId &&
+            !form.memberIds.length &&
+            !deliverables.length &&
+            // The brief counts too, or the button offers to skip past work
+            // somebody has just finished typing.
+            !briefTitle
+              ? ui("skip")
+              : t("continue")}
           </Button>
         )}
       </div>

@@ -63,10 +63,17 @@ function ErrorNote({ children }: { children: React.ReactNode }) {
   );
 }
 
-type DraftSection = { title: string; detail: string };
+export type DraftSection = { title: string; detail: string };
 const emptySection = (): DraftSection => ({ title: "", detail: "" });
 
-function SectionFields({
+/**
+ * The ordered-section editor, exported because a brief is the same shape.
+ *
+ * Shared rather than copied: move, add, remove and the fifty-section cap are
+ * the behaviour people learn once, and two editors that drift apart is how a
+ * brief ends up reordering differently from a case study.
+ */
+export function SectionFields({
   sections,
   setSections,
 }: {
