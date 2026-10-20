@@ -152,8 +152,15 @@ export async function uploadAttachment(formData: FormData): Promise<AttachmentRe
   return { ok: true, id };
 }
 
+/**
+ * Taking a file off a brief.
+ *
+ * `brief.delete`, not `brief.edit`: a manager writes the brief and attaches
+ * what the client sent, but removing a file destroys the only copy this app
+ * holds, so it is admin and owner only.
+ */
 export async function removeAttachment(attachmentId: string): Promise<AttachmentResult> {
-  const session = await requirePermissionForAction("brief.edit");
+  const session = await requirePermissionForAction("brief.delete");
 
   const existing = await getAttachment(session.actor, attachmentId);
   if (!existing) return { ok: false, error: "notFound" };

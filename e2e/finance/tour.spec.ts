@@ -20,6 +20,32 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 const anonymous = { storageState: { cookies: [], origins: [] } };
 const tour = (page: Page) => page.locator('[aria-labelledby="tour-title"]');
 
+/**
+ * Reload until the tour stays gone.
+ *
+ * `completeTour()` is deliberately fire-and-forget -- see `tour.tsx`: the card
+ * closes the moment it is dismissed and the write catches up, because a slow
+ * write must never hold an overlay on screen. The app is explicit that the
+ * cost of that choice is seeing the tour once more.
+ *
+ * So a reload issued immediately after dismissing can legitimately beat the
+ * write, and asserting on a single reload asserts something the app never
+ * promised. This reloads until the write has landed, which is what "it
+ * survives a reload" actually means here. Flaky twice in one day before it,
+ * both times with the tour still on screen.
+ */
+async function reloadUntilTourIsGone(page: Page) {
+  await expect
+    .poll(
+      async () => {
+        await page.reload();
+        return tour(page).count();
+      },
+      { timeout: 15_000 },
+    )
+    .toBe(0);
+}
+
 /** Invite somebody, take the link out of the outbox, and accept it. */
 async function newcomer(page: Page, browser: Browser) {
   const email = `tourist${String(Date.now()).slice(-7)}@brandshift.test`;
@@ -100,8 +126,7 @@ test("goes for good once it is finished", async ({ page, browser }) => {
 
   // On the user rather than in localStorage, so it survives a reload -- and
   // would survive them signing in from a different machine.
-  await invited.reload();
-  await expect(tour(invited)).toHaveCount(0);
+  await reloadUntilTourIsGone(invited);
 
   await context.close();
 });
@@ -112,8 +137,7 @@ test("skipping is an answer, not something to be nagged out of", async ({ page, 
   await tour(invited).getByRole("button", { name: "Skip" }).click();
   await expect(tour(invited)).toHaveCount(0);
 
-  await invited.reload();
-  await expect(tour(invited)).toHaveCount(0);
+  await reloadUntilTourIsGone(invited);
 
   await context.close();
 });

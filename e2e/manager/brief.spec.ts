@@ -110,6 +110,30 @@ test("a file survives the round trip to disk and back", async ({ page }) => {
   await expect(main(page).locator("li", { hasText: "moodboard.png" })).toBeVisible();
 });
 
+test("a manager can attach a file but not remove one", async ({ page, browser }) => {
+  // Adding and removing sit on different rungs: a manager writes the brief
+  // and attaches what the client sent, but a removal destroys the only copy
+  // this app holds, so that is admin and owner only.
+  await openBrief(page, "ATL");
+  const file = main(page).locator("li", { hasText: "client-brief.pdf" });
+  await expect(file).toBeVisible();
+
+  // Elena is a manager: she put it there and cannot take it away.
+  await expect(main(page).getByRole("button", { name: "Add a file" })).toBeVisible();
+  await expect(file.getByRole("button", { name: /^Remove / })).toHaveCount(0);
+
+  // Tom is an admin, and can.
+  const adminCtx = await browser.newContext({ storageState: "e2e/.auth/finance.json" });
+  const admin = await adminCtx.newPage();
+  await admin.goto("/en/work/ATL?tab=brief");
+  await expect(
+    main(admin)
+      .locator("li", { hasText: "client-brief.pdf" })
+      .getByRole("button", { name: /^Remove / }),
+  ).toBeVisible();
+  await adminCtx.close();
+});
+
 test("the limits are the server's, not the file picker's", async ({ page, request }) => {
   await openBrief(page, "HAR");
 

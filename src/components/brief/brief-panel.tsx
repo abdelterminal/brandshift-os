@@ -58,6 +58,8 @@ export async function BriefPanel({
       : await getCompanyBrief(actor, target.companyId);
 
   const mayEdit = can(actor, "brief.edit");
+  // Removing a file is a rung higher than writing the brief -- see authz.ts.
+  const mayDelete = can(actor, "brief.delete");
   const attachments = brief ? await listAttachments(actor, brief.id) : [];
 
   const briefTarget =
@@ -235,7 +237,7 @@ export async function BriefPanel({
                   >
                     {t("download")}
                   </Button>
-                  {mayEdit ? (
+                  {mayDelete ? (
                     <RemoveAttachmentButton attachmentId={file.id} fileName={file.fileName} />
                   ) : null}
                 </li>

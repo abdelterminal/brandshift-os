@@ -111,3 +111,35 @@ describe("the rule table", () => {
     }
   });
 });
+
+describe("the brief", () => {
+  it("is readable by everyone, including a plain member", () => {
+    // The point of a brief is that the people doing the work can read it.
+    expect(can(MEMBER, "document.view")).toBe(true);
+  });
+
+  it("is written and edited from manager up", () => {
+    expect(can(MEMBER, "brief.edit")).toBe(false);
+    expect(can(MANAGER, "brief.edit")).toBe(true);
+    expect(can(ADMIN, "brief.edit")).toBe(true);
+    expect(can(OWNER, "brief.edit")).toBe(true);
+  });
+
+  it("does not admit the people module the way a document does", () => {
+    // `document.edit` lets anyone holding `people` edit a note or a case
+    // study. A brief is the agreement with a client, so the flag is not a way
+    // in -- this is the whole reason `brief.edit` exists separately.
+    const operations = actor({ role: "member", permissions: { people: true } });
+    expect(can(operations, "document.edit")).toBe(true);
+    expect(can(operations, "brief.edit")).toBe(false);
+  });
+
+  it("is deleted from one rung higher than it is written", () => {
+    // A manager attaches what the client sent; removing it destroys the only
+    // copy this app holds, so that stays with admin and owner.
+    expect(can(MANAGER, "brief.edit")).toBe(true);
+    expect(can(MANAGER, "brief.delete")).toBe(false);
+    expect(can(ADMIN, "brief.delete")).toBe(true);
+    expect(can(OWNER, "brief.delete")).toBe(true);
+  });
+});

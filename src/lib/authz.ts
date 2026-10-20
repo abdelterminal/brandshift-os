@@ -89,6 +89,7 @@ export type Action =
   | "document.edit"
   | "document.archive"
   | "brief.edit"
+  | "brief.delete"
   | "playbook.manage"
   | "deliverable.work"
   | "deliverable.convert"
@@ -271,6 +272,21 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
     visible to the whole studio is the point of it.
   */
   "brief.edit": (actor) => atLeast(actor, "manager"),
+
+  /*
+    Taking something off a brief, as opposed to putting something on it.
+
+    A manager writes the brief and attaches what the client sent -- that is
+    the job. Removing a file is the one act here with nothing behind it: the
+    bytes go, and the only other copy was the one in somebody's inbox. So it
+    sits a rung higher, with admin and owner, the same rung `document.archive`
+    already uses for retiring a document.
+
+    Adding and editing stay at manager deliberately. Splitting them is the
+    point: a rule that made managers ask permission to do their own work would
+    be obeyed by nobody and routed around by everybody.
+  */
+  "brief.delete": (actor) => atLeast(actor, "admin"),
 
   // Configuring what a stage sets up -- its template and its expected
   // documents -- is the same kind of decision as writing a template.
