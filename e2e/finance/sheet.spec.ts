@@ -48,8 +48,10 @@ test("a quote prints as the document the client receives", async ({ page }) => {
   const paper = sheet(page);
   await expect(paper).toBeVisible();
 
-  // The letterhead, from the organization row.
-  await expect(paper.getByText("Agence de Communication & Marketing Digital")).toBeVisible();
+  // The letterhead, from the organization row. The strapline used to be
+  // asserted here as text; it is now part of the mark itself, drawn by the
+  // designer rather than set in body type, so the mark is what to look for.
+  await expect(paper.getByRole("img", { name: "Mediast" })).toBeVisible();
   await expect(paper.getByText("contact@mediast.ma")).toBeVisible();
 
   // What it is, who it is for, and what it costs.

@@ -131,7 +131,24 @@ export function DocumentSheet({
               /* eslint-disable-next-line @next/next/no-img-element -- an arbitrary
                  tenant URL printed at a fixed width. next/image would optimise
                  nothing here and needs every tenant's host allow-listed. */
-              <img src={letterhead.logoUrl} alt={letterhead.name} className="h-[10mm] w-auto" />
+              <img
+                src={letterhead.logoUrl}
+                alt={letterhead.name}
+                /*
+                  Tall enough for a lockup, capped so a wide one cannot reach
+                  the number and date facing it.
+
+                  14mm rather than the 10mm this started at: Mediast's
+                  letterhead mark is the wordmark with its strapline beneath,
+                  and 10mm of total height shrinks the wordmark itself to
+                  three-quarters of what it printed at before. The height the
+                  wordmark prints at is the thing to hold steady; the asset
+                  having more in it is not a reason for the name to get
+                  smaller. A tenant whose logo is a plain mark simply gets a
+                  slightly larger one, which is the harmless direction.
+                */
+                className="h-[14mm] w-auto max-w-[95mm]"
+              />
             ) : (
               <p className="font-display text-display text-fg-default font-bold">
                 {letterhead.name}

@@ -19,7 +19,11 @@ export const ORGANIZATION = {
   // The letterhead, taken from the devis that goes out to clients rather than
   // invented. The slug changed with the name: it is only ever seen in seeded
   // data, so there is nothing to migrate behind it.
-  tagline: "Agence de Communication & Marketing Digital",
+  // Empty on purpose: the letterhead mark below carries this exact line as
+  // part of the lockup, so filling the field too printed it twice, once set
+  // by the designer and once in body type a few millimetres under it. The
+  // column stays for a tenant whose logo is a plain mark.
+  tagline: null,
   city: "Meknès, Maroc",
   website: "mediast.ma",
   contactEmail: "contact@mediast.ma",
@@ -27,10 +31,11 @@ export const ORGANIZATION = {
   // getLetterhead() is what turns this into a real path under a sub-path
   // deployment -- see resolveLogoUrl() there.
   //
-  // Deliberately the pre-rebrand "MEDIAST" wordmark, not mediast-wordmark.svg
-  // (the current in-app brand mark used by Wordmark/AnimatedWordmark) -- the
-  // finance letterhead is the one place asked to keep the old logo.
-  logoUrl: "/brand/mediast-wordmark-classic.svg",
+  // Deliberately not mediast-wordmark.svg (the in-app brand mark used by
+  // Wordmark/AnimatedWordmark) -- the finance letterhead carries the full
+  // print lockup instead: the same wordmark with its strapline beneath it,
+  // which is what belongs on a document that leaves the building.
+  logoUrl: "/brand/mediast-wordmark-letterhead.svg",
 };
 
 export const DEPARTMENTS = [
