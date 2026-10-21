@@ -19,6 +19,7 @@
     "db:seed": "tsx --env-file=.env --conditions=react-server src/db/seed.ts",
     "db:reset": "tsx --env-file=.env --conditions=react-server src/db/reset.ts",
     "db:migrate:mongo": "tsx --env-file=.env --conditions=react-server src/db/migrate/run.ts",
+    "db:link-clients": "tsx --env-file=.env --conditions=react-server src/db/link-clients/run.ts",
     "db:import:notion": "tsx --env-file=.env --conditions=react-server src/db/import-notion/run.ts"
   },
   "dependencies": {
