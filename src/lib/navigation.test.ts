@@ -94,14 +94,14 @@ describe("the rail", () => {
 
   it("marks Work as expandable, for the channels Phase 2 nests under it", () => {
     const work = railFor(ADMIN).find((item) => item.id === "work");
-    expect(work?.expandableChildren).toBe("channels");
+    expect(work?.expandableChildren).toContain("channels");
   });
 
   it("marks People (or Team) as expandable, for the departments it nests", () => {
     for (const person of EVERYONE) {
       const rail = railFor(person);
       const peopleLike = rail.find((item) => item.href === "/people");
-      expect(peopleLike?.expandableChildren, `for ${person.role}`).toBe("departments");
+      expect(peopleLike?.expandableChildren, `for ${person.role}`).toContain("departments");
     }
   });
 });
@@ -302,5 +302,135 @@ describe("the client-services rail", () => {
 
   it("is still reachable by name for them", () => {
     expect(destinationsFor(SALES).map((item) => item.href)).toContain("/insights");
+  });
+});
+
+describe("holding two modules adds a destination rather than swapping the list", () => {
+  /**
+   * The bug this replaced: `railFor` picked one of three fixed lists by
+   * checking `finance` then `crm`, so somebody holding both got the finance
+   * list -- which had no CRM entry at all. Holding *more* modules gave them
+   * *fewer* destinations, and the person most likely to live in the pipeline
+   * was the one who could only reach it by name in the palette.
+   *
+   * Reported from the live deployment by an admin holding both.
+   */
+  const BOTH = actor({
+    role: "admin",
+    permissions: { finance: true, crm: true, people: true, insights: true },
+  });
+
+  it("gives the pipeline to somebody who also holds finance", () => {
+    const ids = railFor(BOTH).map((item) => item.id);
+    expect(ids).toContain("crm");
+    expect(ids).toContain("finance");
+  });
+
+  it("keeps Today first and Inbox last, with the modules between", () => {
+    expect(railFor(BOTH).map((item) => item.id)).toEqual([
+      "today",
+      "finance",
+      "crm",
+      "work",
+      "inbox",
+    ]);
+  });
+
+  it("still never exceeds the cap, whatever somebody holds", () => {
+    const everything = actor({
+      role: "owner",
+      permissions: { finance: true, crm: true, people: true, insights: true },
+    });
+    expect(railFor(everything).length).toBeLessThanOrEqual(MAX_PRIMARY_DESTINATIONS);
+    expect(() => railFor(everything)).not.toThrow();
+  });
+
+  it("leaves somebody with one module exactly where they were", () => {
+    const salesOnly = actor({ role: "manager", permissions: { crm: true, insights: true } });
+    expect(railFor(salesOnly).map((item) => item.id)).toEqual([
+      "today",
+      "crm",
+      "work",
+      "people",
+      "inbox",
+    ]);
+  });
+
+  it("loses nothing: what falls off the rail is still in the palette", () => {
+    // People drops for somebody holding both, and must stay reachable.
+    const ids = railFor(BOTH).map((item) => item.id);
+    expect(ids).not.toContain("people");
+    expect(destinationsFor(BOTH).map((item) => item.href)).toContain("/people");
+  });
+});
+
+describe("nothing is lost to the cap", () => {
+  /**
+   * Somebody holding both `finance` and `crm` has six things wanting five
+   * slots, and People is the one that gives way. Departments hang off People,
+   * so letting it go would quietly take Strategy, Design and Engineering off
+   * the rail with it -- a feature disappearing as a side effect of an
+   * unrelated flag, which is not a trade anybody chose. Work adopts them.
+   */
+  const BOTH = actor({
+    role: "admin",
+    permissions: { finance: true, crm: true, people: true, insights: true },
+  });
+  const DEPARTMENTS = [
+    { id: "d1", name: "Strategy" },
+    { id: "d2", name: "Design" },
+  ];
+  const CHANNELS = [{ id: "c1", slug: "general", name: "General" }];
+
+  it("hangs the departments off Work when People did not fit", () => {
+    const rail = withDepartments(
+      withChannels(railFor(BOTH), CHANNELS, "All channels"),
+      DEPARTMENTS,
+    );
+
+    const work = rail.find((item) => item.id === "work");
+    const labels = work?.children?.map((child) => child.label);
+
+    // Both kinds, on the one destination, neither having overwritten the
+    // other -- the two helpers append rather than assign for this reason.
+    expect(labels).toContain("Strategy");
+    expect(labels).toContain("Design");
+    expect(labels).toContain("General");
+    expect(labels).toContain("All channels");
+  });
+
+  it("leaves Work carrying only channels when People did fit", () => {
+    const salesOnly = actor({ role: "manager", permissions: { crm: true } });
+    const rail = withDepartments(
+      withChannels(railFor(salesOnly), CHANNELS, "All channels"),
+      DEPARTMENTS,
+    );
+
+    expect(rail.find((item) => item.id === "work")?.children?.map((c) => c.label)).not.toContain(
+      "Strategy",
+    );
+    // They are where they have always been.
+    expect(rail.find((item) => item.id === "people")?.children?.map((c) => c.label)).toContain(
+      "Strategy",
+    );
+  });
+
+  it("reaches every department exactly once, however the rail came out", () => {
+    // A department appearing under both Work and People would be the obvious
+    // way to get this wrong.
+    for (const person of [
+      BOTH,
+      actor({ role: "manager", permissions: { crm: true } }),
+      actor({ role: "admin", permissions: { people: true } }),
+    ]) {
+      const rail = withDepartments(
+        withChannels(railFor(person), CHANNELS, "All channels"),
+        DEPARTMENTS,
+      );
+      const strategy = rail.flatMap((item) =>
+        (item.children ?? []).filter((child) => child.label === "Strategy"),
+      );
+      expect(strategy.length, `for ${JSON.stringify(person.permissions)}`).toBe(1);
+    }
   });
 });

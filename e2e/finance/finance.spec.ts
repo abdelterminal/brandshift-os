@@ -237,13 +237,34 @@ test("the money is on the rail of the person who can see it", async ({ page }) =
   // its unread badge inside the link: its accessible name is `Inbox 3` the
   // moment anything is waiting, which is most of the time once the rest of
   // the suite has run.
-  for (const name of ["Today", "Finance", "Work", "People", "Inbox"]) {
+  //
+  // Pipeline is here now, where it used to be asserted absent. This person
+  // holds `finance` and `crm`, and the rail used to be one of three fixed
+  // lists picked by checking `finance` first -- so they got the finance list,
+  // which had no CRM entry at all, and holding *more* modules left them with
+  // *fewer* destinations. That is the same fault this test was written to
+  // catch, pointed the other way: reported by an admin as "I don't see any of
+  // what you said". The rail is now assembled from what somebody holds.
+  for (const name of ["Today", "Finance", "Pipeline", "Work", "Inbox"]) {
     const label = new RegExp(String.raw`^${name}( \d+)?$`);
     await expect(rail.getByRole("link", { name: label })).toBeVisible();
   }
-  for (const name of ["Insights", "Pipeline"]) {
+
+  // People and Insights are what give way, because six will not fit in five.
+  for (const name of ["Insights", "People"]) {
     await expect(rail.getByRole("link", { name, exact: true })).toHaveCount(0);
   }
+
+  // And nothing is actually lost. The departments that nest under People
+  // move to Work rather than vanishing with it -- see `navigation.ts`, and
+  // the unit tests that prove each one appears exactly once.
+  const work = rail.getByRole("link", { name: /^Work$/ });
+  await expect(work).toBeVisible();
+  await expect(rail.getByRole("link", { name: "Engineering", exact: true })).toBeVisible();
+
+  // People itself is still a place you can go, just not a place on the rail.
+  await page.goto("/en/people");
+  await expect(page.getByRole("heading", { name: "People", level: 1 })).toBeVisible();
 });
 
 test("and off the rail of somebody who cannot", async ({ browser }) => {

@@ -1,4 +1,4 @@
-import { can, atLeast, hasModule, type Action, type Actor } from "./authz";
+import { can, atLeast, type Action, type Actor } from "./authz";
 
 /**
  * The left rail.
@@ -42,6 +42,15 @@ export type NavIconName =
   | "templates"
   | "reviews";
 
+/**
+ * What can hang under a destination.
+ *
+ * An array rather than one value, because Work has to be able to carry both:
+ * when somebody holds two modules there is no room for People on the rail,
+ * and the departments that nest under it would otherwise disappear with it.
+ */
+export type ExpandableKind = "channels" | "departments";
+
 export type Destination = {
   /** Key into the `Nav` message catalogue, unless `label` overrides it. */
   id: string;
@@ -74,137 +83,111 @@ export type Destination = {
    * in whatever is merely `expandable`, so Work and People can both carry
    * children on the same rail without one overwriting the other's.
    */
-  expandableChildren?: "channels" | "departments";
+  expandableChildren?: ExpandableKind[];
 };
 
 /**
- * Admins coordinate: they need the whole org's work and the people in it.
- * Members do their own work: their tasks, their calendar, their team.
+ * A coordinator's rail, assembled rather than chosen.
  *
- * These are two different jobs, not one job with things hidden, which is why
- * the rails differ in wording as well as membership -- "Work" for the person
- * who assigns it, "My Work" for the person who does it.
+ * There used to be three hand-written lists -- coordination, sales, finance --
+ * and `railFor` picked one by checking `finance` then `crm`. That worked for
+ * somebody holding exactly one module and quietly failed for anybody holding
+ * two: an owner with both `finance` and `crm` got the finance list, which has
+ * no CRM entry at all, so holding *more* modules gave them *fewer*
+ * destinations. The Pipeline was reachable only by name in the palette, by the
+ * person most likely to live in it. Reported as "I don't see any of what you
+ * said", which is exactly right.
+ *
+ * So the rail is built from what somebody actually holds. One rule, applied to
+ * everybody, instead of four lists each of which had to remember every case.
+ *
+ * Members keep their own list below: theirs is a different job rather than a
+ * subset of this one, down to the wording -- "My Work" for the person doing it,
+ * "Work" for the person assigning it.
  */
-const ADMIN_RAIL: Destination[] = [
-  { id: "today", href: "/today", icon: "today" },
-  {
-    id: "work",
-    href: "/work",
-    icon: "work",
-    requires: "work.view",
-    expandableChildren: "channels",
-  },
-  {
-    id: "people",
-    href: "/people",
-    icon: "people",
-    requires: "people.view",
-    expandableChildren: "departments",
-  },
-  {
-    id: "insights",
-    href: "/insights",
-    icon: "insights",
-    requires: "insights.view",
-  },
-  { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" },
-];
+
+const TODAY: Destination = { id: "today", href: "/today", icon: "today" };
+const INBOX: Destination = { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" };
 
 /**
- * Client services.
+ * A module flag outranks the general screens, for everybody.
  *
- * A third rail rather than a sixth destination on the second one. The cap of
- * five is what keeps this thing scannable and it is not being bent: somebody
- * whose job is selling gets the pipeline where somebody coordinating delivery
- * gets Insights, and both fit in five.
- *
- * This is the same reasoning that already gives coordinators and members
- * different rails -- "two different jobs, not one job with things hidden".
- * Without it the person who lives in the pipeline was the one person who could
- * only reach it by name in the command palette.
+ * It is the narrower statement about somebody's day: `finance` is only ever
+ * given to the people who send invoices, where every single person has Work.
+ * These come first for a member in client services exactly as they do for the
+ * owner -- the module says what the job is, and seniority does not change
+ * that.
  */
-const SALES_RAIL: Destination[] = [
-  { id: "today", href: "/today", icon: "today" },
+const MODULE_DESTINATIONS: Destination[] = [
+  { id: "finance", href: "/finance", icon: "finance", requires: "finance.view" },
   { id: "crm", href: "/crm", icon: "crm", requires: "crm.view" },
-  {
-    id: "work",
-    href: "/work",
-    icon: "work",
-    requires: "work.view",
-    expandableChildren: "channels",
-  },
-  {
-    id: "people",
-    href: "/people",
-    icon: "people",
-    requires: "people.view",
-    expandableChildren: "departments",
-  },
-  { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" },
 ];
 
 /**
- * Money.
+ * What a coordinator gets after their modules.
  *
- * The same argument as the sales rail, one milestone later: somebody who can
- * see the money should not be the one person who has to know its name to reach
- * it. Finance takes the slot Insights holds on the coordination rail.
- *
- * `finance` is checked before `crm` because the owner and the operations lead
- * hold both, and it is the narrower statement of the two about what somebody's
- * day is -- `crm` ends up on every manager who has been near a client, where
- * `finance` is only ever given to the people who send the invoices. Whichever
- * flag loses, its screen is still one keystroke away in the palette.
+ * People and Insights last because they are read weekly rather than lived in,
+ * so they are the right things to lose to the palette when somebody holds two
+ * modules.
  */
-const FINANCE_RAIL: Destination[] = [
-  { id: "today", href: "/today", icon: "today" },
-  {
-    id: "finance",
-    href: "/finance",
-    icon: "finance",
-    requires: "finance.view",
-  },
+/** Named, because the rail has to ask afterwards whether it kept this one. */
+const PEOPLE: Destination = {
+  id: "people",
+  href: "/people",
+  icon: "people",
+  requires: "people.view",
+  expandableChildren: ["departments"],
+};
+
+const COORDINATOR_MIDDLE: Destination[] = [
   {
     id: "work",
     href: "/work",
     icon: "work",
     requires: "work.view",
-    expandableChildren: "channels",
+    expandableChildren: ["channels"],
   },
-  {
-    id: "people",
-    href: "/people",
-    icon: "people",
-    requires: "people.view",
-    expandableChildren: "departments",
-  },
-  { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" },
+  PEOPLE,
+  { id: "insights", href: "/insights", icon: "insights", requires: "insights.view" },
 ];
 
-const MEMBER_RAIL: Destination[] = [
-  { id: "today", href: "/today", icon: "today" },
+/**
+ * And what a member gets.
+ *
+ * A different job, not a shorter version of the same one -- down to the
+ * wording: "My Work" for the person doing it, "Work" for the person handing
+ * it out. The calendar earns a slot here that it never does above, because a
+ * member's day is largely what is already in it.
+ */
+const MEMBER_MIDDLE: Destination[] = [
   {
     id: "myWork",
     href: "/work",
     icon: "myWork",
     requires: "work.view",
-    expandableChildren: "channels",
+    expandableChildren: ["channels"],
   },
-  {
-    id: "calendar",
-    href: "/calendar",
-    icon: "calendar",
-    requires: "calendar.view",
-  },
-  { id: "inbox", href: "/inbox", icon: "inbox", requires: "inbox.view" },
+  { id: "calendar", href: "/calendar", icon: "calendar", requires: "calendar.view" },
+  /*
+    Inbox sits *inside* a member's list rather than pinned to the end of it,
+    which is the one place the two shapes differ.
+
+    `bottomNavFor` takes the first four of the rail and puts the rest under
+    More, so pinning Inbox last would push a member's Inbox off their phone --
+    and that bar was specified: today, my work, calendar, inbox. A
+    coordinator's Inbox is last on every rail and still reaches the bar,
+    because exactly three things come before it.
+  */
+  INBOX,
   {
     id: "team",
     href: "/people",
     icon: "people",
     requires: "people.view",
-    expandableChildren: "departments",
+    expandableChildren: ["departments"],
   },
 ];
+
 
 /**
  * Every place in the app, whether or not it fits on a rail.
@@ -277,23 +260,66 @@ export function destinationsFor(actor: Actor): Destination[] {
  * the cap is enforced rather than trusted.
  */
 export function railFor(actor: Actor): Destination[] {
-  // A module decides before the role does. Holding one of these flags is what
-  // says what this person's day is, whatever their seniority.
-  const rail = hasModule(actor, "finance")
-    ? FINANCE_RAIL
-    : hasModule(actor, "crm")
-      ? SALES_RAIL
-      : atLeast(actor, "manager")
-        ? ADMIN_RAIL
-        : MEMBER_RAIL;
-  const visible = rail.filter((item) => !item.requires || can(actor, item.requires));
+  const allowed = (item: Destination) => !item.requires || can(actor, item.requires);
 
+  /*
+    Today, then as much of the middle as fits, then Inbox.
+
+    Today and Inbox are the two fixed points -- where you start, and where you
+    are interrupted -- so everything else competes for the three slots between
+    them rather than against the whole rail. Taking the first three that
+    `can()` allows is what makes holding a second module *add* a destination
+    instead of silently swapping the whole list, which is the bug this
+    replaced.
+
+    The modules come first for everybody, member or owner: somebody in client
+    services reaches the pipeline from their rail whatever their role.
+  */
+  if (!atLeast(actor, "manager")) {
+    // Inbox is already in the member list, in the slot the phone bar needs.
+    const visible = [TODAY, ...MODULE_DESTINATIONS, ...MEMBER_MIDDLE]
+      .filter(allowed)
+      .slice(0, MAX_PRIMARY_DESTINATIONS);
+    return capped(visible);
+  }
+
+  const middle = [...MODULE_DESTINATIONS, ...COORDINATOR_MIDDLE]
+    .filter(allowed)
+    .slice(0, MAX_PRIMARY_DESTINATIONS - 2);
+
+  /*
+    Nothing is lost to the cap.
+
+    Somebody holding both `finance` and `crm` has six things wanting five
+    slots, and People is the one that gives way -- but departments hang off
+    People, so letting it go would quietly take Strategy, Design and
+    Engineering off the rail with it. That is a feature disappearing as a side
+    effect of an unrelated flag, which is not a trade anybody chose.
+
+    So Work adopts them. It already carries this person's channels; one
+    destination holding two kinds of child is the price of losing none of
+    them, and it is only ever paid by the handful of people holding two
+    modules at once.
+  */
+  const lostPeople =
+    allowed(PEOPLE) && !middle.some((destination) => destination.id === PEOPLE.id);
+
+  const visible = [TODAY, ...middle, INBOX].filter(allowed).map((destination) =>
+    lostPeople && destination.expandableChildren?.includes("channels")
+      ? { ...destination, expandableChildren: ["channels", "departments"] as ExpandableKind[] }
+      : destination,
+  );
+
+  return capped(visible);
+}
+
+/** The cap is enforced rather than trusted -- see `MAX_PRIMARY_DESTINATIONS`. */
+function capped(visible: Destination[]): Destination[] {
   if (visible.length > MAX_PRIMARY_DESTINATIONS) {
     throw new Error(
       `The rail may hold at most ${MAX_PRIMARY_DESTINATIONS} primary destinations; got ${visible.length}.`,
     );
   }
-
   return visible;
 }
 
@@ -314,11 +340,15 @@ export function withChannels(
   allChannelsLabel: string,
 ): Destination[] {
   return rail.map((destination) => {
-    if (destination.expandableChildren !== "channels") return destination;
+    if (!destination.expandableChildren?.includes("channels")) return destination;
 
     return {
       ...destination,
+      // Appended, not assigned: `withDepartments` may already have run, and
+      // on a rail where Work carries both, whichever ran first would
+      // otherwise be thrown away by the second.
       children: [
+        ...(destination.children ?? []),
         ...channels.map((channel) => ({
           id: channel.id,
           href: `/channels/${channel.slug}`,
@@ -361,17 +391,20 @@ export function withDepartments(
   departments: Array<{ id: string; name: string }>,
 ): Destination[] {
   return rail.map((destination) => {
-    if (destination.expandableChildren !== "departments") return destination;
+    if (!destination.expandableChildren?.includes("departments")) return destination;
 
     return {
       ...destination,
-      children: departments.map((department) => ({
-        id: department.id,
-        href: `/people?department=${department.id}`,
-        icon: "department" as const,
-        label: department.name,
-        requires: "people.view" as const,
-      })),
+      children: [
+        ...(destination.children ?? []),
+        ...departments.map((department) => ({
+          id: department.id,
+          href: `/people?department=${department.id}`,
+          icon: "department" as const,
+          label: department.name,
+          requires: "people.view" as const,
+        })),
+      ],
     };
   });
 }

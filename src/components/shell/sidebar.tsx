@@ -387,7 +387,7 @@ export function Sidebar({
           const isCollapsed = hasChildren && collapsed[destination.id];
           // A channel's own row is pinnable; the trailing "All channels" link
           // is not a channel to pin, it is the way to the rest of them.
-          const isChannelSection = destination.expandableChildren === "channels";
+          const isChannelSection = destination.expandableChildren?.includes("channels") ?? false;
 
           return (
             <li key={destination.id}>
