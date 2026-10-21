@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useState, useTransition } from "react";
 
 import type { Option } from "@/components/crm/create-dialogs";
@@ -18,7 +18,7 @@ import {
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { focusRing, transition } from "@/components/ui/styles";
-import { archiveCompanyAction, editCompany } from "@/lib/actions/crm";
+import { archiveCompanyAction, deleteCompanyAction, editCompany } from "@/lib/actions/crm";
 import type { CompanyStatus } from "@/lib/data/crm";
 import { cn } from "@/lib/utils";
 
@@ -284,6 +284,121 @@ export function ArchiveCompanyControl({
           {error}
         </p>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * Removing a client for good.
+ *
+ * Alongside Archive rather than instead of it, because they answer different
+ * questions. Archiving means "we are not working with them at the moment" and
+ * a click undoes it. This means "this record should not exist" -- a duplicate,
+ * a typo, a client created by mistake -- and nothing undoes it. The page puts
+ * them on separate rows for that reason: two buttons side by side that read
+ * alike, where only one can be undone, is how the wrong one gets pressed.
+ *
+ * The confirm states what will actually happen, counted from the database
+ * rather than described in general terms, because the three outcomes differ:
+ * deals go, projects and contacts are kept but unattached, and a client with
+ * quotes or invoices cannot be deleted at all. Somebody about to press this
+ * should not have to know which of those applies to them.
+ */
+export function DeleteCompanyControl({
+  companyId,
+  companyName,
+  impact,
+}: {
+  companyId: string;
+  companyName: string;
+  impact: {
+    projects: number;
+    deals: number;
+    contacts: number;
+    quotes: number;
+    invoices: number;
+    blocked: boolean;
+  };
+}) {
+  const t = useTranslations("Crm");
+  const router = useRouter();
+
+  const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  // Billed clients are not deletable, and saying so up front is kinder than
+  // a button that always refuses. Archive is right there beside it.
+  if (impact.blocked) {
+    return (
+      <p className="text-caption text-fg-muted max-w-md">
+        {t("deleteBlocked", { count: impact.quotes + impact.invoices })}
+      </p>
+    );
+  }
+
+  if (!confirming) {
+    return (
+      <div className="flex flex-col items-end gap-1">
+        <Button variant="ghost" onClick={() => setConfirming(true)}>
+          {t("deleteCompany")}
+        </Button>
+        {error ? (
+          <p role="alert" className="text-caption text-blocked-text">
+            {error}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-border bg-surface-inset rounded-control flex max-w-md flex-col gap-3 border p-3">
+      <p className="text-body text-fg-default">{t("deleteConfirm", { name: companyName })}</p>
+
+      <ul className="text-caption text-fg-muted list-disc space-y-1 pl-4">
+        {impact.deals > 0 ? <li>{t("deleteTakesDeals", { count: impact.deals })}</li> : null}
+        {impact.projects > 0 ? (
+          <li>{t("deleteKeepsProjects", { count: impact.projects })}</li>
+        ) : null}
+        {impact.contacts > 0 ? (
+          <li>{t("deleteKeepsContacts", { count: impact.contacts })}</li>
+        ) : null}
+        <li>{t("deleteNoUndo")}</li>
+      </ul>
+
+      {error ? (
+        <p role="alert" className="text-caption text-blocked-text">
+          {error}
+        </p>
+      ) : null}
+
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          variant="destructive"
+          loading={pending}
+          onClick={() =>
+            startTransition(async () => {
+              setError(null);
+              const result = await deleteCompanyAction({ companyId });
+              if (!result.ok) {
+                setError(result.error === "hasBilling" ? t("deleteBlockedShort") : t("invalid"));
+                setConfirming(false);
+                return;
+              }
+              // The page this is on no longer exists.
+              router.push("/crm/companies");
+              router.refresh();
+            })
+          }
+        >
+          {t("deleteConfirmButton")}
+        </Button>
+        <Button size="sm" variant="ghost" disabled={pending} onClick={() => setConfirming(false)}>
+          {t("cancel")}
+        </Button>
+      </div>
     </div>
   );
 }

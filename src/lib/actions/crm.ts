@@ -17,6 +17,8 @@ import {
   updateCompany,
   updateCompanyNotes,
   updateDeal,
+  companyDeletionImpact,
+  deleteCompany,
 } from "@/lib/data/crm";
 
 /**
@@ -177,6 +179,51 @@ export async function archiveCompanyAction(
     verb: parsed.data.archived ? "company.archived" : "company.restored",
     subjectType: "company",
     subjectId: parsed.data.companyId,
+  });
+
+  await revalidateCrm();
+  return { ok: true };
+}
+
+const deleteCompanySchema = z.object({ companyId: z.uuid() });
+
+/**
+ * Remove a client for good.
+ *
+ * Archiving is the ordinary act and this is not it: there is no undo, the
+ * client's deals go with it, and its projects, contacts and brief are left
+ * unattached. So it needs `company.delete` -- the module and admin -- where
+ * archiving needs only the module.
+ *
+ * A client carrying quotes or invoices is refused here before the database
+ * refuses it anyway. Both columns are `onDelete: "restrict"`, so letting it
+ * reach Postgres would surface as a foreign-key violation, which is a 500 and
+ * a stack trace where the honest answer is one sentence: this client has been
+ * billed, archive it instead.
+ */
+export async function deleteCompanyAction(
+  input: z.input<typeof deleteCompanySchema>,
+): Promise<ActionResult> {
+  const parsed = deleteCompanySchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "invalid" };
+
+  const session = await requirePermissionForAction("company.delete");
+
+  const impact = await companyDeletionImpact(session.actor, parsed.data.companyId);
+  if (!impact) return { ok: false, error: "notFound" };
+  if (impact.blocked) return { ok: false, error: "hasBilling" };
+
+  // The name comes out of the preflight above: afterwards there is no row
+  // to read it from, and "a client was deleted" without one is not a record
+  // of anything.
+  const done = await deleteCompany(session.actor, parsed.data.companyId);
+  if (!done) return { ok: false, error: "notFound" };
+
+  await recordActivity(session.actor, {
+    verb: "company.deleted",
+    subjectType: "company",
+    subjectId: parsed.data.companyId,
+    metadata: { name: impact.name },
   });
 
   await revalidateCrm();

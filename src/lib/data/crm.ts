@@ -3,7 +3,9 @@ import "server-only";
 import { eq, ilike, inArray, isNull, ne, or } from "drizzle-orm";
 
 import { companies, contacts, deals, type CompanyStatus, type DealStage } from "@/db/schema/crm";
+import { invoices, quotes } from "@/db/schema/finance";
 import { users } from "@/db/schema/people";
+import { projects } from "@/db/schema/projects";
 import { withOrg, type Executor } from "@/db/tenancy";
 
 import type { Actor } from "../authz";
@@ -550,4 +552,80 @@ export async function setCompanyArchived(
     archived ? isNull(companies.archivedAt) : undefined,
   );
   return updated.length > 0;
+}
+
+// ---------------------------------------------------------------------------
+// Deleting a client
+// ---------------------------------------------------------------------------
+
+/**
+ * What deleting this client would actually do.
+ *
+ * Read before the confirm rather than after the fact, because the four
+ * numbers behave in three different ways and nobody should have to know the
+ * schema to find that out:
+ *
+ * - **quotes and invoices** are `onDelete: "restrict"`. One of either and the
+ *   database refuses the delete outright -- a client who has been billed is a
+ *   row the money refers to, and archiving is the only honest answer.
+ * - **deals** are `onDelete: "cascade"`. They go too, silently, unless
+ *   something says so first. This is what says so.
+ * - **projects, contacts and the brief** are `onDelete: "set null"`. They
+ *   survive, unattached -- the work does not disappear because the client
+ *   record did.
+ */
+export type CompanyDeletionImpact = {
+  /** Carried out so the caller can name it in the record after it is gone. */
+  name: string;
+  projects: number;
+  deals: number;
+  contacts: number;
+  /** Non-zero means the delete is refused. */
+  quotes: number;
+  invoices: number;
+  blocked: boolean;
+};
+
+export async function companyDeletionImpact(
+  actor: Actor,
+  companyId: string,
+): Promise<CompanyDeletionImpact | null> {
+  if (!isUuid(companyId)) return null;
+
+  const scope = withOrg(actor.organizationId);
+  const [company] = await scope.select(companies, eq(companies.id, companyId));
+  if (!company) return null;
+
+  const [projectCount, dealCount, contactCount, quoteCount, invoiceCount] = await Promise.all([
+    scope.count(projects, eq(projects.companyId, companyId)),
+    scope.count(deals, eq(deals.companyId, companyId)),
+    scope.count(contacts, eq(contacts.companyId, companyId)),
+    scope.count(quotes, eq(quotes.companyId, companyId)),
+    scope.count(invoices, eq(invoices.companyId, companyId)),
+  ]);
+
+  return {
+    name: company.name,
+    projects: projectCount,
+    deals: dealCount,
+    contacts: contactCount,
+    quotes: quoteCount,
+    invoices: invoiceCount,
+    blocked: quoteCount > 0 || invoiceCount > 0,
+  };
+}
+
+/**
+ * Remove a client.
+ *
+ * The cascades and null-outs are the database's own, declared on the columns
+ * that point here -- this does not sweep them by hand, because a hand-written
+ * sweep is the thing that forgets the table somebody added last month.
+ */
+export async function deleteCompany(actor: Actor, companyId: string): Promise<boolean> {
+  const removed = await withOrg(actor.organizationId).delete(
+    companies,
+    eq(companies.id, companyId),
+  );
+  return removed.length > 0;
 }

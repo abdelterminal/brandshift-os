@@ -80,6 +80,7 @@ export type Action =
   | "leave.request"
   | "leave.approve"
   | "crm.manage"
+  | "company.delete"
   | "finance.manage"
   | "objective.manage"
   | "objective.record"
@@ -161,6 +162,22 @@ const RULES: Record<Action, (actor: Actor, resource?: Resource) => boolean> = {
   // call cannot record what was said.
   "crm.view": (actor) => hasModule(actor, "crm"),
   "crm.manage": (actor) => hasModule(actor, "crm"),
+
+  /*
+    Removing a client outright, as opposed to archiving one.
+
+    Archiving is the ordinary act and stays with anyone holding the module: it
+    takes a client out of every list and picker, and a click puts it back.
+    Deleting cannot be undone, takes the client's deals with it, and leaves
+    its projects with no client -- so it needs the module *and* admin, the
+    rung every other irreversible act here sits on.
+
+    The database refuses it outright for a client carrying quotes or invoices,
+    both of which are `onDelete: "restrict"`. That is a stronger guarantee
+    than this rule, and the reason a client who has been billed can only ever
+    be archived.
+  */
+  "company.delete": (actor) => hasModule(actor, "crm") && atLeast(actor, "admin"),
 
   // What the company is owed and what it has spent is the most sensitive data
   // in here. The `finance` module gates the whole area, and reading and writing

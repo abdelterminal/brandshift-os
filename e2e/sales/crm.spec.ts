@@ -211,3 +211,39 @@ test("a corrected figure that is not a figure is refused", async ({ page }) => {
   // the form: a lost deal already carries a status message on this page.
   await expect(page.locator("form").getByRole("alert")).toBeVisible();
 });
+
+/**
+ * A client's page as the whole account, not just its pipeline.
+ *
+ * Before this the page answered "what are we selling them" and nothing else:
+ * the projects were there as rows with a count on each, and what the count
+ * stood for, and who would be doing it, were a click away per project. The
+ * two sections below are that answer on one page.
+ */
+test("a client's page shows the work outstanding and who is on it", async ({ page }) => {
+  await page.goto("/en/crm/companies/meridian-bank");
+
+  await expect(main(page).getByRole("heading", { name: "Open work" })).toBeVisible();
+
+  // Real rows, each one a link into the task on its project -- the count on
+  // the project rows above says how much, this says what.
+  const tasks = main(page).locator("a[href*='?task=']");
+  expect(await tasks.count()).toBeGreaterThan(0);
+  await expect(tasks.first()).toHaveAttribute("href", /\/work\/[A-Z]+\?task=[0-9a-f-]{36}/);
+
+  // The roster, deduped across their projects: Claire runs the rebrand, so
+  // she is here once and marked as leading it.
+  await expect(main(page).getByRole("heading", { name: "People on this client" })).toBeVisible();
+  await expect(main(page).getByText("Claire Moreau", { exact: true })).toHaveCount(1);
+  await expect(main(page).getByText("MER", { exact: true }).first()).toBeVisible();
+});
+
+test("a manager cannot delete a client", async ({ page }) => {
+  // Sofia holds `crm` and runs the pipeline, so she archives. Deleting takes
+  // the deals with it and cannot be undone, so it stays with admin and owner
+  // -- and the button is absent rather than present and refusing.
+  await page.goto("/en/crm/companies/meridian-bank");
+
+  await expect(main(page).getByRole("button", { name: "Archive", exact: true })).toBeVisible();
+  await expect(main(page).getByRole("button", { name: "Delete permanently" })).toHaveCount(0);
+});

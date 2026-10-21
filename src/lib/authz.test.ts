@@ -143,3 +143,27 @@ describe("the brief", () => {
     expect(can(OWNER, "brief.delete")).toBe(true);
   });
 });
+
+describe("deleting a client", () => {
+  /**
+   * Archiving and deleting look alike and are not alike: one is a view
+   * filter, the other destroys the deals attached to the client and detaches
+   * everything else. So the second needs a rung the first does not.
+   */
+  const crm = (role: Actor["role"]) => actor({ role, permissions: { crm: true } });
+
+  it("is archived by anybody holding the module, and deleted only from admin up", () => {
+    expect(can(crm("member"), "crm.manage")).toBe(true);
+    expect(can(crm("member"), "company.delete")).toBe(false);
+    expect(can(crm("manager"), "company.delete")).toBe(false);
+    expect(can(crm("admin"), "company.delete")).toBe(true);
+    expect(can(crm("owner"), "company.delete")).toBe(true);
+  });
+
+  it("needs the module as well as the rung", () => {
+    // An admin of the people side has no business in the sales records.
+    expect(can(actor({ role: "admin", permissions: { people: true } }), "company.delete")).toBe(
+      false,
+    );
+  });
+});

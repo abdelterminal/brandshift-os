@@ -186,6 +186,17 @@ export type SeedProject = {
   dueInDays: number | null;
   ownerEmail: string;
   memberEmails: string[];
+  /**
+   * The client the work is for, by name, or null for our own.
+   *
+   * Without this the CRM and the work never met: eight projects, seven
+   * clients, and not one row joining them -- so a client's page showed no
+   * projects, no roster and nothing outstanding, and every one of those
+   * sections looked broken rather than empty. ATL is deliberately null,
+   * because an internal build has no client and the column is nullable for
+   * exactly that case.
+   */
+  companyName: string | null;
 };
 
 /**
@@ -210,6 +221,7 @@ export const PROJECTS: SeedProject[] = [
       "marc.dubois@brandshift.test",
       "sofia.laurent@brandshift.test",
     ],
+    companyName: "Meridian Bank",
   },
   {
     key: "ATL",
@@ -227,6 +239,7 @@ export const PROJECTS: SeedProject[] = [
       "priya.raman@brandshift.test",
       "lukas.weber@brandshift.test",
     ],
+    companyName: null,
   },
   {
     key: "NOR",
@@ -244,6 +257,7 @@ export const PROJECTS: SeedProject[] = [
       "ines.ferreira@brandshift.test",
       "priya.raman@brandshift.test",
     ],
+    companyName: "Northwind Retail",
   },
   {
     key: "LUM",
@@ -257,6 +271,7 @@ export const PROJECTS: SeedProject[] = [
     dueInDays: 33,
     ownerEmail: "priya.raman@brandshift.test",
     memberEmails: ["marc.dubois@brandshift.test", "nadia.haddad@brandshift.test"],
+    companyName: "Lumen Energy",
   },
   {
     key: "HAR",
@@ -270,6 +285,7 @@ export const PROJECTS: SeedProject[] = [
     dueInDays: 74,
     ownerEmail: "elena.rossi@brandshift.test",
     memberEmails: ["ines.ferreira@brandshift.test", "yusuf.karim@brandshift.test"],
+    companyName: "Harbour Group",
   },
   {
     key: "VER",
@@ -283,6 +299,7 @@ export const PROJECTS: SeedProject[] = [
     dueInDays: null,
     ownerEmail: "marc.dubois@brandshift.test",
     memberEmails: ["yusuf.karim@brandshift.test"],
+    companyName: "Verdant Foods",
   },
   {
     key: "KES",
@@ -296,6 +313,7 @@ export const PROJECTS: SeedProject[] = [
     dueInDays: -26,
     ownerEmail: "nadia.haddad@brandshift.test",
     memberEmails: ["claire.moreau@brandshift.test", "marc.dubois@brandshift.test"],
+    companyName: "Kestrel Partners",
   },
   {
     key: "ORB",
@@ -312,6 +330,7 @@ export const PROJECTS: SeedProject[] = [
       "priya.raman@brandshift.test",
       "nadia.haddad@brandshift.test",
     ],
+    companyName: "Orbit Media",
   },
 ];
 

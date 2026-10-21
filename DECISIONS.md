@@ -1290,3 +1290,34 @@ already uses it: the server has no opinion on a value that only exists in this b
 `useState`/`useEffect` pair for that is exactly the cascading-render shape the `react-hooks`
 lint rule now catches. A drag in progress is ordinary local state for per-pixel feedback; only
 release commits it to storage and the event every reader of that key is listening for.
+
+## Deleting a client is a different act from archiving it, and a billed client cannot be deleted
+
+**Archive answers "we are not working with them at the moment"; delete answers "this record
+should not exist."** They were one button because only archive existed, and that made the
+second question unanswerable -- a duplicate created by the link-clients script, a client typed
+twice, a company made by mistake stayed in the system forever, filtered out of every list and
+still occupying its name and slug. So there are two controls, deliberately not beside each
+other: archive sits with Edit in the header, delete sits alone on its own row underneath. Two
+buttons in a row that read alike, where only one of them can be undone, is how somebody presses
+the wrong one.
+
+**`company.delete` is admin and owner, where `crm.manage` is anybody holding the module.** The
+manager who runs the pipeline archives; deleting takes the client's deals with it and detaches
+its projects, contacts and brief, which is the same reasoning that put `brief.delete` a rung
+above `brief.edit`. Nobody is shown a button they will be refused.
+
+**A client carrying a quote or an invoice cannot be deleted at all, and the page says so instead
+of offering the button.** `quotes.company_id` and `invoices.company_id` are both
+`ON DELETE RESTRICT` -- the money has to resolve to a client -- so the database would refuse it
+regardless. The choice is where that refusal surfaces: a foreign-key violation is a 500 and a
+stack trace, where the honest answer is one sentence about archiving instead. Counted in
+`companyDeletionImpact()` before anything is written, and the same preflight is what the confirm
+reads out: so many deals go, so many projects and contacts are kept with no client attached.
+Described in general terms it would have to cover all three cases at once; counted, it says only
+what is true for this client.
+
+**The record of the deletion carries the name, because the row it points at is gone.** The
+`company.deleted` activity reads the name out of that same preflight and stores it in metadata.
+`activity_events` has no foreign key to `companies`, so the entry survives -- but "a client was
+deleted" with no name is not a record of anything.

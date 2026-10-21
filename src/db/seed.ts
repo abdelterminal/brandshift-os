@@ -13,7 +13,7 @@
  * from tenancy; it is the first proof that the scoped path works.
  */
 
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { closeDb, db } from "./client";
 import {
@@ -789,6 +789,18 @@ async function main() {
   const companyByName = new Map(
     COMPANIES.map((company, index) => [company.name, companyRows[index]!]),
   );
+
+  // Projects are inserted long before this, because almost everything else
+  // hangs off them -- so the client goes on afterwards rather than moving the
+  // whole CRM block above the work.
+  for (const project of PROJECTS) {
+    if (project.companyName === null) continue;
+    await scope.update(
+      projects,
+      { companyId: companyByName.get(project.companyName)!.id },
+      eq(projects.id, projectByKey.get(project.key)!.id),
+    );
+  }
 
   const contactRows = await scope.insert(
     contacts,

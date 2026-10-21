@@ -1,7 +1,11 @@
 import { getFormatter, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
-import { ArchiveCompanyControl, EditCompanyDialog } from "@/components/crm/company-controls";
+import {
+  ArchiveCompanyControl,
+  DeleteCompanyControl,
+  EditCompanyDialog,
+} from "@/components/crm/company-controls";
 import { NewContactDialog, NewDealDialog } from "@/components/crm/create-dialogs";
 import { BriefPanel } from "@/components/brief/brief-panel";
 import { CompanyNotes } from "@/components/crm/stage-control";
@@ -10,8 +14,10 @@ import { Badge, CountBadge, StatusPill } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/feedback";
 import { focusRing, focusRingInset, quietLinkHover, transition } from "@/components/ui/styles";
 import { Link } from "@/i18n/navigation";
+import { can } from "@/lib/authz";
 import { requirePermission } from "@/lib/auth/guards";
 import {
+  companyDeletionImpact,
   getCompanyBySlug,
   listCompanies,
   listCompanyContacts,
@@ -21,10 +27,19 @@ import {
 } from "@/lib/data/crm";
 import { listPeople } from "@/lib/data/people";
 import { listProjectMembers, listProjects } from "@/lib/data/projects";
-import { listOpenTasks } from "@/lib/data/tasks";
+import { listOpenTasks, organizationToday } from "@/lib/data/tasks";
 import { memberProjectIds, seesOnlyOwnWork } from "@/lib/data/visibility";
 import { readLocation } from "@/lib/meeting-location";
 import { cn } from "@/lib/utils";
+
+/**
+ * How many of a client's open tasks the page lists before it stops.
+ *
+ * A long-standing client can have hundreds across a dozen projects, and a
+ * page that scrolls for a minute answers nothing. The soonest are the ones
+ * somebody came here for; the rest are a click away on their project.
+ */
+const TASK_LIMIT = 20;
 
 const PROJECT_STATUS_TONE = {
   planning: "neutral",
@@ -116,6 +131,61 @@ export default async function CompanyPage({ params }: PageProps<"/[locale]/crm/c
     visibleProjects.map((project) => listProjectMembers(session.actor, project.id)),
   );
 
+  /*
+    What is actually outstanding for this client, rather than a count per
+    project.
+
+    The project rows above say "4 open" each, which answers how much is left
+    and never what it is. Somebody on the phone to a client needs the second.
+    Filtered out of the set already fetched -- no query per project -- and
+    ordered by date, soonest first, with the undated at the back.
+  */
+  const clientProjectIds = new Set(visibleProjects.map((project) => project.id));
+  const clientTasks = countedTasks
+    .filter((task) => task.projectId !== null && clientProjectIds.has(task.projectId))
+    .sort(
+      (a, b) =>
+        Number(a.dueDate === null) - Number(b.dueDate === null) ||
+        (a.dueDate ?? "").localeCompare(b.dueDate ?? "") ||
+        a.title.localeCompare(b.title),
+    );
+  const shownTasks = clientTasks.slice(0, TASK_LIMIT);
+  const todayIso = organizationToday();
+
+  /*
+    Everybody on this client, once each.
+
+    Project by project the same names repeat, and the avatar stacks on the
+    rows above cut off at three. This is the roster: who to ask, and which of
+    their projects to ask them about.
+  */
+  const roster = new Map<
+    string,
+    { name: string; avatarUrl: string | null; leads: boolean; projectKeys: string[] }
+  >();
+  for (const [index, members] of projectTeams.entries()) {
+    const project = visibleProjects[index]!;
+    for (const member of members) {
+      const entry = roster.get(member.userId) ?? {
+        name: member.name,
+        avatarUrl: member.avatarUrl,
+        leads: false,
+        projectKeys: [],
+      };
+      entry.leads ||= member.role === "lead";
+      entry.projectKeys.push(project.key);
+      roster.set(member.userId, entry);
+    }
+  }
+  const team = [...roster.entries()]
+    .map(([userId, entry]) => ({ userId, ...entry }))
+    .sort((a, b) => Number(b.leads) - Number(a.leads) || a.name.localeCompare(b.name));
+
+  // Five counts, so only for somebody who could act on them.
+  const deletion = can(session.actor, "company.delete")
+    ? await companyDeletionImpact(session.actor, company.id)
+    : null;
+
   const currency = session.organization.currency;
   // The same guard the meeting location uses: only http and https become a
   // link, because this is a field somebody typed that ends up in an `href`.
@@ -194,6 +264,20 @@ export default async function CompanyPage({ params }: PageProps<"/[locale]/crm/c
         <p className="border-border bg-surface-raised text-body text-fg-muted rounded-card mb-6 border px-4 py-3">
           {t("archivedNote")}
         </p>
+      ) : null}
+
+      {/*
+        Delete sits below the header rather than beside Archive, because the
+        two read alike in a row of buttons and only one of them can be undone.
+      */}
+      {deletion ? (
+        <div className="mb-6 flex justify-end">
+          <DeleteCompanyControl
+            companyId={company.id}
+            companyName={company.name}
+            impact={deletion}
+          />
+        </div>
       ) : null}
 
       {/*
@@ -308,6 +392,108 @@ export default async function CompanyPage({ params }: PageProps<"/[locale]/crm/c
                 </li>
               );
             })}
+          </ul>
+        )}
+      </section>
+
+      <section className="mb-8">
+        <h2 className="text-label text-fg-default mb-1 font-semibold">{t("openWork")}</h2>
+        <p className="text-caption text-fg-muted mb-2">{t("openWorkBody")}</p>
+
+        {clientTasks.length === 0 ? (
+          <div className="border-border rounded-card border">
+            <EmptyState title={t("noOpenWork")} description={t("noOpenWorkBody")} />
+          </div>
+        ) : (
+          <>
+            <ul className="border-border divide-border bg-surface-raised divide-y overflow-hidden rounded-card border">
+              {shownTasks.map((task) => (
+                <li key={task.id}>
+                  <Link
+                    href={task.projectKey ? `/work/${task.projectKey}?task=${task.id}` : "/work"}
+                    className={cn(
+                      "flex flex-wrap items-center gap-3 px-4 py-3",
+                      "hover:bg-surface-hover",
+                      focusRingInset,
+                      transition,
+                    )}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="text-body text-fg-default block">{task.title}</span>
+                      <span className="text-caption text-fg-subtle mt-0.5 block truncate">
+                        {[task.projectKey, task.assigneeName ?? t("unassigned")]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
+                    </span>
+
+                    {task.dueDate ? (
+                      <span
+                        className={cn(
+                          "text-caption shrink-0 tabular-nums",
+                          // Red for a date that has gone past, which is the
+                          // one meaning of red the design rules keep for it.
+                          task.dueDate < todayIso ? "text-blocked-text" : "text-fg-muted",
+                        )}
+                      >
+                        {format.dateTime(new Date(`${task.dueDate}T00:00:00`), {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </span>
+                    ) : null}
+
+                    {task.status === "blocked" ? (
+                      <Badge tone="blocked" size="sm" className="shrink-0">
+                        {t("blocked")}
+                      </Badge>
+                    ) : null}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            {clientTasks.length > shownTasks.length ? (
+              <p className="text-caption text-fg-muted mt-2">
+                {t("moreOpenWork", { count: clientTasks.length - shownTasks.length })}
+              </p>
+            ) : null}
+          </>
+        )}
+      </section>
+
+      <section className="mb-8">
+        <h2 className="text-label text-fg-default mb-1 font-semibold">{t("peopleOn")}</h2>
+        <p className="text-caption text-fg-muted mb-2">{t("peopleOnBody")}</p>
+
+        {team.length === 0 ? (
+          <div className="border-border rounded-card border">
+            <EmptyState title={t("noPeopleOn")} description={t("noPeopleOnBody")} />
+          </div>
+        ) : (
+          <ul className="border-border divide-border bg-surface-raised divide-y overflow-hidden rounded-card border">
+            {team.map((member) => (
+              <li key={member.userId} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                <PersonAvatar
+                  name={member.name}
+                  src={member.avatarUrl}
+                  size="sm"
+                  className="shrink-0"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="text-body text-fg-default block">{member.name}</span>
+                  <span className="text-caption text-fg-subtle mt-0.5 block truncate">
+                    {member.projectKeys.join(" · ")}
+                  </span>
+                </span>
+
+                {member.leads ? (
+                  <Badge tone="accent" size="sm" className="shrink-0">
+                    {t("lead")}
+                  </Badge>
+                ) : null}
+              </li>
+            ))}
           </ul>
         )}
       </section>
